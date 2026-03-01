@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build:*)",
+      "Bash(TEST_URL=https://workoutproai.com npm run test:ai:*)"
+    ]
+  }
+}
