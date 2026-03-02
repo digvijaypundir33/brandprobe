@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { scrapeWebsite, formatScrapedDataForPrompt } from '@/lib/scraper';
+import { scrapeWebsite, formatScrapedDataForPrompt, captureScreenshot } from '@/lib/scraper';
 import { analyzeWebsite } from '@/lib/ai';
 import {
   getOrCreateUser,
@@ -124,9 +124,21 @@ async function processReport(
     // Step 2: Format for Claude
     const websiteContent = formatScrapedDataForPrompt(scrapedData);
 
-    // Step 3: Analyze with Claude (all 9 sections in parallel)
+    // Step 3: Capture screenshot (parallel with AI analysis)
+    console.log(`[${reportId}] Capturing screenshot`);
+    const screenshotPromise = captureScreenshot(url);
+
+    // Step 4: Analyze with Claude (all sections in parallel)
     console.log(`[${reportId}] Starting Claude analysis`);
-    const analysis = await analyzeWebsite(websiteContent);
+    const [analysis, screenshotUrl] = await Promise.all([
+      analyzeWebsite(websiteContent),
+      screenshotPromise,
+    ]);
+
+    // Add screenshot to design authenticity if available
+    if (screenshotUrl && analysis.designAuthenticity) {
+      analysis.designAuthenticity.detailedAnalysis.screenshotUrl = screenshotUrl;
+    }
 
     // Calculate scores (including new sections)
     const overallScore = calculateOverallScore({
@@ -139,6 +151,7 @@ async function processReport(
       aiSearch: analysis.aiSearch.score,
       technical: analysis.technical.score,
       brandHealth: analysis.brandHealth.score,
+      designAuth: analysis.designAuthenticity.score,
     });
 
     const scoreChange = previousOverallScore !== null
@@ -159,6 +172,7 @@ async function processReport(
       aiSearchVisibility: analysis.aiSearch,
       technicalPerformance: analysis.technical,
       brandHealth: analysis.brandHealth,
+      designAuthenticity: analysis.designAuthenticity,
       overallScore,
       messagingScore: analysis.messaging.score,
       seoScore: analysis.seo.score,
@@ -169,6 +183,7 @@ async function processReport(
       aiSearchScore: analysis.aiSearch.score,
       technicalScore: analysis.technical.score,
       brandHealthScore: analysis.brandHealth.score,
+      designAuthenticityScore: analysis.designAuthenticity.score,
       previousOverallScore,
       scoreChange,
       scanTimeMs,

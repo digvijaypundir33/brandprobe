@@ -53,6 +53,7 @@ export function calculateOverallScore(scores: {
   aiSearch?: number;
   technical?: number;
   brandHealth?: number;
+  designAuth?: number;
 }): number {
   const values = Object.values(scores).filter((v): v is number => typeof v === 'number');
   const sum = values.reduce((a, b) => a + b, 0);
@@ -100,6 +101,35 @@ export function getScoreInterpretation(score: number): {
     color: 'emerald',
     description: 'Top tier marketing',
   };
+}
+
+/**
+ * Get Tailwind color class for score display
+ */
+export function getScoreColorClass(score: number): string {
+  if (score <= 25) return 'text-red-500';
+  if (score <= 50) return 'text-orange-500';
+  if (score <= 70) return 'text-yellow-500';
+  if (score <= 85) return 'text-blue-500';
+  return 'text-emerald-500';
+}
+
+/**
+ * Get fit rating color class (for channel fit bars)
+ */
+export function getFitColorClass(fit: number): string {
+  if (fit <= 3) return 'bg-red-500';
+  if (fit <= 6) return 'bg-orange-500';
+  return 'bg-green-500';
+}
+
+/**
+ * Get fit rating text color class
+ */
+export function getFitTextColorClass(fit: number): string {
+  if (fit <= 3) return 'text-red-600';
+  if (fit <= 6) return 'text-orange-600';
+  return 'text-green-600';
 }
 
 /**

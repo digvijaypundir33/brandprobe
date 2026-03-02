@@ -20,9 +20,10 @@ import ChannelFitChart from '@/components/ChannelFitChart';
 import AISearchVisibilityCard from '@/components/AISearchVisibilityCard';
 import TechnicalPerformanceCard from '@/components/TechnicalPerformanceCard';
 import BrandHealthCard from '@/components/BrandHealthCard';
+import DesignAuthenticityCard from '@/components/DesignAuthenticityCard';
 import type { Report } from '@/types/report';
 
-type TabType = 'overview' | 'messaging' | 'seo' | 'content' | 'ads' | 'conversion' | 'distribution' | 'aiSearch' | 'technical' | 'brandHealth';
+type TabType = 'overview' | 'messaging' | 'seo' | 'content' | 'ads' | 'conversion' | 'distribution' | 'aiSearch' | 'technical' | 'brandHealth' | 'designAuth';
 
 export default function ReportPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -140,6 +141,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
     aiSearch: report.aiSearchScore || 0,
     technical: report.technicalScore || 0,
     brandHealth: report.brandHealthScore || 0,
+    designAuth: report.designAuthenticityScore || 0,
   };
 
   const tabs: { id: TabType; label: string; score?: number; locked?: boolean }[] = [
@@ -149,6 +151,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
     { id: 'aiSearch', label: 'AI', score: scores.aiSearch },
     { id: 'technical', label: 'Tech', score: scores.technical },
     { id: 'brandHealth', label: 'Brand', score: scores.brandHealth },
+    { id: 'designAuth', label: 'Design', score: scores.designAuth },
     { id: 'content', label: 'Content', score: scores.content, locked: !isPaid },
     { id: 'ads', label: 'Ads', score: scores.ads, locked: !isPaid },
     { id: 'conversion', label: 'CRO', score: scores.conversion, locked: !isPaid },
@@ -164,7 +167,8 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
     (report.distributionStrategy?.quickWins?.length || 0) +
     (report.aiSearchVisibility?.quickWins?.length || 0) +
     (report.technicalPerformance?.quickWins?.length || 0) +
-    (report.brandHealth?.quickWins?.length || 0);
+    (report.brandHealth?.quickWins?.length || 0) +
+    (report.designAuthenticity?.quickWins?.length || 0);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -407,6 +411,10 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
 
           {activeTab === 'brandHealth' && report.brandHealth && (
             <BrandHealthCard brandHealth={report.brandHealth} />
+          )}
+
+          {activeTab === 'designAuth' && report.designAuthenticity && (
+            <DesignAuthenticityCard designAuth={report.designAuthenticity} />
           )}
         </motion.div>
 

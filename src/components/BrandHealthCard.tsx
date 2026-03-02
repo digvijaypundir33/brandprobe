@@ -3,13 +3,31 @@
 import { motion } from 'framer-motion';
 import type { BrandHealth } from '@/types/report';
 import IssuesAndQuickWins from './IssuesAndQuickWins';
+import { getScoreColorClass } from '@/lib/utils';
 
 interface BrandHealthCardProps {
   brandHealth: BrandHealth;
 }
 
+// Helper to safely convert any value to string
+function toDisplayString(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (value === null || value === undefined) return 'N/A';
+  if (typeof value === 'object') {
+    const obj = value as Record<string, unknown>;
+    if ('type' in obj && 'issue' in obj) {
+      return `${obj.type}: ${obj.issue}`;
+    }
+    const stringVals = Object.values(obj).filter(v => typeof v === 'string');
+    if (stringVals.length > 0) return stringVals.join(' ');
+    return 'N/A';
+  }
+  return String(value);
+}
+
 export default function BrandHealthCard({ brandHealth }: BrandHealthCardProps) {
-  const analysis = brandHealth.detailedAnalysis;
+  const analysis = brandHealth.detailedAnalysis || {};
 
   return (
     <motion.div
@@ -32,7 +50,7 @@ export default function BrandHealthCard({ brandHealth }: BrandHealthCardProps) {
             </div>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold">{brandHealth.score}</div>
+            <div className={`text-2xl font-bold ${getScoreColorClass(brandHealth.score)}`}>{brandHealth.score}</div>
             <div className="text-gray-400 text-sm">/100</div>
           </div>
         </div>
@@ -46,21 +64,21 @@ export default function BrandHealthCard({ brandHealth }: BrandHealthCardProps) {
 
         {/* Key Metrics Row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-          <div className="bg-gray-50 rounded-lg p-3 border border-gray-100 text-center">
-            <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Voice</div>
-            <div className="text-sm font-medium text-gray-800 truncate">{analysis.voiceToneAnalysis.split('.')[0]}</div>
+          <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
+            <div className="text-xs text-blue-600 uppercase tracking-wide font-semibold mb-2">Voice</div>
+            <div className="text-xs font-medium text-blue-800 line-clamp-3">{toDisplayString(analysis.voiceToneAnalysis).split('.')[0]}</div>
           </div>
-          <div className="bg-gray-50 rounded-lg p-3 border border-gray-100 text-center">
-            <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Personality</div>
-            <div className="text-sm font-medium text-gray-800 truncate">{analysis.brandPersonality.split('.')[0]}</div>
+          <div className="bg-purple-50 rounded-lg p-4 border border-purple-100">
+            <div className="text-xs text-purple-600 uppercase tracking-wide font-semibold mb-2">Personality</div>
+            <div className="text-xs font-medium text-purple-800 line-clamp-3">{toDisplayString(analysis.brandPersonality).split('.')[0]}</div>
           </div>
-          <div className="bg-gray-50 rounded-lg p-3 border border-gray-100 text-center">
-            <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Memorability</div>
-            <div className="text-sm font-medium text-gray-800 truncate">{analysis.memorabilityScore.split('.')[0]}</div>
+          <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-100">
+            <div className="text-xs text-indigo-600 uppercase tracking-wide font-semibold mb-2">Memorability</div>
+            <div className="text-xs font-medium text-indigo-800 line-clamp-3">{toDisplayString(analysis.memorabilityScore).split('.')[0]}</div>
           </div>
-          <div className="bg-gray-50 rounded-lg p-3 border border-gray-100 text-center">
-            <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Trust</div>
-            <div className="text-sm font-medium text-gray-800 truncate">{analysis.trustPerception.split('.')[0]}</div>
+          <div className="bg-emerald-50 rounded-lg p-4 border border-emerald-100">
+            <div className="text-xs text-emerald-600 uppercase tracking-wide font-semibold mb-2">Trust</div>
+            <div className="text-xs font-medium text-emerald-800 line-clamp-3">{toDisplayString(analysis.trustPerception).split('.')[0]}</div>
           </div>
         </div>
 
@@ -73,7 +91,7 @@ export default function BrandHealthCard({ brandHealth }: BrandHealthCardProps) {
               </svg>
               <h4 className="font-medium text-gray-800 text-sm">Brand Consistency</h4>
             </div>
-            <p className="text-xs text-gray-600">{analysis.brandConsistency}</p>
+            <p className="text-xs text-gray-600">{toDisplayString(analysis.brandConsistency)}</p>
           </div>
 
           <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
@@ -83,7 +101,7 @@ export default function BrandHealthCard({ brandHealth }: BrandHealthCardProps) {
               </svg>
               <h4 className="font-medium text-gray-800 text-sm">Voice & Tone</h4>
             </div>
-            <p className="text-xs text-gray-600">{analysis.voiceToneAnalysis}</p>
+            <p className="text-xs text-gray-600">{toDisplayString(analysis.voiceToneAnalysis)}</p>
           </div>
 
           <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
@@ -94,7 +112,7 @@ export default function BrandHealthCard({ brandHealth }: BrandHealthCardProps) {
               </svg>
               <h4 className="font-medium text-gray-800 text-sm">Visual Identity</h4>
             </div>
-            <p className="text-xs text-gray-600">{analysis.visualIdentityNotes}</p>
+            <p className="text-xs text-gray-600">{toDisplayString(analysis.visualIdentityNotes)}</p>
           </div>
 
           <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
@@ -104,7 +122,7 @@ export default function BrandHealthCard({ brandHealth }: BrandHealthCardProps) {
               </svg>
               <h4 className="font-medium text-gray-800 text-sm">Competitor Differentiation</h4>
             </div>
-            <p className="text-xs text-gray-600">{analysis.competitorDifferentiation}</p>
+            <p className="text-xs text-gray-600">{toDisplayString(analysis.competitorDifferentiation)}</p>
           </div>
         </div>
 
@@ -116,7 +134,7 @@ export default function BrandHealthCard({ brandHealth }: BrandHealthCardProps) {
             </svg>
             <h4 className="font-medium text-gray-800 text-sm">Brand Personality</h4>
           </div>
-          <p className="text-sm text-gray-600">{analysis.brandPersonality}</p>
+          <p className="text-sm text-gray-600">{toDisplayString(analysis.brandPersonality)}</p>
         </div>
 
         {/* Trust Perception */}
@@ -127,7 +145,7 @@ export default function BrandHealthCard({ brandHealth }: BrandHealthCardProps) {
             </svg>
             <h4 className="font-medium text-gray-800 text-sm">Trust Perception</h4>
           </div>
-          <p className="text-sm text-gray-600">{analysis.trustPerception}</p>
+          <p className="text-sm text-gray-600">{toDisplayString(analysis.trustPerception)}</p>
         </div>
 
         {/* Key Issues & Quick Wins */}

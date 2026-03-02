@@ -123,6 +123,33 @@ export interface BrandHealth extends ReportSection {
   };
 }
 
+export interface DesignAuthenticity extends ReportSection {
+  detailedAnalysis: {
+    // Cliché Phrases Detection
+    clichePhrasesDetected: string[];
+    clicheCount: number;
+    clicheSeverity: 'high' | 'medium' | 'low' | 'none';
+
+    // Layout Pattern Analysis
+    layoutPattern: string;
+    layoutAuthenticity: 'unique' | 'common' | 'generic';
+    layoutDescription: string;
+
+    // Icon Library Detection
+    iconLibrariesFound: string[];
+    usesCustomIcons: boolean;
+    iconAnalysis: string;
+
+    // Overall Assessment
+    authenticityRating: 'Authentic' | 'Somewhat Generic' | 'AI-Generated Pattern';
+    strengthsSummary: string;
+    recommendations: string[];
+
+    // Screenshot
+    screenshotUrl?: string;
+  };
+}
+
 export interface Report {
   id: string;
   userId: string;
@@ -145,6 +172,7 @@ export interface Report {
   aiSearchVisibility: AISearchVisibility | null;
   technicalPerformance: TechnicalPerformance | null;
   brandHealth: BrandHealth | null;
+  designAuthenticity: DesignAuthenticity | null;
 
   // Scores
   overallScore: number | null;
@@ -159,6 +187,7 @@ export interface Report {
   aiSearchScore: number | null;
   technicalScore: number | null;
   brandHealthScore: number | null;
+  designAuthenticityScore: number | null;
 
   // Progress tracking
   previousOverallScore: number | null;

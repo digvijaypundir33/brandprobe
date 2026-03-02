@@ -3,13 +3,16 @@
 import { motion } from 'framer-motion';
 import type { AISearchVisibility } from '@/types/report';
 import IssuesAndQuickWins from './IssuesAndQuickWins';
+import { getScoreColorClass } from '@/lib/utils';
 
 interface AISearchVisibilityCardProps {
   aiSearch: AISearchVisibility;
 }
 
 export default function AISearchVisibilityCard({ aiSearch }: AISearchVisibilityCardProps) {
-  const analysis = aiSearch.detailedAnalysis;
+  const analysis = aiSearch.detailedAnalysis || {};
+  const aiSearchAppearance = Array.isArray(analysis.aiSearchAppearance) ? analysis.aiSearchAppearance : [];
+  const faqOpportunities = Array.isArray(analysis.faqOpportunities) ? analysis.faqOpportunities : [];
 
   return (
     <motion.div
@@ -32,7 +35,7 @@ export default function AISearchVisibilityCard({ aiSearch }: AISearchVisibilityC
             </div>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold">{aiSearch.score}</div>
+            <div className={`text-2xl font-bold ${getScoreColorClass(aiSearch.score)}`}>{aiSearch.score}</div>
             <div className="text-gray-400 text-sm">/100</div>
           </div>
         </div>
@@ -46,8 +49,8 @@ export default function AISearchVisibilityCard({ aiSearch }: AISearchVisibilityC
 
         {/* AEO Score Badge */}
         <div className="flex items-center gap-4 mb-6">
-          <div className="bg-gray-900 rounded-lg px-4 py-3 text-white">
-            <div className="text-xs text-gray-400 uppercase tracking-wide">AEO Score</div>
+          <div className="bg-indigo-600 rounded-lg px-4 py-3 text-white">
+            <div className="text-xs text-indigo-200 uppercase tracking-wide">AEO Score</div>
             <div className="text-2xl font-bold">{analysis.aeoScore}</div>
           </div>
           <div className="flex-1 text-sm text-gray-600">
@@ -99,19 +102,19 @@ export default function AISearchVisibilityCard({ aiSearch }: AISearchVisibilityC
         </div>
 
         {/* AI Search Appearance */}
-        {analysis.aiSearchAppearance && analysis.aiSearchAppearance.length > 0 && (
+        {aiSearchAppearance.length > 0 && (
           <div className="mb-6">
             <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               Potential AI Search Queries
             </h4>
             <div className="flex flex-wrap gap-2">
-              {analysis.aiSearchAppearance.map((query, i) => (
+              {aiSearchAppearance.map((query, i) => (
                 <span
                   key={i}
-                  className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-md text-sm border border-gray-200"
+                  className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-md text-sm border border-blue-200"
                 >
                   {query}
                 </span>
@@ -121,18 +124,18 @@ export default function AISearchVisibilityCard({ aiSearch }: AISearchVisibilityC
         )}
 
         {/* FAQ Opportunities */}
-        {analysis.faqOpportunities && analysis.faqOpportunities.length > 0 && (
+        {faqOpportunities.length > 0 && (
           <div className="mb-6">
             <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               FAQ Opportunities
             </h4>
             <ul className="space-y-2">
-              {analysis.faqOpportunities.map((faq, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg p-3 border border-gray-100">
-                  <span className="text-gray-400 font-medium">Q:</span>
+              {faqOpportunities.map((faq, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm text-indigo-700 bg-indigo-50 rounded-lg p-3 border border-indigo-100">
+                  <span className="text-indigo-400 font-medium">Q:</span>
                   {faq}
                 </li>
               ))}

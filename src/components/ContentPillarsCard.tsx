@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import type { ContentStrategy } from '@/types/report';
 import IssuesAndQuickWins from './IssuesAndQuickWins';
+import { getScoreColorClass } from '@/lib/utils';
 
 interface ContentPillarsCardProps {
   content: ContentStrategy;
@@ -29,12 +30,13 @@ function toDisplayString(value: unknown): string {
 }
 
 export default function ContentPillarsCard({ content }: ContentPillarsCardProps) {
-  const pillars = content.detailedAnalysis.contentPillars || [];
-  const formats = content.detailedAnalysis.formatRecommendations || [];
-  const topics = content.detailedAnalysis.topicClusters || [];
-  const angles = content.detailedAnalysis.differentiationAngles || [];
-  const cadence = content.detailedAnalysis.publishingCadence || '';
-  const platforms = content.detailedAnalysis.platformGuidance || {};
+  const analysis = content.detailedAnalysis || {};
+  const pillars = Array.isArray(analysis.contentPillars) ? analysis.contentPillars : [];
+  const formats = Array.isArray(analysis.formatRecommendations) ? analysis.formatRecommendations : [];
+  const topics = Array.isArray(analysis.topicClusters) ? analysis.topicClusters : [];
+  const angles = Array.isArray(analysis.differentiationAngles) ? analysis.differentiationAngles : [];
+  const cadence = analysis.publishingCadence || '';
+  const platforms = analysis.platformGuidance || {};
 
   return (
     <motion.div
@@ -57,7 +59,7 @@ export default function ContentPillarsCard({ content }: ContentPillarsCardProps)
             </div>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold">{content.score}</div>
+            <div className={`text-2xl font-bold ${getScoreColorClass(content.score)}`}>{content.score}</div>
             <div className="text-gray-400 text-sm">/100</div>
           </div>
         </div>

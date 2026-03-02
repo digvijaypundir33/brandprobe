@@ -11,6 +11,7 @@ import { DISTRIBUTION_PROMPT } from './prompts/distribution';
 import { AI_SEARCH_PROMPT } from './prompts/aiSearch';
 import { TECHNICAL_PROMPT } from './prompts/technical';
 import { BRAND_HEALTH_PROMPT } from './prompts/brandHealth';
+import { CORE_MARKETING_PROMPT, TECHNICAL_DISTRIBUTION_PROMPT } from './prompts/consolidated';
 import type {
   MessagingAnalysis,
   SeoOpportunities,
@@ -21,6 +22,7 @@ import type {
   AISearchVisibility,
   TechnicalPerformance,
   BrandHealth,
+  DesignAuthenticity,
 } from '@/types/report';
 import { retry } from './utils';
 
@@ -34,15 +36,18 @@ export function getAIProvider(): AIProvider {
     return 'ollama';
   }
 
+  // Respect explicit AI_PROVIDER setting (highest priority)
   const provider = process.env.AI_PROVIDER?.toLowerCase() as AIProvider;
   if (provider && ['anthropic', 'openai', 'groq', 'ollama'].includes(provider)) {
     return provider;
   }
+
   // Auto-detect based on available API keys (ollama doesn't need a key)
-  if (process.env.OLLAMA_BASE_URL) return 'ollama';
   if (process.env.ANTHROPIC_API_KEY) return 'anthropic';
   if (process.env.OPENAI_API_KEY) return 'openai';
   if (process.env.GROQ_API_KEY) return 'groq';
+  if (process.env.OLLAMA_BASE_URL) return 'ollama';
+
   throw new Error('No AI provider configured. Set AI_PROVIDER or add an API key.');
 }
 
@@ -87,6 +92,49 @@ function getGroqClient(): Groq {
     });
   }
   return groqClient;
+}
+
+/**
+ * Get the number of parallel API calls to use in legacy mode
+ * @param provider - The AI provider being used
+ * @returns Number of parallel calls (1-9)
+ *
+ * Configuration priority:
+ * 1. AI_PARALLEL_CALLS (new, provider-agnostic)
+ * 2. OLLAMA_PARALLEL_CALLS (deprecated, backward compatibility)
+ * 3. Provider defaults (Ollama: 3, Cloud: 9)
+ */
+function getParallelCallsConfig(provider: AIProvider): number {
+  // Priority 1: Check new AI_PARALLEL_CALLS
+  const aiParallelCalls = process.env.AI_PARALLEL_CALLS;
+  if (aiParallelCalls) {
+    const parsed = parseInt(aiParallelCalls, 10);
+    if (!isNaN(parsed)) {
+      // Clamp between 1 and 9 (max is 9 since we have 9 API calls in legacy mode)
+      const clamped = Math.max(1, Math.min(9, parsed));
+      if (parsed !== clamped) {
+        console.warn(`[AI] AI_PARALLEL_CALLS=${parsed} is out of range. Using ${clamped} (valid range: 1-9)`);
+      }
+      return clamped;
+    }
+    console.warn(`[AI] Invalid AI_PARALLEL_CALLS value: "${aiParallelCalls}". Using provider default.`);
+  }
+
+  // Priority 2: Check deprecated OLLAMA_PARALLEL_CALLS
+  if (provider === 'ollama' && process.env.OLLAMA_PARALLEL_CALLS) {
+    console.warn('[AI] OLLAMA_PARALLEL_CALLS is deprecated. Use AI_PARALLEL_CALLS instead.');
+    const parsed = parseInt(process.env.OLLAMA_PARALLEL_CALLS, 10);
+    if (!isNaN(parsed)) {
+      const clamped = Math.max(1, Math.min(9, parsed));
+      if (parsed !== clamped) {
+        console.warn(`[AI] OLLAMA_PARALLEL_CALLS=${parsed} is out of range. Using ${clamped} (valid range: 1-9)`);
+      }
+      return clamped;
+    }
+  }
+
+  // Priority 3: Provider-specific defaults
+  return provider === 'ollama' ? 3 : 9;
 }
 
 /**
@@ -268,8 +316,55 @@ async function callAI<T>(prompt: string, websiteContent: string): Promise<T> {
   }, 3, 2000);
 }
 
+// Types for consolidated responses
+interface CoreMarketingResponse {
+  messaging: MessagingAnalysis;
+  brandHealth: BrandHealth;
+  content: ContentStrategy;
+  adAngles: AdAngles;
+}
+
+interface TechnicalDistributionResponse {
+  seo: SeoOpportunities;
+  technical: TechnicalPerformance;
+  conversion: ConversionOptimization;
+  distribution: DistributionStrategy;
+  aiSearch: AISearchVisibility;
+  designAuthenticity: DesignAuthenticity;
+}
+
+// Default section template for when AI doesn't return complete data
+function createDefaultSection(sectionName: string): Record<string, unknown> {
+  return {
+    score: 50,
+    summary: `Analysis for ${sectionName} is being processed.`,
+    keyIssues: [],
+    quickWins: [],
+    detailedAnalysis: {},
+  };
+}
+
+// Ensure a section has required fields
+function ensureSection<T extends { score?: number; summary?: string; keyIssues?: unknown[]; quickWins?: unknown[] }>(
+  section: T | undefined,
+  sectionName: string
+): T {
+  if (!section || typeof section !== 'object') {
+    return createDefaultSection(sectionName) as T;
+  }
+  return {
+    ...createDefaultSection(sectionName),
+    ...section,
+    score: section.score ?? 50,
+    summary: section.summary ?? `Analysis for ${sectionName}.`,
+    keyIssues: section.keyIssues ?? [],
+    quickWins: section.quickWins ?? [],
+  } as T;
+}
+
 /**
- * Analyze all 9 sections in parallel
+ * Analyze website using consolidated prompts (2 calls instead of 9)
+ * This is ~4x faster for local Ollama models
  */
 export async function analyzeWebsite(websiteContent: string): Promise<{
   messaging: MessagingAnalysis;
@@ -281,49 +376,96 @@ export async function analyzeWebsite(websiteContent: string): Promise<{
   aiSearch: AISearchVisibility;
   technical: TechnicalPerformance;
   brandHealth: BrandHealth;
+  designAuthenticity: DesignAuthenticity;
 }> {
   const provider = getAIProvider();
   console.log(`[AI] Using provider: ${provider}${provider === 'ollama' ? ` (model: ${MODELS.ollama})` : ''}`);
 
-  // For Ollama, run sequentially to avoid overwhelming local resources
-  if (provider === 'ollama') {
-    console.log('[AI] Running sections sequentially for Ollama...');
-    const messaging = await callAI<MessagingAnalysis>(MESSAGING_PROMPT, websiteContent);
-    const seo = await callAI<SeoOpportunities>(SEO_PROMPT, websiteContent);
-    const content = await callAI<ContentStrategy>(CONTENT_PROMPT, websiteContent);
-    const adAngles = await callAI<AdAngles>(AD_ANGLES_PROMPT, websiteContent);
-    const conversion = await callAI<ConversionOptimization>(CONVERSION_PROMPT, websiteContent);
-    const distribution = await callAI<DistributionStrategy>(DISTRIBUTION_PROMPT, websiteContent);
-    const aiSearch = await callAI<AISearchVisibility>(AI_SEARCH_PROMPT, websiteContent);
-    const technical = await callAI<TechnicalPerformance>(TECHNICAL_PROMPT, websiteContent);
-    const brandHealth = await callAI<BrandHealth>(BRAND_HEALTH_PROMPT, websiteContent);
+  // Use consolidated prompts (2 calls instead of 9)
+  // This reduces total time from ~4 min to ~1 min for Ollama
+  const useConsolidated = process.env.USE_CONSOLIDATED_PROMPTS !== 'false';
 
-    return { messaging, seo, content, adAngles, conversion, distribution, aiSearch, technical, brandHealth };
+  if (useConsolidated) {
+    // Consolidated prompts run in PARALLEL (2 calls at same time)
+    console.log('[AI] Using consolidated prompts (2 API calls in PARALLEL)...');
+
+    const [coreMarketing, techDistribution] = await Promise.all([
+      (async () => {
+        console.log('[AI] Starting: Core Marketing Analysis...');
+        const result = await callAI<CoreMarketingResponse>(CORE_MARKETING_PROMPT, websiteContent);
+        console.log('[AI] Completed: Core Marketing Analysis');
+        return result;
+      })(),
+      (async () => {
+        console.log('[AI] Starting: Technical & Distribution Analysis...');
+        const result = await callAI<TechnicalDistributionResponse>(TECHNICAL_DISTRIBUTION_PROMPT, websiteContent);
+        console.log('[AI] Completed: Technical & Distribution Analysis');
+        return result;
+      })(),
+    ]);
+
+    // Ensure all sections have required fields (smaller models may miss some)
+    return {
+      messaging: ensureSection(coreMarketing.messaging, 'Messaging') as MessagingAnalysis,
+      brandHealth: ensureSection(coreMarketing.brandHealth, 'Brand Health') as BrandHealth,
+      content: ensureSection(coreMarketing.content, 'Content Strategy') as ContentStrategy,
+      adAngles: ensureSection(coreMarketing.adAngles, 'Ad Angles') as AdAngles,
+      seo: ensureSection(techDistribution.seo, 'SEO') as SeoOpportunities,
+      technical: ensureSection(techDistribution.technical, 'Technical') as TechnicalPerformance,
+      conversion: ensureSection(techDistribution.conversion, 'Conversion') as ConversionOptimization,
+      distribution: ensureSection(techDistribution.distribution, 'Distribution') as DistributionStrategy,
+      aiSearch: ensureSection(techDistribution.aiSearch, 'AI Search') as AISearchVisibility,
+      designAuthenticity: ensureSection(techDistribution.designAuthenticity, 'Design Authenticity') as DesignAuthenticity,
+    };
   }
 
-  // For cloud providers, run in parallel
-  const [messaging, seo, content, adAngles, conversion, distribution, aiSearch, technical, brandHealth] = await Promise.all([
-    callAI<MessagingAnalysis>(MESSAGING_PROMPT, websiteContent),
-    callAI<SeoOpportunities>(SEO_PROMPT, websiteContent),
-    callAI<ContentStrategy>(CONTENT_PROMPT, websiteContent),
-    callAI<AdAngles>(AD_ANGLES_PROMPT, websiteContent),
-    callAI<ConversionOptimization>(CONVERSION_PROMPT, websiteContent),
-    callAI<DistributionStrategy>(DISTRIBUTION_PROMPT, websiteContent),
-    callAI<AISearchVisibility>(AI_SEARCH_PROMPT, websiteContent),
-    callAI<TechnicalPerformance>(TECHNICAL_PROMPT, websiteContent),
-    callAI<BrandHealth>(BRAND_HEALTH_PROMPT, websiteContent),
-  ]);
+  // Legacy: 9 separate calls with parallel batching
+  // Parallelism level: configurable via AI_PARALLEL_CALLS env var
+  // Default: 3 for Ollama (balance speed vs memory), 9 for cloud (all parallel)
+  const parallelCalls = getParallelCallsConfig(provider);
+
+  console.log(`[AI] Using legacy prompts (9 API calls, ${parallelCalls} parallel)...`);
+
+  // Helper to run promises in batches
+  async function runInBatches(tasks: (() => Promise<unknown>)[], batchSize: number): Promise<unknown[]> {
+    const results: unknown[] = [];
+    for (let i = 0; i < tasks.length; i += batchSize) {
+      const batch = tasks.slice(i, i + batchSize);
+      const batchNum = Math.floor(i / batchSize) + 1;
+      const totalBatches = Math.ceil(tasks.length / batchSize);
+      console.log(`[AI] Running batch ${batchNum}/${totalBatches} (${batch.length} calls)...`);
+      const batchResults = await Promise.all(batch.map(task => task()));
+      results.push(...batchResults);
+    }
+    return results;
+  }
+
+  const tasks: (() => Promise<unknown>)[] = [
+    () => callAI<MessagingAnalysis>(MESSAGING_PROMPT, websiteContent),
+    () => callAI<SeoOpportunities>(SEO_PROMPT, websiteContent),
+    () => callAI<ContentStrategy>(CONTENT_PROMPT, websiteContent),
+    () => callAI<AdAngles>(AD_ANGLES_PROMPT, websiteContent),
+    () => callAI<ConversionOptimization>(CONVERSION_PROMPT, websiteContent),
+    () => callAI<DistributionStrategy>(DISTRIBUTION_PROMPT, websiteContent),
+    () => callAI<AISearchVisibility>(AI_SEARCH_PROMPT, websiteContent),
+    () => callAI<TechnicalPerformance>(TECHNICAL_PROMPT, websiteContent),
+    () => callAI<BrandHealth>(BRAND_HEALTH_PROMPT, websiteContent),
+  ];
+
+  const results = await runInBatches(tasks, parallelCalls);
+  const [messaging, seo, content, adAngles, conversion, distribution, aiSearch, technical, brandHealth] = results;
 
   return {
-    messaging,
-    seo,
-    content,
-    adAngles,
-    conversion,
-    distribution,
-    aiSearch,
-    technical,
-    brandHealth,
+    messaging: messaging as MessagingAnalysis,
+    seo: seo as SeoOpportunities,
+    content: content as ContentStrategy,
+    adAngles: adAngles as AdAngles,
+    conversion: conversion as ConversionOptimization,
+    distribution: distribution as DistributionStrategy,
+    aiSearch: aiSearch as AISearchVisibility,
+    technical: technical as TechnicalPerformance,
+    brandHealth: brandHealth as BrandHealth,
+    designAuthenticity: ensureSection(undefined, 'Design Authenticity') as DesignAuthenticity, // Legacy mode doesn't support this yet
   };
 }
 

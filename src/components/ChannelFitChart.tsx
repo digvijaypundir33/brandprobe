@@ -3,16 +3,18 @@
 import { motion } from 'framer-motion';
 import type { DistributionStrategy } from '@/types/report';
 import IssuesAndQuickWins from './IssuesAndQuickWins';
+import { getScoreColorClass, getFitColorClass, getFitTextColorClass } from '@/lib/utils';
 
 interface ChannelFitChartProps {
   distribution: DistributionStrategy;
 }
 
 export default function ChannelFitChart({ distribution }: ChannelFitChartProps) {
-  const channels = distribution.detailedAnalysis.channelRecommendations || [];
-  const contentMapping = distribution.detailedAnalysis.contentChannelMapping || {};
-  const tonePerPlatform = distribution.detailedAnalysis.tonePerPlatform || {};
-  const partnerships = distribution.detailedAnalysis.partnershipSuggestions || [];
+  const analysis = distribution.detailedAnalysis || {};
+  const channels = analysis.channelRecommendations || [];
+  const contentMapping = analysis.contentChannelMapping || {};
+  const tonePerPlatform = analysis.tonePerPlatform || {};
+  const partnerships = analysis.partnershipSuggestions || [];
 
   return (
     <motion.div
@@ -35,7 +37,7 @@ export default function ChannelFitChart({ distribution }: ChannelFitChartProps) 
             </div>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold">{distribution.score}</div>
+            <div className={`text-2xl font-bold ${getScoreColorClass(distribution.score)}`}>{distribution.score}</div>
             <div className="text-gray-400 text-sm">/100</div>
           </div>
         </div>
@@ -59,7 +61,7 @@ export default function ChannelFitChart({ distribution }: ChannelFitChartProps) 
             >
               <div className="flex items-center justify-between mb-1">
                 <span className="font-medium text-gray-800 text-sm">{channel.channel}</span>
-                <span className="text-gray-600 text-sm font-medium">{channel.fit}/10</span>
+                <span className={`text-sm font-medium ${getFitTextColorClass(channel.fit)}`}>{channel.fit}/10</span>
               </div>
 
               {/* Progress Bar */}
@@ -68,7 +70,7 @@ export default function ChannelFitChart({ distribution }: ChannelFitChartProps) 
                   initial={{ width: 0 }}
                   animate={{ width: `${channel.fit * 10}%` }}
                   transition={{ duration: 0.5, delay: i * 0.1 }}
-                  className="h-full bg-gray-900 rounded-full"
+                  className={`h-full rounded-full ${getFitColorClass(channel.fit)}`}
                 />
               </div>
 
@@ -82,24 +84,27 @@ export default function ChannelFitChart({ distribution }: ChannelFitChartProps) 
           <div className="mb-6 pt-6 border-t border-gray-100">
             <h4 className="text-sm font-medium text-gray-700 mb-3">Content-Channel Mapping</h4>
             <div className="grid md:grid-cols-2 gap-3">
-              {Object.entries(contentMapping).map(([contentType, channels]) => (
-                <div
-                  key={contentType}
-                  className="bg-gray-50 rounded-lg p-3 border border-gray-100"
-                >
-                  <h5 className="font-medium text-gray-800 text-sm capitalize mb-2">{contentType}</h5>
-                  <div className="flex flex-wrap gap-1">
-                    {(channels as string[]).map((ch, i) => (
-                      <span
-                        key={i}
-                        className="px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs"
-                      >
-                        {ch}
-                      </span>
-                    ))}
+              {Object.entries(contentMapping).map(([contentType, channels]) => {
+                const channelArray = Array.isArray(channels) ? channels : [];
+                return (
+                  <div
+                    key={contentType}
+                    className="bg-gray-50 rounded-lg p-3 border border-gray-100"
+                  >
+                    <h5 className="font-medium text-gray-800 text-sm capitalize mb-2">{contentType}</h5>
+                    <div className="flex flex-wrap gap-1">
+                      {channelArray.map((ch, i) => (
+                        <span
+                          key={i}
+                          className="px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs"
+                        >
+                          {ch}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}

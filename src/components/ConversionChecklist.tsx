@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import type { ConversionOptimization } from '@/types/report';
 import IssuesAndQuickWins from './IssuesAndQuickWins';
+import { getScoreColorClass } from '@/lib/utils';
 
 interface ConversionChecklistProps {
   conversion: ConversionOptimization;
@@ -23,12 +24,13 @@ function toDisplayString(value: unknown): string {
 }
 
 export default function ConversionChecklist({ conversion }: ConversionChecklistProps) {
-  const frictionPoints = conversion.detailedAnalysis.frictionPoints || [];
-  const trustAudit = conversion.detailedAnalysis.trustSignalAudit || '';
-  const ctaOpt = conversion.detailedAnalysis.ctaOptimization || '';
-  const pageStructure = conversion.detailedAnalysis.pageStructureAnalysis || '';
-  const socialProof = conversion.detailedAnalysis.socialProofAssessment || '';
-  const aboveFold = conversion.detailedAnalysis.aboveFoldEffectiveness || '';
+  const analysis = conversion.detailedAnalysis || {};
+  const frictionPoints = analysis.frictionPoints || [];
+  const trustAudit = analysis.trustSignalAudit || '';
+  const ctaOpt = analysis.ctaOptimization || '';
+  const pageStructure = analysis.pageStructureAnalysis || '';
+  const socialProof = analysis.socialProofAssessment || '';
+  const aboveFold = analysis.aboveFoldEffectiveness || '';
 
   const analysisItems = [
     { title: 'Trust Signals', content: trustAudit, icon: 'shield' },
@@ -76,7 +78,7 @@ export default function ConversionChecklist({ conversion }: ConversionChecklistP
             </div>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold">{conversion.score}</div>
+            <div className={`text-2xl font-bold ${getScoreColorClass(conversion.score)}`}>{conversion.score}</div>
             <div className="text-gray-400 text-sm">/100</div>
           </div>
         </div>

@@ -72,8 +72,49 @@ BROWSERLESS_API_KEY=your_browserless_key
 RESEND_API_KEY=your_resend_key
 
 # App
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_APP_URL=http://localhost:3001
+
+# Performance Configuration (Optional)
+AI_PARALLEL_CALLS=3           # Parallel API calls in legacy mode (1-9)
+USE_CONSOLIDATED_PROMPTS=true # Use 2 consolidated calls instead of 9
 ```
+
+## Performance Tuning
+
+BrandProbe offers two analysis modes:
+
+### Consolidated Mode (Recommended, Default)
+- Uses 2 large prompts instead of 9 separate calls
+- ~4x faster than legacy mode (1 min vs 4 min for Ollama)
+- Works with all providers
+- Set `USE_CONSOLIDATED_PROMPTS=true` (default)
+
+### Legacy Mode (9 Separate Calls)
+- More granular analysis with individual prompts
+- Configurable parallelism via `AI_PARALLEL_CALLS`
+- Set `USE_CONSOLIDATED_PROMPTS=false`
+
+**Parallel Call Configuration:**
+
+```env
+# Default settings (recommended)
+AI_PARALLEL_CALLS=3  # Ollama: 3 parallel calls (balance speed vs. memory)
+AI_PARALLEL_CALLS=9  # Cloud providers: 9 parallel calls (full parallelism)
+
+# Low-memory systems (Ollama)
+AI_PARALLEL_CALLS=2
+
+# Sequential processing (slowest but minimal memory)
+AI_PARALLEL_CALLS=1
+```
+
+**Provider-Specific Recommendations:**
+- **Ollama (local)**: 2-5 (depends on model size and RAM)
+- **OpenAI**: 5-9 (watch free tier rate limits)
+- **Groq**: 9 (excellent rate limits, max parallelism)
+- **Anthropic**: 5-9 (standard tier)
+
+**Note**: Valid range is 1-9 (maximum 9 since legacy mode has 9 API calls total)
 
 ### Database Setup
 
@@ -83,13 +124,50 @@ Run the migration in your Supabase SQL editor:
 # See supabase/migrations/001_initial.sql
 ```
 
-### Development
+## Running the Project
+
+### Local Development
 
 ```bash
+# Start development server (hot reload enabled)
 npm run dev
+# or
+npm run dev:local
+
+# Open http://localhost:3001
 ```
 
-Open [http://localhost:3000](http://localhost:3000)
+### Production Build
+
+```bash
+# Build and start production server
+npm run dev:prod
+
+# Or build and start separately
+npm run build
+npm run start
+
+# Open http://localhost:3001
+```
+
+### Clean Build Cache
+
+```bash
+# Remove .next build cache
+npm run clean
+
+# Clean and rebuild
+npm run clean:build
+```
+
+### Database Management
+
+```bash
+# Clear all report data (keeps users)
+npm run clear-reports
+# or
+npm run db:clear
+```
 
 ## Project Structure
 

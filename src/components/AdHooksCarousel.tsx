@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { AdAngles } from '@/types/report';
 import IssuesAndQuickWins from './IssuesAndQuickWins';
+import { getScoreColorClass } from '@/lib/utils';
 
 interface AdHooksCarouselProps {
   adAngles: AdAngles;
@@ -32,10 +33,11 @@ export default function AdHooksCarousel({ adAngles }: AdHooksCarouselProps) {
   const [activeTab, setActiveTab] = useState<'hooks' | 'headlines' | 'triggers'>('hooks');
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const hooks = adAngles.detailedAnalysis.adHooks || [];
-  const headlines = adAngles.detailedAnalysis.headlineSuggestions || [];
-  const triggers = adAngles.detailedAnalysis.psychologicalTriggers || [];
-  const platformDirection = adAngles.detailedAnalysis.platformCreativeDirection || {};
+  const analysis = adAngles.detailedAnalysis || {};
+  const hooks = analysis.adHooks || [];
+  const headlines = analysis.headlineSuggestions || [];
+  const triggers = analysis.psychologicalTriggers || [];
+  const platformDirection = analysis.platformCreativeDirection || {};
 
   const currentItems = activeTab === 'hooks' ? hooks : activeTab === 'headlines' ? headlines : triggers;
 
@@ -68,7 +70,7 @@ export default function AdHooksCarousel({ adAngles }: AdHooksCarouselProps) {
             </div>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold">{adAngles.score}</div>
+            <div className={`text-2xl font-bold ${getScoreColorClass(adAngles.score)}`}>{adAngles.score}</div>
             <div className="text-gray-400 text-sm">/100</div>
           </div>
         </div>
@@ -179,13 +181,13 @@ export default function AdHooksCarousel({ adAngles }: AdHooksCarouselProps) {
         )}
 
         {/* Audience Angles */}
-        {adAngles.detailedAnalysis.audienceAngleVariations?.length > 0 && (
+        {analysis.audienceAngleVariations?.length > 0 && (
           <div className="mt-6 pt-6 border-t border-gray-100">
             <h4 className="text-sm font-medium text-gray-700 mb-3">
               Audience Angle Variations
             </h4>
             <div className="space-y-2">
-              {adAngles.detailedAnalysis.audienceAngleVariations.map((angle, i) => (
+              {analysis.audienceAngleVariations.map((angle, i) => (
                 <div
                   key={i}
                   className="flex items-start gap-3 bg-gray-50 rounded-lg p-3 border border-gray-100"

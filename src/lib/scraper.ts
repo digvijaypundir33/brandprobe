@@ -624,3 +624,55 @@ export function formatScrapedDataForPrompt(data: ScrapedData): string {
 
   return sections.join('\n\n');
 }
+
+/**
+ * Capture a screenshot of a website
+ * Returns a base64 encoded data URL
+ */
+export async function captureScreenshot(url: string): Promise<string | null> {
+  let browser: Browser | null = null;
+
+  try {
+    // Connect to Browserless or launch local browser for dev
+    if (process.env.BROWSERLESS_API_KEY) {
+      browser = await chromium.connectOverCDP(BROWSERLESS_URL);
+    } else {
+      browser = await chromium.launch({ headless: true });
+    }
+
+    const context = await browser.newContext({
+      viewport: { width: 1280, height: 1024 },
+    });
+
+    const page = await context.newPage();
+
+    await page.goto(url, {
+      waitUntil: 'networkidle',
+      timeout: TIMEOUT
+    });
+
+    // Wait for page to settle
+    await page.waitForTimeout(2000);
+
+    // Capture screenshot as buffer
+    const screenshotBuffer = await page.screenshot({
+      fullPage: true,
+      type: 'jpeg',
+      quality: 80
+    });
+
+    await context.close();
+
+    // Convert to base64 data URL
+    const base64 = screenshotBuffer.toString('base64');
+    return `data:image/jpeg;base64,${base64}`;
+
+  } catch (error) {
+    console.error('[Screenshot] Capture failed:', error);
+    return null;
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
+  }
+}

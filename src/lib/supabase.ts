@@ -199,6 +199,7 @@ export async function updateReport(
     aiSearchVisibility: unknown;
     technicalPerformance: unknown;
     brandHealth: unknown;
+    designAuthenticity: unknown;
     overallScore: number;
     messagingScore: number;
     seoScore: number;
@@ -209,6 +210,7 @@ export async function updateReport(
     aiSearchScore: number;
     technicalScore: number;
     brandHealthScore: number;
+    designAuthenticityScore: number;
     previousOverallScore: number | null;
     scoreChange: number | null;
     scanTimeMs: number;
@@ -228,6 +230,7 @@ export async function updateReport(
       ai_search_visibility: updates.aiSearchVisibility,
       technical_performance: updates.technicalPerformance,
       brand_health: updates.brandHealth,
+      design_authenticity: updates.designAuthenticity,
       overall_score: updates.overallScore,
       messaging_score: updates.messagingScore,
       seo_score: updates.seoScore,
@@ -238,6 +241,7 @@ export async function updateReport(
       ai_search_score: updates.aiSearchScore,
       technical_score: updates.technicalScore,
       brand_health_score: updates.brandHealthScore,
+      design_authenticity_score: updates.designAuthenticityScore,
       previous_overall_score: updates.previousOverallScore,
       score_change: updates.scoreChange,
       scan_time_ms: updates.scanTimeMs,
@@ -346,6 +350,7 @@ function transformReport(row: Record<string, unknown>): Report {
     aiSearchVisibility: row.ai_search_visibility as Report['aiSearchVisibility'],
     technicalPerformance: row.technical_performance as Report['technicalPerformance'],
     brandHealth: row.brand_health as Report['brandHealth'],
+    designAuthenticity: row.design_authenticity as Report['designAuthenticity'],
     overallScore: row.overall_score as number | null,
     messagingScore: row.messaging_score as number | null,
     seoScore: row.seo_score as number | null,
@@ -356,6 +361,7 @@ function transformReport(row: Record<string, unknown>): Report {
     aiSearchScore: row.ai_search_score as number | null,
     technicalScore: row.technical_score as number | null,
     brandHealthScore: row.brand_health_score as number | null,
+    designAuthenticityScore: row.design_authenticity_score as number | null,
     previousOverallScore: row.previous_overall_score as number | null,
     scoreChange: row.score_change as number | null,
     scanTimeMs: row.scan_time_ms as number | null,

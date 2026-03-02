@@ -3,15 +3,21 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3001",
+    "dev:local": "next dev -p 3001",
+    "dev:prod": "next build && next start -p 3001",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 3001",
+    "clean": "rm -rf .next",
+    "clean:build": "rm -rf .next && next build",
     "lint": "eslint",
     "test": "jest",
     "test:scraper": "jest scraper.test.ts --verbose",
     "test:ai": "jest ai.test.ts --verbose",
     "test:e2e": "jest e2e.test.ts --verbose",
-    "test:url": "jest e2e.test.ts --verbose"
+    "test:url": "jest e2e.test.ts --verbose",
+    "clear-reports": "npx tsx scripts/clear-reports.ts",
+    "db:clear": "npx tsx scripts/clear-reports.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
