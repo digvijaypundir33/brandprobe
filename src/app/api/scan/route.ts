@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { scrapeWebsite, formatScrapedDataForPrompt, captureScreenshot } from '@/lib/scraper';
 import { analyzeWebsite } from '@/lib/ai';
+import { analyzeTechnicalPerformance } from '@/lib/technical-analyzer';
 import {
   getOrCreateUser,
   getOrCreateSite,
@@ -10,12 +11,17 @@ import {
   getCachedReport,
   getLatestReportForSite,
   updateUser,
+  createMagicLink,
 } from '@/lib/supabase';
 import { normalizeUrl, extractDomain, isValidEmail, calculateOverallScore } from '@/lib/utils';
+import { sendMagicLinkEmail } from '@/lib/email';
+import { getSessionFromRequest } from '@/lib/auth';
 
 const scanRequestSchema = z.object({
   url: z.string().min(1, 'URL is required'),
   email: z.string().email('Valid email is required'),
+  analysisType: z.enum(['quick', 'full']).default('full').optional(),
+  skipVerification: z.boolean().optional(), // For authenticated users
 });
 
 export async function POST(request: NextRequest) {
@@ -23,7 +29,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { url, email } = scanRequestSchema.parse(body);
+    const { url, email, analysisType = 'full', skipVerification = false } = scanRequestSchema.parse(body);
 
     // Normalize URL
     const normalizedUrl = normalizeUrl(url);
@@ -42,13 +48,67 @@ export async function POST(request: NextRequest) {
     // Get or create user
     const user = await getOrCreateUser(email);
 
-    // Check report limits for free users
+    // Check if user is already authenticated
+    const session = await getSessionFromRequest(request);
+    const isAuthenticated = session?.email === email;
+
+    // If not authenticated and not skipping verification, send magic link
+    if (!isAuthenticated && !skipVerification) {
+      // Create pending report
+      const site = await getOrCreateSite(user.id, normalizedUrl, domain);
+      const report = await createReport(user.id, site.id, normalizedUrl);
+
+      // Create and send magic link
+      const magicLink = await createMagicLink(email, report.id);
+      const emailResult = await sendMagicLinkEmail(email, magicLink.token, report.id);
+
+      if (!emailResult.success) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Failed to send verification email',
+            message: 'Please try again or contact support',
+          },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        requiresVerification: true,
+        reportId: report.id,
+        message: 'Check your email to verify and start the scan',
+      });
+    }
+
+    // User is authenticated or verification skipped - proceed with scan
+    // Check report limits based on subscription tier
     if (user.subscriptionStatus === 'free' && user.reportsUsedThisMonth >= user.reportsLimit) {
       return NextResponse.json(
         {
           success: false,
           error: 'Report limit reached',
-          message: 'You have used your free report. Upgrade to get 10 reports per month.',
+          message: 'You have used your free report. Unlock the full report for $9 or subscribe to Pro for $29/month.',
+          requiresUpgrade: true,
+          upgradeOptions: {
+            starter: { price: 9, type: 'one-time', reports: 1 },
+            pro: { price: 29, type: 'monthly', reports: 10 },
+          },
+        },
+        { status: 403 }
+      );
+    }
+
+    if (user.subscriptionStatus === 'starter' && user.reportsUsedThisMonth >= user.reportsLimit) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Report limit reached',
+          message: 'You have used your Starter report. Upgrade to Pro for $29/month to get 10 reports per month.',
+          requiresUpgrade: true,
+          upgradeOptions: {
+            pro: { price: 29, type: 'monthly', reports: 10 },
+          },
         },
         { status: 403 }
       );
@@ -65,7 +125,7 @@ export async function POST(request: NextRequest) {
     const report = await createReport(user.id, site.id, normalizedUrl);
 
     // Start async processing
-    processReport(report.id, normalizedUrl, previousOverallScore, startTime).catch(console.error);
+    processReport(report.id, normalizedUrl, previousOverallScore, startTime, analysisType, email).catch(console.error);
 
     // Increment reports used
     await updateUser(user.id, {
@@ -104,17 +164,20 @@ export async function POST(request: NextRequest) {
 
 /**
  * Process report asynchronously
+ * Exported so it can be called from verify route
  */
-async function processReport(
+export async function processReport(
   reportId: string,
   url: string,
   previousOverallScore: number | null,
-  startTime: number
+  startTime: number,
+  analysisType: 'quick' | 'full' = 'full',
+  userEmail?: string
 ): Promise<void> {
   try {
     // Step 1: Scrape website
-    console.log(`[${reportId}] Starting scrape for ${url}`);
-    const scrapedData = await scrapeWebsite(url);
+    console.log(`[${reportId}] Starting scrape for ${url} (${analysisType} mode)`);
+    const scrapedData = await scrapeWebsite(url, { analysisType });
 
     // Update report with scraped data
     await updateReport(reportId, {
@@ -128,10 +191,14 @@ async function processReport(
     console.log(`[${reportId}] Capturing screenshot`);
     const screenshotPromise = captureScreenshot(url);
 
-    // Step 4: Analyze with Claude (all sections in parallel)
-    console.log(`[${reportId}] Starting Claude analysis`);
+    // Step 4a: Analyze technical performance (rules-based, instant)
+    console.log(`[${reportId}] Analyzing technical performance (rules-based)`);
+    const technical = await analyzeTechnicalPerformance(url, scrapedData.html);
+
+    // Step 4b: Analyze with AI (marketing sections in parallel)
+    console.log(`[${reportId}] Starting AI analysis`);
     const [analysis, screenshotUrl] = await Promise.all([
-      analyzeWebsite(websiteContent),
+      analyzeWebsite(websiteContent, technical, scrapedData.brandConfig),
       screenshotPromise,
     ]);
 
@@ -187,9 +254,17 @@ async function processReport(
       previousOverallScore,
       scoreChange,
       scanTimeMs,
+      analysisType,
+      pagesAnalyzed: scrapedData.pagesAnalyzed,
     });
 
     console.log(`[${reportId}] Report complete. Score: ${overallScore}. Time: ${scanTimeMs}ms`);
+
+    // Send report ready email if email provided
+    if (userEmail) {
+      const { sendReportReadyEmail } = await import('@/lib/email');
+      await sendReportReadyEmail(userEmail, reportId, url).catch(console.error);
+    }
   } catch (error) {
     console.error(`[${reportId}] Processing failed:`, error);
 

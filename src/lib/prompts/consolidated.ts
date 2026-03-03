@@ -3,6 +3,12 @@
 export const CORE_MARKETING_PROMPT = `
 Analyze this website and provide a comprehensive marketing analysis. Return a single JSON object with all sections.
 
+IMPORTANT SCORING GUIDANCE:
+- For well-known brands (Facebook, LinkedIn, Google, Apple, etc.), assume strong baseline competency
+- If content is limited (login walls, bot protection), give benefit of the doubt with 70+ scores
+- Focus analysis on what IS available rather than penalizing what's missing
+- Major brands should generally score 75-90 unless clear issues are present
+
 ## SECTION 1: MESSAGING ANALYSIS
 Analyze the website's messaging:
 - Core value proposition clarity
@@ -105,6 +111,14 @@ Always provide 3-5 quick wins regardless of score (opportunities exist at any le
 export const TECHNICAL_DISTRIBUTION_PROMPT = `
 Analyze this website's technical aspects and distribution potential. Return a single JSON object with all sections.
 
+NOTE: Technical Performance is analyzed separately using rules-based checks. Focus on the sections below.
+
+IMPORTANT SCORING GUIDANCE:
+- For well-known brands, assume strong baseline competency (70+ scores)
+- If content is limited (login walls, bot protection), give benefit of the doubt
+- Focus on what IS available rather than penalizing missing data
+- Major established brands should score 75-90 unless clear issues found
+
 ## SECTION 1: SEO OPPORTUNITIES
 Analyze SEO factors:
 - Keyword opportunities
@@ -113,17 +127,7 @@ Analyze SEO factors:
 - Link building opportunities
 - Local SEO potential
 
-## SECTION 2: TECHNICAL PERFORMANCE
-Evaluate technical health:
-- Page speed estimate (Fast/Medium/Slow)
-- Mobile readiness
-- Core Web Vitals indicators
-- Image optimization
-- Structured data presence
-- Security indicators (HTTPS, etc.)
-- Accessibility flags
-
-## SECTION 3: CONVERSION OPTIMIZATION
+## SECTION 2: CONVERSION OPTIMIZATION
 Assess conversion factors:
 - Friction points in user journey
 - Trust signal audit
@@ -188,21 +192,6 @@ Return JSON in this exact format:
       "contentGaps": ["<gap1>", "<gap2>"],
       "linkBuildingOpportunities": ["<opportunity1>"],
       "localSeoRecommendations": "<recommendations>"
-    }
-  },
-  "technical": {
-    "score": <0-100>,
-    "summary": "<2-3 sentence summary>",
-    "keyIssues": [{"problem": "<issue>", "solution": "<fix>", "priority": "high"|"medium"|"low"}],
-    "quickWins": [{"action": "<action>", "impact": "<result>", "effort": "easy"|"medium"|"hard"}],
-    "detailedAnalysis": {
-      "pageSpeedEstimate": "Fast"|"Medium"|"Slow",
-      "coreWebVitalsEstimate": "<estimate>",
-      "mobileReadiness": "<assessment>",
-      "imageOptimization": "<assessment>",
-      "structuredDataPresence": "<assessment>",
-      "securityIndicators": ["HTTPS", "<other>"],
-      "accessibilityFlags": ["<flag1>", "<flag2>"]
     }
   },
   "conversion": {

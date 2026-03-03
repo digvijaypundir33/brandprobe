@@ -30,11 +30,19 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
   const router = useRouter();
   const [report, setReport] = useState<Report | null>(null);
   const [error, setError] = useState<string | null>(null);
-  // Set to true for local development to see all sections unlocked
-  const [isPaid, setIsPaid] = useState(process.env.NODE_ENV === 'development');
+  const [hasFullAccess, setHasFullAccess] = useState(false);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string>('free');
+  const [userEmail, setUserEmail] = useState<string>('');
   const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const [paymentCancelled, setPaymentCancelled] = useState(false);
 
   useEffect(() => {
+    // Check for payment cancelled query parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('payment') === 'cancelled') {
+      setPaymentCancelled(true);
+    }
+
     const fetchReport = async () => {
       try {
         const response = await fetch(`/api/report/${id}`);
@@ -45,15 +53,21 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
         }
 
         setReport(data.report);
+        setHasFullAccess(data.hasFullAccess || false);
+        setSubscriptionStatus(data.subscriptionStatus || 'free');
+        setUserEmail(data.userEmail || '');
 
-        // If still scanning, poll for updates
-        if (data.report.status === 'scanning') {
+        // If still scanning, poll for updates (but not if payment was cancelled)
+        if (data.report.status === 'scanning' && !paymentCancelled) {
           const pollInterval = setInterval(async () => {
             const pollResponse = await fetch(`/api/report/${id}`);
             const pollData = await pollResponse.json();
 
             if (pollData.report.status !== 'scanning') {
               setReport(pollData.report);
+              setHasFullAccess(pollData.hasFullAccess || false);
+              setSubscriptionStatus(pollData.subscriptionStatus || 'free');
+              setUserEmail(pollData.userEmail || '');
               clearInterval(pollInterval);
             }
           }, 3000);
@@ -66,10 +80,12 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
     };
 
     fetchReport();
-  }, [id]);
+  }, [id, paymentCancelled]);
 
-  const handleUnlock = () => {
-    router.push('/api/stripe/checkout?reportId=' + id);
+  const handleUnlock = (tier: 'starter' | 'pro') => {
+    // Redirect to checkout page with tier, reportId, and email
+    const checkoutUrl = `/checkout?tier=${tier}&reportId=${id}&email=${encodeURIComponent(userEmail)}`;
+    router.push(checkoutUrl);
   };
 
   if (error) {
@@ -98,8 +114,74 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
     );
   }
 
-  if (!report || report.status === 'scanning') {
+  if (!report || (report.status === 'scanning' && !paymentCancelled)) {
     return <ScanningAnimation />;
+  }
+
+  // If payment was cancelled and report is still scanning, show a message instead of loading animation
+  if (report && report.status === 'scanning' && paymentCancelled) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center max-w-2xl bg-white rounded-2xl shadow-xl p-8"
+        >
+          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Your Report is Being Prepared</h1>
+          <p className="text-gray-600 mb-8">
+            We're still analyzing your website in the background. This usually takes about 60 seconds.
+            You can wait here or come back later - we'll email you when it's ready!
+          </p>
+
+          <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-6 mb-6">
+            <h2 className="text-lg font-bold text-gray-900 mb-4">While you wait, unlock the full report:</h2>
+            <div className="grid md:grid-cols-2 gap-4">
+              {/* Starter Tier */}
+              <div className="bg-white rounded-lg p-6 border-2 border-gray-200">
+                <h3 className="font-bold text-gray-900 mb-2">Starter - $9</h3>
+                <p className="text-sm text-gray-600 mb-4">One-time payment for this report</p>
+                <button
+                  onClick={() => handleUnlock('starter')}
+                  className="w-full py-3 px-4 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors"
+                >
+                  Unlock for $9
+                </button>
+              </div>
+
+              {/* Pro Tier */}
+              <div className="bg-white rounded-lg p-6 border-2 border-purple-600">
+                <div className="inline-block bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded mb-2">
+                  BEST VALUE
+                </div>
+                <h3 className="font-bold text-gray-900 mb-2">Pro - $29/month</h3>
+                <p className="text-sm text-gray-600 mb-4">10 reports/month + progress tracking</p>
+                <button
+                  onClick={() => handleUnlock('pro')}
+                  className="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all"
+                >
+                  Upgrade to Pro
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={() => {
+              setPaymentCancelled(false);
+              window.location.reload();
+            }}
+            className="text-blue-600 hover:underline text-sm"
+          >
+            Refresh to check if report is ready
+          </button>
+        </motion.div>
+      </div>
+    );
   }
 
   if (report.status === 'failed') {
@@ -144,18 +226,20 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
     designAuth: report.designAuthenticityScore || 0,
   };
 
+  // Free tier: 4 sections visible (Messaging, SEO, Content, Ad Angles)
+  // Paid tiers (Starter/Pro): All 10 sections visible
   const tabs: { id: TabType; label: string; score?: number; locked?: boolean }[] = [
     { id: 'overview', label: 'Overview' },
-    { id: 'messaging', label: 'Messaging', score: scores.messaging },
-    { id: 'seo', label: 'SEO', score: scores.seo },
-    { id: 'aiSearch', label: 'AI', score: scores.aiSearch },
-    { id: 'technical', label: 'Tech', score: scores.technical },
-    { id: 'brandHealth', label: 'Brand', score: scores.brandHealth },
-    { id: 'designAuth', label: 'Design', score: scores.designAuth },
-    { id: 'content', label: 'Content', score: scores.content, locked: !isPaid },
-    { id: 'ads', label: 'Ads', score: scores.ads, locked: !isPaid },
-    { id: 'conversion', label: 'CRO', score: scores.conversion, locked: !isPaid },
-    { id: 'distribution', label: 'Channels', score: scores.distribution, locked: !isPaid },
+    { id: 'messaging', label: 'Messaging', score: scores.messaging }, // FREE
+    { id: 'seo', label: 'SEO', score: scores.seo }, // FREE
+    { id: 'content', label: 'Content', score: scores.content }, // FREE
+    { id: 'ads', label: 'Ads', score: scores.ads }, // FREE
+    { id: 'conversion', label: 'CRO', score: scores.conversion, locked: !hasFullAccess }, // PAID
+    { id: 'distribution', label: 'Channels', score: scores.distribution, locked: !hasFullAccess }, // PAID
+    { id: 'aiSearch', label: 'AI', score: scores.aiSearch, locked: !hasFullAccess }, // PAID
+    { id: 'technical', label: 'Tech', score: scores.technical, locked: !hasFullAccess }, // PAID
+    { id: 'brandHealth', label: 'Brand', score: scores.brandHealth, locked: !hasFullAccess }, // PAID
+    { id: 'designAuth', label: 'Design', score: scores.designAuth, locked: !hasFullAccess }, // PAID
   ];
 
   const totalQuickWins =
@@ -186,16 +270,49 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
             </span>
           </a>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-500 hidden md:block">
-              Report generated {new Date(report.createdAt).toLocaleDateString()}
-            </span>
-            {!isPaid && (
-              <button
-                onClick={handleUnlock}
-                className="px-4 py-2 bg-gray-900 text-white text-sm font-semibold rounded-lg hover:bg-gray-800 transition-colors"
-              >
-                Unlock Full Report
-              </button>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-500 hidden md:block">
+                Report generated {new Date(report.createdAt).toLocaleDateString()}
+              </span>
+              {hasFullAccess && (
+                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                  subscriptionStatus === 'active'
+                    ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white'
+                    : 'bg-green-100 text-green-800'
+                }`}>
+                  {subscriptionStatus === 'active' ? (
+                    <>
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                      PRO
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      PAID
+                    </>
+                  )}
+                </span>
+              )}
+            </div>
+            {!hasFullAccess && (
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => handleUnlock('starter')}
+                  className="px-4 py-2 bg-white border-2 border-gray-900 text-gray-900 text-sm font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Unlock for $9
+                </button>
+                <button
+                  onClick={() => handleUnlock('pro')}
+                  className="px-4 py-2 bg-gray-900 text-white text-sm font-semibold rounded-lg hover:bg-gray-800 transition-colors"
+                >
+                  Get Pro - $29/mo
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -419,7 +536,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
         </motion.div>
 
         {/* CTA at bottom for free users */}
-        {!isPaid && (
+        {!hasFullAccess && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -436,19 +553,33 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
               Unlock the Full Report
             </h2>
             <p className="text-gray-400 mb-8 max-w-lg mx-auto">
-              Get access to all 9 sections with detailed analysis, specific recommendations,
-              and monthly re-scans to track your progress.
+              Get access to all 10 sections with detailed analysis, specific recommendations,
+              and actionable insights to grow your startup.
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <button
-                onClick={handleUnlock}
-                className="px-8 py-4 bg-white text-gray-900 font-bold rounded-lg hover:bg-gray-100 transition-all"
-              >
-                Unlock Full Report - $29/mo
-              </button>
-              <p className="text-gray-500 text-sm">
-                Cancel anytime
-              </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+              <div className="text-center">
+                <button
+                  onClick={() => handleUnlock('starter')}
+                  className="px-8 py-4 bg-white text-gray-900 font-bold rounded-lg hover:bg-gray-100 transition-all border-2 border-white"
+                >
+                  Unlock Report - $9
+                </button>
+                <p className="text-gray-500 text-sm mt-2">
+                  One-time payment
+                </p>
+              </div>
+              <div className="text-gray-500">or</div>
+              <div className="text-center">
+                <button
+                  onClick={() => handleUnlock('pro')}
+                  className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all"
+                >
+                  Get Pro - $29/mo
+                </button>
+                <p className="text-gray-500 text-sm mt-2">
+                  10 reports/month + auto re-scan
+                </p>
+              </div>
             </div>
           </motion.div>
         )}
@@ -469,9 +600,9 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
             &copy; {new Date().getFullYear()} BrandProbe. All rights reserved.
           </p>
           <div className="flex items-center gap-6 text-sm text-gray-500">
-            <a href="#" className="hover:text-gray-700">Privacy</a>
-            <a href="#" className="hover:text-gray-700">Terms</a>
-            <a href="#" className="hover:text-gray-700">Support</a>
+            <a href="/privacy" className="hover:text-gray-700">Privacy</a>
+            <a href="/terms" className="hover:text-gray-700">Terms</a>
+            <a href="/support" className="hover:text-gray-700">Support</a>
           </div>
         </div>
       </footer>

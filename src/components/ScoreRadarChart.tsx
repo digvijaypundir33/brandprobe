@@ -18,6 +18,10 @@ interface ScoreRadarChartProps {
     ads: number;
     conversion: number;
     distribution: number;
+    aiSearch: number;
+    technical: number;
+    brandHealth: number;
+    designAuth: number;
   };
 }
 
@@ -29,6 +33,10 @@ export default function ScoreRadarChart({ scores }: ScoreRadarChartProps) {
     { subject: 'Ads', score: scores.ads, fullMark: 100 },
     { subject: 'Conversion', score: scores.conversion, fullMark: 100 },
     { subject: 'Distribution', score: scores.distribution, fullMark: 100 },
+    { subject: 'AI Search', score: scores.aiSearch, fullMark: 100 },
+    { subject: 'Technical', score: scores.technical, fullMark: 100 },
+    { subject: 'Brand', score: scores.brandHealth, fullMark: 100 },
+    { subject: 'Design', score: scores.designAuth, fullMark: 100 },
   ];
 
   return (

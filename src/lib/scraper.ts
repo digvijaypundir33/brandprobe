@@ -1,6 +1,8 @@
 import { chromium, Browser, Page } from 'playwright';
 import type { ScrapedData, SubPageData, TechnicalData } from '@/types/report';
 import { normalizeUrl, cleanText } from './utils';
+import { fetchSitemap, selectBestPages, extractSitemapMetadata } from './sitemap-parser';
+import { getBrandUrlsToScrape } from './brand-recognizer';
 
 const BROWSERLESS_URL = `wss://chrome.browserless.io?token=${process.env.BROWSERLESS_API_KEY}`;
 const TIMEOUT = 30000; // 30 seconds max per page
@@ -8,13 +10,53 @@ const MAX_SUBPAGES = 3;
 
 /**
  * Main scraper function - scrapes a URL and returns structured data
+ * Now supports both Quick (1 page) and Full (4 pages) analysis modes
  */
-export async function scrapeWebsite(url: string): Promise<ScrapedData> {
+export async function scrapeWebsite(
+  url: string,
+  options: { analysisType?: 'quick' | 'full' } = {}
+): Promise<ScrapedData & { brandConfig?: any; pagesAnalyzed: number }> {
+  const { analysisType = 'full' } = options;
   const normalizedUrl = normalizeUrl(url);
   let browser: Browser | null = null;
 
   try {
-    // Connect to Browserless or launch local browser for dev
+    // Step 1: Brand detection and URL routing
+    console.log(`[Scraper] Analysis type: ${analysisType}`);
+    const brandRouting = await getBrandUrlsToScrape(normalizedUrl);
+
+    let urlsToScrape: string[] = [];
+    let useSitemap = false;
+
+    if (analysisType === 'quick') {
+      // Quick mode: Only scrape the entered URL (or brand's primary URL)
+      urlsToScrape = [brandRouting.urls[0]];
+      console.log('[Scraper] Quick mode: Single page analysis');
+    } else {
+      // Full mode: Use brand routing or sitemap intelligence
+      if (brandRouting.useBrandBaselines) {
+        // Major brand detected - use curated URLs
+        urlsToScrape = brandRouting.urls.slice(0, 4); // Primary + up to 3 additional
+        console.log(`[Scraper] Major brand detected, using ${urlsToScrape.length} curated URLs`);
+      } else {
+        // Regular site - try sitemap first
+        const sitemap = await fetchSitemap(normalizedUrl);
+
+        if (sitemap.length > 0) {
+          // Use sitemap to find best pages
+          const sitemapPages = selectBestPages(sitemap, normalizedUrl, MAX_SUBPAGES);
+          urlsToScrape = [normalizedUrl, ...sitemapPages];
+          useSitemap = true;
+          console.log(`[Scraper] Using sitemap: ${urlsToScrape.length} pages selected`);
+        } else {
+          // Will fall back to nav-based discovery after scraping main page
+          urlsToScrape = [normalizedUrl];
+          console.log('[Scraper] No sitemap found, will use nav-based discovery');
+        }
+      }
+    }
+
+    // Step 2: Connect to browser
     if (process.env.BROWSERLESS_API_KEY) {
       browser = await chromium.connectOverCDP(BROWSERLESS_URL);
     } else {
@@ -29,22 +71,48 @@ export async function scrapeWebsite(url: string): Promise<ScrapedData> {
 
     const page = await context.newPage();
 
-    // Scrape main page
-    const mainPageData = await scrapeMainPage(page, normalizedUrl);
+    // Step 3: Scrape main page
+    const mainPageData = await scrapeMainPage(page, urlsToScrape[0]);
 
-    // Scrape technical data
-    const technicalData = await scrapeTechnicalData(page, normalizedUrl);
+    // Step 4: Scrape technical data
+    const technicalData = await scrapeTechnicalData(page, urlsToScrape[0]);
 
-    // Extract nav links and scrape top subpages
-    const subPageUrls = getSubPageUrls(mainPageData.navLinks, normalizedUrl);
-    const subPages = await scrapeSubPages(page, subPageUrls);
+    // Step 5: Scrape subpages (skip in Quick mode)
+    let subPages: SubPageData[] = [];
+    let subPageUrls: string[] = [];
+
+    if (analysisType === 'full') {
+      if (brandRouting.useBrandBaselines || useSitemap) {
+        // Already have URLs from brand routing or sitemap
+        subPageUrls = urlsToScrape.slice(1);
+      } else {
+        // Fall back to nav-based discovery
+        subPageUrls = getSubPageUrls(mainPageData.navLinks, normalizedUrl);
+      }
+
+      subPages = await scrapeSubPages(page, subPageUrls);
+    }
+
+    // Step 6: Extract sitemap metadata (if available, for SEO analysis)
+    let sitemapMetadata = undefined;
+    if (useSitemap) {
+      const sitemap = await fetchSitemap(normalizedUrl);
+      if (sitemap.length > 0) {
+        sitemapMetadata = extractSitemapMetadata(sitemap);
+      }
+    }
 
     await context.close();
+
+    const pagesAnalyzed = 1 + subPages.length; // Main page + subpages
 
     return {
       ...mainPageData,
       subPages,
       technicalData,
+      sitemapMetadata,
+      brandConfig: brandRouting.useBrandBaselines ? brandRouting : undefined,
+      pagesAnalyzed,
     };
   } finally {
     if (browser) {
@@ -225,9 +293,13 @@ async function scrapeMainPage(
     };
   });
 
+  // Get raw HTML for technical analysis
+  const html = await page.content();
+
   return {
     url,
     ...data,
+    html,
   };
 }
 

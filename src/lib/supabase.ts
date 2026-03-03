@@ -51,6 +51,7 @@ export async function updateUser(
     reportsUsedThisMonth: number;
     reportsLimit: number;
     currentPeriodStart: string;
+    oneTimePurchaseId: string;
   }>
 ): Promise<void> {
   const { error } = await supabaseAdmin
@@ -62,6 +63,7 @@ export async function updateUser(
       reports_used_this_month: updates.reportsUsedThisMonth,
       reports_limit: updates.reportsLimit,
       current_period_start: updates.currentPeriodStart,
+      one_time_purchase_id: updates.oneTimePurchaseId,
     })
     .eq('id', userId);
 
@@ -214,6 +216,8 @@ export async function updateReport(
     previousOverallScore: number | null;
     scoreChange: number | null;
     scanTimeMs: number;
+    analysisType: 'quick' | 'full';
+    pagesAnalyzed: number;
   }>
 ): Promise<void> {
   const { error } = await supabaseAdmin
@@ -245,6 +249,8 @@ export async function updateReport(
       previous_overall_score: updates.previousOverallScore,
       score_change: updates.scoreChange,
       scan_time_ms: updates.scanTimeMs,
+      analysis_type: updates.analysisType,
+      pages_analyzed: updates.pagesAnalyzed,
     })
     .eq('id', reportId);
 
@@ -368,4 +374,90 @@ function transformReport(row: Record<string, unknown>): Report {
     isAutoRescan: row.is_auto_rescan as boolean,
     createdAt: row.created_at as string,
   };
+}
+
+// Magic link operations
+export interface MagicLink {
+  id: string;
+  email: string;
+  token: string;
+  reportId: string | null;
+  expiresAt: string;
+  usedAt: string | null;
+  createdAt: string;
+}
+
+export async function createMagicLink(
+  email: string,
+  reportId?: string
+): Promise<MagicLink> {
+  // Generate cryptographically secure random token
+  const token = generateSecureToken();
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+  const { data, error } = await supabaseAdmin
+    .from('magic_links')
+    .insert({
+      email,
+      token,
+      report_id: reportId || null,
+      expires_at: expiresAt.toISOString(),
+    })
+    .select()
+    .single();
+
+  if (error) throw new Error(`Failed to create magic link: ${error.message}`);
+  return transformMagicLink(data);
+}
+
+export async function getMagicLinkByToken(token: string): Promise<MagicLink | null> {
+  const { data, error } = await supabaseAdmin
+    .from('magic_links')
+    .select('*')
+    .eq('token', token)
+    .is('used_at', null)
+    .single();
+
+  if (error) return null;
+  return transformMagicLink(data);
+}
+
+export async function markMagicLinkAsUsed(token: string): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('magic_links')
+    .update({ used_at: new Date().toISOString() })
+    .eq('token', token);
+
+  if (error) throw new Error(`Failed to mark magic link as used: ${error.message}`);
+}
+
+export async function updateUserLastLogin(userId: string): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('users')
+    .update({
+      last_login_at: new Date().toISOString(),
+      email_verified: true,
+    })
+    .eq('id', userId);
+
+  if (error) throw new Error(`Failed to update user login: ${error.message}`);
+}
+
+function transformMagicLink(row: Record<string, unknown>): MagicLink {
+  return {
+    id: row.id as string,
+    email: row.email as string,
+    token: row.token as string,
+    reportId: row.report_id as string | null,
+    expiresAt: row.expires_at as string,
+    usedAt: row.used_at as string | null,
+    createdAt: row.created_at as string,
+  };
+}
+
+// Generate cryptographically secure token
+function generateSecureToken(): string {
+  const array = new Uint8Array(32);
+  crypto.getRandomValues(array);
+  return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
 }

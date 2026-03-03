@@ -199,6 +199,16 @@ export interface Report {
   createdAt: string;
 }
 
+export interface SitemapMetadata {
+  totalPages: number;
+  blogCount: number;
+  productCount: number;
+  recentlyUpdated: number;
+  staleContent: number;
+  urlQuality: 'good' | 'needs-improvement';
+  averageDepth: number;
+}
+
 export interface ScrapedData {
   url: string;
   title: string;
@@ -214,8 +224,12 @@ export interface ScrapedData {
   socialProof: string[];
   subPages: SubPageData[];
 
-  // Technical indicators (NEW)
+  // Technical indicators
   technicalData?: TechnicalData;
+
+  // Sitemap data (NEW)
+  sitemapMetadata?: SitemapMetadata;
+  html?: string; // Raw HTML for technical analysis
 }
 
 export interface TechnicalData {
@@ -253,7 +267,7 @@ export interface User {
   id: string;
   email: string;
   stripeCustomerId: string | null;
-  subscriptionStatus: 'free' | 'active' | 'cancelled' | 'past_due';
+  subscriptionStatus: 'free' | 'starter' | 'active' | 'cancelled' | 'past_due';
   subscriptionId: string | null;
   reportsUsedThisMonth: number;
   reportsLimit: number;

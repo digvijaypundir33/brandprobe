@@ -326,7 +326,6 @@ interface CoreMarketingResponse {
 
 interface TechnicalDistributionResponse {
   seo: SeoOpportunities;
-  technical: TechnicalPerformance;
   conversion: ConversionOptimization;
   distribution: DistributionStrategy;
   aiSearch: AISearchVisibility;
@@ -365,8 +364,13 @@ function ensureSection<T extends { score?: number; summary?: string; keyIssues?:
 /**
  * Analyze website using consolidated prompts (2 calls instead of 9)
  * This is ~4x faster for local Ollama models
+ * Note: Technical Performance is analyzed separately using rules-based checks
  */
-export async function analyzeWebsite(websiteContent: string): Promise<{
+export async function analyzeWebsite(
+  websiteContent: string,
+  technical: TechnicalPerformance,
+  brandConfig?: { baselineScores?: Record<string, number>; brandInfo?: any }
+): Promise<{
   messaging: MessagingAnalysis;
   seo: SeoOpportunities;
   content: ContentStrategy;
@@ -405,18 +409,42 @@ export async function analyzeWebsite(websiteContent: string): Promise<{
     ]);
 
     // Ensure all sections have required fields (smaller models may miss some)
-    return {
+    let result = {
       messaging: ensureSection(coreMarketing.messaging, 'Messaging') as MessagingAnalysis,
       brandHealth: ensureSection(coreMarketing.brandHealth, 'Brand Health') as BrandHealth,
       content: ensureSection(coreMarketing.content, 'Content Strategy') as ContentStrategy,
       adAngles: ensureSection(coreMarketing.adAngles, 'Ad Angles') as AdAngles,
       seo: ensureSection(techDistribution.seo, 'SEO') as SeoOpportunities,
-      technical: ensureSection(techDistribution.technical, 'Technical') as TechnicalPerformance,
+      technical, // Use rules-based analysis passed in
       conversion: ensureSection(techDistribution.conversion, 'Conversion') as ConversionOptimization,
       distribution: ensureSection(techDistribution.distribution, 'Distribution') as DistributionStrategy,
       aiSearch: ensureSection(techDistribution.aiSearch, 'AI Search') as AISearchVisibility,
       designAuthenticity: ensureSection(techDistribution.designAuthenticity, 'Design Authenticity') as DesignAuthenticity,
     };
+
+    // Apply brand baseline scores if applicable
+    if (brandConfig?.baselineScores) {
+      console.log('[AI] Applying brand baseline scores for major brand');
+      const { baselineScores } = brandConfig;
+
+      // Use Math.max to ensure minimum scores (never lower AI score, only raise it)
+      if (baselineScores.technical !== undefined) {
+        result.technical.score = Math.max(result.technical.score, baselineScores.technical);
+      }
+      if (baselineScores.brandHealth !== undefined) {
+        result.brandHealth.score = Math.max(result.brandHealth.score, baselineScores.brandHealth);
+      }
+      if (baselineScores.messaging !== undefined) {
+        result.messaging.score = Math.max(result.messaging.score, baselineScores.messaging);
+      }
+      if (baselineScores.designAuth !== undefined) {
+        result.designAuthenticity.score = Math.max(result.designAuthenticity.score, baselineScores.designAuth);
+      }
+
+      console.log(`[AI] Baseline scores applied: T:${baselineScores.technical} B:${baselineScores.brandHealth} M:${baselineScores.messaging} D:${baselineScores.designAuth}`);
+    }
+
+    return result;
   }
 
   // Legacy: 9 separate calls with parallel batching
@@ -448,12 +476,11 @@ export async function analyzeWebsite(websiteContent: string): Promise<{
     () => callAI<ConversionOptimization>(CONVERSION_PROMPT, websiteContent),
     () => callAI<DistributionStrategy>(DISTRIBUTION_PROMPT, websiteContent),
     () => callAI<AISearchVisibility>(AI_SEARCH_PROMPT, websiteContent),
-    () => callAI<TechnicalPerformance>(TECHNICAL_PROMPT, websiteContent),
     () => callAI<BrandHealth>(BRAND_HEALTH_PROMPT, websiteContent),
   ];
 
   const results = await runInBatches(tasks, parallelCalls);
-  const [messaging, seo, content, adAngles, conversion, distribution, aiSearch, technical, brandHealth] = results;
+  const [messaging, seo, content, adAngles, conversion, distribution, aiSearch, brandHealth] = results;
 
   return {
     messaging: messaging as MessagingAnalysis,
@@ -463,7 +490,7 @@ export async function analyzeWebsite(websiteContent: string): Promise<{
     conversion: conversion as ConversionOptimization,
     distribution: distribution as DistributionStrategy,
     aiSearch: aiSearch as AISearchVisibility,
-    technical: technical as TechnicalPerformance,
+    technical, // Use rules-based analysis passed in
     brandHealth: brandHealth as BrandHealth,
     designAuthenticity: ensureSection(undefined, 'Design Authenticity') as DesignAuthenticity, // Legacy mode doesn't support this yet
   };

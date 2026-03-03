@@ -19,6 +19,10 @@ interface ScoreBarChartProps {
     ads: number;
     conversion: number;
     distribution: number;
+    aiSearch: number;
+    technical: number;
+    brandHealth: number;
+    designAuth: number;
   };
 }
 
@@ -38,10 +42,14 @@ export default function ScoreBarChart({ scores }: ScoreBarChartProps) {
     { name: 'Ads', score: scores.ads },
     { name: 'Conversion', score: scores.conversion },
     { name: 'Distribution', score: scores.distribution },
+    { name: 'AI Search', score: scores.aiSearch },
+    { name: 'Technical', score: scores.technical },
+    { name: 'Brand Health', score: scores.brandHealth },
+    { name: 'Design Auth', score: scores.designAuth },
   ];
 
   return (
-    <div className="w-full h-[250px]">
+    <div className="w-full h-[450px]">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} layout="vertical" margin={{ left: 20, right: 30 }}>
           <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />

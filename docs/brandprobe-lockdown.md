@@ -15,6 +15,8 @@
 | Target User | Founders, solopreneurs, SMBs |
 | What it IS | A marketing Brain — strategic intelligence that sits ABOVE execution tools |
 | What it IS NOT | Not a content writer, not a scheduler, not a CRM, not an SEO crawler, not an ads manager |
+| Analysis Modes | **Quick** (1 page, 30s) OR **Full** (4 pages, 60s) — user choice |
+| Major Brand Support | Hybrid recognition: instant for top 30 brands + dynamic detection for others |
 
 ---
 
@@ -23,19 +25,24 @@
 ```
 1. User lands on brandprobe.io
 2. Sees: "Paste your website. Know why you're not growing in 60 seconds."
-3. Enters URL + email address
+3. Enters URL + email address + (OPTIONAL) selects Quick vs Full analysis
 4. Waits 30-60 seconds (animated progress: "Probing your brand...")
-5. Gets report with 6 sections:
+5. Gets report with 10 sections (6 free, 4 locked):
    ✅ Section 1: Messaging & Positioning Analysis — FREE
    ✅ Section 2: SEO & Content Opportunities — FREE
-   🔒 Section 3: Content Strategy Recommendations — LOCKED
-   🔒 Section 4: Ad Angle Suggestions — LOCKED
-   🔒 Section 5: Conversion Optimization — LOCKED
-   🔒 Section 6: Distribution Strategy Brief — LOCKED
+   ✅ Section 3: Content Strategy Recommendations — FREE
+   ✅ Section 4: Ad Angle Suggestions — FREE
+   ✅ Section 5: Conversion Optimization — FREE
+   ✅ Section 6: Distribution Strategy Brief — FREE
+   🔒 Section 7: AI Search Visibility — LOCKED
+   🔒 Section 8: Technical Performance — LOCKED
+   🔒 Section 9: Brand Health — LOCKED
+   🔒 Section 10: Design Authenticity — LOCKED
 6. All sections show scores. Locked sections show blurred preview + "Unlock Full Report"
 7. User pays $29/mo → instant unlock + 9 more reports this month
 8. Report has unique URL for bookmarking/sharing
 9. Paid users get automatic monthly re-scan with progress tracking
+10. Major brands (Facebook, LinkedIn, Apple) routed to public pages with baseline scores (88-95)
 ```
 
 ---
@@ -44,10 +51,10 @@
 
 | Plan | Price | Includes |
 |------|-------|---------|
-| Free | $0 | 1 report ever per email. Sections 1-2 fully visible. Sections 3-6 blurred with scores shown. |
-| Paid | $29/mo | 10 full reports/month. All 6 sections unlocked. Monthly auto re-scan + progress tracking. Cancel anytime. |
+| Free | $0 | 1 report ever per email. Sections 1-6 fully visible. Sections 7-10 blurred with scores shown. |
+| Paid | $29/mo | 10 full reports/month. All 10 sections unlocked. Monthly auto re-scan + progress tracking. Cancel anytime. |
 
-**Critical design decision:** All 6 sections are generated for EVERY report, including free users. The paywall is FRONTEND ONLY (blurred display). This means:
+**Critical design decision:** All 10 sections are generated for EVERY report, including free users. The paywall is FRONTEND ONLY (blurred display). This means:
 - No wasted API calls when users upgrade (report already exists)
 - Instant unlock — pay → immediately see full report
 - Simpler backend — no conditional generation logic
@@ -76,7 +83,72 @@
 
 ---
 
-## 5. REPORT STRUCTURE — 6 Sections
+## 5. MULTI-PAGE ANALYSIS STRATEGY
+
+### Analysis Modes
+
+BrandProbe supports two analysis depths to meet different user needs:
+
+| Mode | Pages | Time | Best For |
+|------|-------|------|----------|
+| **Quick Scan** | 1 page | 30s | Landing page optimization, quick checks, A/B testing single pages |
+| **Full Website** | 4 pages | 60s | Comprehensive brand analysis, brand health assessment, cross-page consistency (DEFAULT) |
+
+**Backend Implementation:** Both modes fully implemented. Frontend toggle optional (defaults to Full if not selected).
+
+### Intelligent Page Selection (Full Mode)
+
+Instead of randomly selecting pages, BrandProbe uses a three-tier strategy:
+
+#### Tier 1: Major Brand Routing (Top 30 Brands)
+For major brands with login walls (Facebook, LinkedIn, Apple, etc.):
+- **Instant Recognition:** Domain matched against curated list (0ms)
+- **Smart Routing:** Redirects to public-accessible pages
+  - Example: `facebook.com` → `facebook.com/business`, `facebook.com/business/marketing`, `facebook.com/business/ads`, `about.meta.com`
+- **Baseline Scores:** Minimum scores applied (88-95) to ensure fair assessment
+
+#### Tier 2: Sitemap Intelligence (Sites with sitemap.xml)
+For sites with sitemap.xml:
+- **Fetches:** sitemap.xml (5-second timeout)
+- **Scoring Algorithm:** Priority (0-10) + Pattern match (+20 for /about, /pricing) + Recency (+10 if updated in 30 days) - Depth penalty (-2 per level)
+- **Metadata Extraction:** Total pages, blog count, product count, content freshness, URL quality
+- **Best Pages:** Selects top 3 pages based on scoring + homepage
+
+#### Tier 3: Navigation Fallback (Default)
+For sites without sitemap:
+- **Current Method:** Extracts nav links, prioritizes /about, /pricing, /features, /product, /solutions
+- **Top 3 Pages:** Selected from navigation + homepage
+
+### Hybrid Brand Recognition System
+
+**Fast Path (Instant - 0ms):**
+- Curated list of top 30 brands (Facebook, LinkedIn, Apple, Google, Microsoft, Amazon, Netflix, Shopify, Stripe, Notion, Figma, Slack, Zoom, Spotify, Adobe, Salesforce, HubSpot, Mailchimp, Canva, Dropbox, Airbnb, Uber, Tesla, Nike, Adidas, Coca-Cola, McDonald's, Starbucks, IBM, Oracle)
+- Pre-configured public URLs to bypass login walls
+- Pre-set baseline scores (88-95 range)
+
+**Slow Path (Dynamic - 2-5s):**
+For unknown domains, multi-signal detection:
+1. **Domain Age:** DNS-based heuristic (15+ years = likely major brand)
+2. **CDN Detection:** Cloudflare, Akamai, Fastly headers (enterprise signal)
+3. **Security Headers:** HSTS, CSP (enterprise security practices)
+4. **Subdomain Count:** crt.sh certificate transparency logs (20+ subdomains = large org)
+5. **Wikipedia Page:** Existence check (strong notability signal)
+6. **Scoring:** Combines signals to calculate confidence (high/medium/low)
+
+**Caching:**
+- Results stored in `brand_recognition_cache` table
+- 30-day TTL (expires_at)
+- Tracks hit count for analytics
+- Gradual improvement as cache grows
+
+**Why Hybrid?**
+- Best of both worlds: Speed for known brands + scalability for new ones
+- No manual updates needed beyond initial 30
+- Global coverage (discovers regional brands dynamically)
+
+---
+
+## 6. REPORT STRUCTURE — 10 Sections
 
 ### Section 1: Messaging & Positioning Analysis ✅ FREE
 **Question it answers:** "Is my message clear? Do people understand what I do?"
@@ -86,36 +158,108 @@ Covers: headline analysis, value proposition clarity, differentiation signals, C
 ### Section 2: SEO & Content Opportunities ✅ FREE
 **Question it answers:** "What keywords am I missing? What should I write about?"
 
-Covers: keyword gap analysis, meta tag review, content gap identification, competitor keyword inference, technical SEO flags, quick wins.
+Covers: keyword gap analysis, meta tag review, content gap identification, competitor keyword inference, technical SEO flags, sitemap metadata (pages, blog count, freshness), quick wins.
 
-### Section 3: Content Strategy Recommendations 🔒 PAID
+### Section 3: Content Strategy Recommendations ✅ FREE
 **Question it answers:** "What content should I create to stand out?"
 
 Covers: content pillar suggestions, format recommendations, topic clusters, differentiation angles, publishing cadence, platform-specific guidance.
 
-### Section 4: Ad Angle Suggestions 🔒 PAID
+### Section 4: Ad Angle Suggestions ✅ FREE
 **Question it answers:** "What hooks and angles would work for paid ads?"
 
 Covers: ad hook generation, psychological trigger mapping, audience angle variations, headline/copy suggestions, platform-specific creative direction.
 
-### Section 5: Conversion Optimization 🔒 PAID
+### Section 5: Conversion Optimization ✅ FREE
 **Question it answers:** "Where and why am I losing visitors?"
 
 Covers: trust signal audit, CTA optimization, page structure analysis, friction points, social proof assessment, above-fold effectiveness, quick wins.
 
-### Section 6: Distribution Strategy Brief 🔒 PAID
+### Section 6: Distribution Strategy Brief ✅ FREE
 **Question it answers:** "Which channels should I focus on and what tone?"
 
 Covers: channel recommendations (ranked by fit), content-channel mapping, tone/voice per platform, partnership suggestions, distribution quick wins.
 
+### Section 7: AI Search Visibility 🔒 PAID
+**Question it answers:** "Will AI assistants (ChatGPT, Claude, Perplexity) recommend my brand?"
+
+Covers: citation readiness, semantic authority, structured data for AI, FAQ optimization, brand entity signals, AI-friendly content format.
+
+### Section 8: Technical Performance 🔒 PAID
+**Question it answers:** "Are technical issues killing my SEO and conversions?"
+
+Covers: SSL, structured data (Schema.org), meta tags quality, image optimization, link health, mobile responsiveness signals, technical quick wins.
+
+### Section 9: Brand Health 🔒 PAID
+**Question it answers:** "How strong is my brand positioning and consistency?"
+
+Covers: brand consistency analysis (across multiple pages), positioning clarity, trust and credibility signals, competitive differentiation strength, brand voice authenticity.
+
+### Section 10: Design Authenticity 🔒 PAID
+**Question it answers:** "Does my design look unique or generic?"
+
+Covers: visual uniqueness assessment, design pattern analysis, authenticity vs template detection, screenshot-based visual review, design improvement recommendations.
+
 ---
 
-## 6. SCORING SYSTEM
+## 6A. REPORT SECTION COLORS & VISUAL IDENTITY
+
+Each section uses distinct color schemes for visual differentiation and brand consistency:
+
+### Section Color Mapping
+
+| Section | Primary Color | Usage | Rationale |
+|---------|--------------|-------|-----------|
+| **Messaging & Positioning** | Default/Gray | Standard card | Foundation section, neutral tone |
+| **SEO & Content** | Default/Gray | Standard card | Objective analysis, professional |
+| **Content Strategy** | Default/Gray | Standard card | Strategic planning, clear focus |
+| **Ad Angles** | Default/Gray | Standard card | Creative but professional |
+| **Conversion Optimization** | Green | Quick wins, success states | Growth-focused, action-oriented |
+| **Distribution Strategy** | Default/Gray | Standard card | Multi-channel strategy |
+| **AI Search Visibility** | Indigo | Primary theme, highlights | Modern AI technology focus |
+| **Technical Performance** | Blue/Yellow/Red | Status indicators | Technical metrics: Blue (info), Yellow (warnings), Red (errors), Green (success) |
+| **Brand Health** | Blue/Purple/Indigo | Analysis sections | Trust, authority, brand strength |
+| **Design Authenticity** | Red/Yellow/Blue/Purple/Green | Multi-status | Red (issues), Yellow (clichés), Blue (originality), Purple (patterns), Green (strengths) |
+
+### Color Psychology
+
+- **Green** (`bg-green-50`, `text-green-700`): Success, growth, quick wins, positive actions
+- **Blue** (`bg-blue-50`, `text-blue-700`): Trust, information, technical details
+- **Indigo** (`bg-indigo-50`, `text-indigo-700`): Modern, AI/tech-forward, innovation
+- **Purple** (`bg-purple-50`, `text-purple-700`): Premium, brand authority, creativity
+- **Yellow** (`bg-yellow-50`, `text-yellow-700`): Warnings, attention needed, clichés
+- **Red** (`bg-red-50`, `text-red-700`): Critical issues, errors, immediate action required
+
+### Badge Colors
+
+- **Score Labels:** Black (`bg-gray-900 text-white`) - High contrast, clear hierarchy
+- **Locked Sections:** Gray (`bg-gray-100 text-gray-600`) - Subdued, non-intrusive
+- **Action Priority:** Green (`bg-green-600 text-white`) - High priority quick wins
+- **Technical Status:**
+  - Pass: Green (`bg-green-100 text-green-600`)
+  - Warning: Yellow (`bg-yellow-100 text-yellow-600`)
+  - Fail: Red (`bg-red-100 text-red-600`)
+
+### Design System Consistency
+
+All sections follow these design patterns:
+- **Card Background:** White (`bg-white`) with subtle border (`border-gray-200`)
+- **Hover State:** Light gray (`hover:bg-gray-50`)
+- **Section Backgrounds:** 50-shade with matching 100-border (e.g., `bg-blue-50 border-blue-100`)
+- **Text Hierarchy:**
+  - Primary: `text-gray-900` (headings)
+  - Secondary: `text-gray-600` (body)
+  - Tertiary: `text-gray-500` (captions)
+- **Border Radius:** Consistent rounded corners (`rounded-lg`, `rounded-xl`)
+
+---
+
+## 7. SCORING SYSTEM
 
 ```
-OVERALL SCORE = Average of 6 section scores
+OVERALL SCORE = Average of 10 section scores
 
-Each section scored 0-100 by Claude.
+Each section scored 0-100 by AI (Claude via Groq with consolidated prompts).
 
 Score Interpretation:
   0-25:   CRITICAL — Major foundational issues
@@ -125,21 +269,35 @@ Score Interpretation:
   86-100: EXCELLENT — Top tier marketing
 
 Reality: Most SMB websites score 25-45. That's normal.
+Major brands (Facebook, LinkedIn, Apple) score 88-95 with baseline application.
 The score creates urgency, not demoralization.
 ```
 
-**All 6 section scores are visible to free users.** They can see they scored 28/100 on Conversion — they just can't see the details of WHY or the specific fixes. This is what drives payment.
+**All 10 section scores are visible to free users.** They can see they scored 28/100 on Conversion — they just can't see the details of WHY or the specific fixes. This is what drives payment.
+
+### Brand Baseline Scores (for Major Brands)
+
+When analyzing major brands (detected via hybrid recognition), baseline scores are applied using `Math.max(aiScore, baselineScore)`:
+- **Facebook/LinkedIn:** Technical: 95, Brand Health: 95, Messaging: 88, Design: 85
+- **Apple:** Technical: 98, Brand Health: 95, Messaging: 92, Design: 90
+- **Google/Microsoft:** Technical: 96, Brand Health: 92, Messaging: 90, Design: 88
+
+This ensures fair scoring when login walls or redirects block content scraping.
 
 ---
 
-## 7. TECH STACK
+## 8. TECH STACK
 
 ```
-Framework:      Next.js 14 (App Router) + TypeScript
+Framework:      Next.js 16.1.6 (App Router) + TypeScript
 Styling:        Tailwind CSS
-AI:             Claude API (claude-sonnet-4-5-20250929)
+AI:             Primary: Groq (llama-3.3-70b-versatile) via consolidated prompts
+                Fallback: Claude API (claude-sonnet-4-5-20250929)
+                Mode: 2 parallel API calls for efficiency
 Scraping:       Playwright via Browserless.io (free: 1000 sessions/mo)
-Database:       Supabase (PostgreSQL — free tier)
+                Modes: Quick (1 page, 30s) OR Full (4 pages, 60s)
+                Intelligence: Sitemap.xml parsing + brand routing
+Database:       Supabase (PostgreSQL — free tier with local dev)
 Payments:       Stripe Checkout + Billing
 Email:          Resend (free: 3000 emails/mo)
 Hosting:        Vercel (free tier → Pro $20/mo if needed for timeouts)
@@ -158,7 +316,7 @@ At 100 paying users × $29/mo = $2,900 MRR vs $135/mo cost = 95%+ gross margin.
 
 ---
 
-## 8. DATABASE SCHEMA (Updated with Sites + Progress Tracking)
+## 9. DATABASE SCHEMA (Updated with Sites + Progress Tracking + Analysis Type + Brand Cache)
 
 ```sql
 -- Users (simple email-based)
@@ -203,10 +361,14 @@ CREATE TABLE reports (
   -- Report sections (ALL generated, visibility controlled in frontend)
   messaging_analysis        JSONB,        -- Section 1 (FREE)
   seo_opportunities         JSONB,        -- Section 2 (FREE)
-  content_strategy          JSONB,        -- Section 3 (PAID)
-  ad_angles                 JSONB,        -- Section 4 (PAID)
-  conversion_optimization   JSONB,        -- Section 5 (PAID)
-  distribution_strategy     JSONB,        -- Section 6 (PAID)
+  content_strategy          JSONB,        -- Section 3 (FREE)
+  ad_angles                 JSONB,        -- Section 4 (FREE)
+  conversion_optimization   JSONB,        -- Section 5 (FREE)
+  distribution_strategy     JSONB,        -- Section 6 (FREE)
+  ai_search_visibility      JSONB,        -- Section 7 (PAID)
+  technical_performance     JSONB,        -- Section 8 (PAID)
+  brand_health              JSONB,        -- Section 9 (PAID)
+  design_authenticity       JSONB,        -- Section 10 (PAID)
 
   -- Scores (ALL visible to free users)
   overall_score             INT,
@@ -216,15 +378,39 @@ CREATE TABLE reports (
   ads_score                 INT,
   conversion_score          INT,
   distribution_score        INT,
+  ai_search_score           INT,
+  technical_score           INT,
+  brand_health_score        INT,
+  design_authenticity_score INT,
 
   -- Progress tracking
   previous_overall_score    INT,          -- Score from last scan of same site
   score_change              INT,          -- Delta from previous
 
+  -- Analysis metadata (NEW)
+  analysis_type             TEXT DEFAULT 'full',  -- 'quick' | 'full'
+  pages_analyzed            INT,          -- Actual pages scraped
+
   -- Meta
   scan_time_ms              INT,
   is_auto_rescan            BOOLEAN DEFAULT false,
-  created_at                TIMESTAMPTZ DEFAULT NOW()
+  created_at                TIMESTAMPTZ DEFAULT NOW(),
+
+  CONSTRAINT valid_analysis_type CHECK (analysis_type IN ('quick', 'full'))
+);
+
+-- Brand Recognition Cache (NEW)
+CREATE TABLE brand_recognition_cache (
+  domain              TEXT PRIMARY KEY,
+  is_major_brand      BOOLEAN NOT NULL,
+  confidence          TEXT NOT NULL CHECK (confidence IN ('high', 'medium', 'low')),
+  signals             JSONB NOT NULL DEFAULT '[]'::jsonb,
+  baseline_scores     JSONB,
+  suggested_urls      TEXT[],
+  cached_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  expires_at          TIMESTAMPTZ NOT NULL DEFAULT NOW() + INTERVAL '30 days',
+  hits                INT DEFAULT 0,
+  last_hit_at         TIMESTAMPTZ
 );
 
 -- Report views (simple analytics)
@@ -240,15 +426,18 @@ CREATE INDEX idx_reports_user ON reports(user_id);
 CREATE INDEX idx_reports_site ON reports(site_id);
 CREATE INDEX idx_reports_url ON reports(url);
 CREATE INDEX idx_reports_status ON reports(status);
+CREATE INDEX idx_reports_analysis_type ON reports(analysis_type);
 CREATE INDEX idx_sites_user ON sites(user_id);
 CREATE INDEX idx_sites_primary ON sites(user_id, is_primary) WHERE is_primary = true;
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_stripe ON users(stripe_customer_id);
+CREATE INDEX idx_brand_cache_expires ON brand_recognition_cache(expires_at);
+CREATE INDEX idx_brand_cache_major_brands ON brand_recognition_cache(is_major_brand) WHERE is_major_brand = true;
 ```
 
 ---
 
-## 9. PROJECT STRUCTURE
+## 10. PROJECT STRUCTURE
 
 ```
 brandprobe/
@@ -260,7 +449,7 @@ brandprobe/
 │   │   │       └── page.tsx             # Report display page
 │   │   ├── api/
 │   │   │   ├── scan/
-│   │   │   │   └── route.ts             # POST: URL → scrape → analyze → save
+│   │   │   │   └── route.ts             # POST: URL → scrape → analyze → save (with analysis type)
 │   │   │   ├── report/
 │   │   │   │   └── [id]/
 │   │   │   │       └── route.ts         # GET: fetch report data
@@ -280,26 +469,42 @@ brandprobe/
 │   │   ├── LockedSection.tsx            # Blurred section + CTA
 │   │   ├── ProgressTracker.tsx          # Score comparison (prev vs current)
 │   │   ├── ScanningAnimation.tsx        # Loading state
-│   │   └── URLInput.tsx                 # Landing page form
+│   │   ├── URLInput.tsx                 # Landing page form (with Quick/Full toggle - optional)
+│   │   ├── MessagingCard.tsx            # Section 1 card
+│   │   ├── SEOCard.tsx                  # Section 2 card
+│   │   ├── ContentCard.tsx              # Section 3 card
+│   │   ├── AdAnglesCard.tsx             # Section 4 card
+│   │   ├── ConversionCard.tsx           # Section 5 card
+│   │   ├── DistributionCard.tsx         # Section 6 card
+│   │   ├── AISearchCard.tsx             # Section 7 card (NEW)
+│   │   ├── TechnicalCard.tsx            # Section 8 card (NEW)
+│   │   ├── BrandHealthCard.tsx          # Section 9 card (NEW)
+│   │   └── DesignAuthenticityCard.tsx   # Section 10 card (NEW)
 │   │
 │   ├── lib/
-│   │   ├── scraper.ts                   # Playwright scraping logic
-│   │   ├── claude.ts                    # Claude API wrapper
+│   │   ├── scraper.ts                   # Playwright scraping logic (Quick/Full + brand routing + sitemap)
+│   │   ├── sitemap-parser.ts            # Sitemap.xml fetching and intelligent page selection (NEW)
+│   │   ├── brand-recognizer.ts          # Hybrid brand recognition (instant + dynamic) (NEW)
+│   │   ├── technical-analyzer.ts        # Rules-based technical performance analysis (NEW)
+│   │   ├── ai.ts                        # AI wrapper (Groq primary, Claude fallback) + baseline application
 │   │   ├── prompts/
+│   │   │   ├── consolidated.ts         # Consolidated prompts (2 parallel API calls) (NEW)
 │   │   │   ├── system.ts               # Shared system prompt
 │   │   │   ├── messaging.ts            # Section 1 prompt
 │   │   │   ├── seo.ts                  # Section 2 prompt
 │   │   │   ├── content.ts              # Section 3 prompt
 │   │   │   ├── adAngles.ts             # Section 4 prompt
 │   │   │   ├── conversion.ts           # Section 5 prompt
-│   │   │   └── distribution.ts         # Section 6 prompt
+│   │   │   ├── distribution.ts         # Section 6 prompt
+│   │   │   ├── aiSearch.ts             # Section 7 prompt (NEW)
+│   │   │   └── brandHealth.ts          # Section 9 prompt (NEW)
 │   │   ├── stripe.ts                   # Stripe helpers
-│   │   ├── supabase.ts                 # DB client + queries
+│   │   ├── supabase.ts                 # DB client + queries (updated with new fields)
 │   │   ├── email.ts                    # Resend templates
 │   │   └── utils.ts                    # URL validation, helpers
 │   │
 │   └── types/
-│       ├── report.ts                   # Report type definitions
+│       ├── report.ts                   # Report type definitions (with SitemapMetadata)
 │       └── scraper.ts                  # Scraper type definitions
 │
 ├── supabase/
@@ -315,7 +520,7 @@ brandprobe/
 
 ---
 
-## 10. SYSTEM PROMPT (Shared Across All 6 Sections)
+## 11. SYSTEM PROMPT (Shared Across All Sections)
 
 ```typescript
 const systemPrompt = `
@@ -343,7 +548,7 @@ CRITICAL RULES:
 
 ---
 
-## 11. COMPETITOR HANDLING (v1)
+## 12. COMPETITOR HANDLING (v1)
 
 In v1, competitors are AI-INFERRED, not scraped:
 1. AI analyzes scraped content to infer business niche
@@ -355,7 +560,7 @@ In v1, competitors are AI-INFERRED, not scraped:
 
 ---
 
-## 12. BUILD TIMELINE — 3 Weeks
+## 13. BUILD TIMELINE — 3 Weeks
 
 ### WEEK 1: Core Pipeline (Scanner + AI Brain)
 
@@ -513,7 +718,7 @@ Afternoon:
 
 ---
 
-## 13. LAUNCH COPY
+## 14. LAUNCH COPY
 
 ### Landing Page
 
@@ -554,7 +759,7 @@ Humbling but helpful.
 
 ---
 
-## 14. VALIDATION GATE — Do NOT Build Phase 1 Until
+## 15. VALIDATION GATE — Do NOT Build Phase 1 Until
 
 | Metric | Target | Why |
 |--------|--------|-----|
@@ -575,28 +780,32 @@ Humbling but helpful.
 
 ---
 
-## 15. DECISIONS — ALL LOCKED
+## 16. DECISIONS — ALL LOCKED
 
 | Decision | Answer | Do Not Revisit |
 |----------|--------|----------------|
 | Product name | BrandProbe | ✅ |
 | Domain | brandprobe.io | ✅ |
-| Report structure | 6 sections | ✅ |
-| Free sections | 1 (Messaging) + 2 (SEO) | ✅ |
-| Paid sections | 3 (Content) + 4 (Ads) + 5 (Conversion) + 6 (Distribution) | ✅ |
-| Scores visible to free users | Yes — all 6 scores shown, details locked | ✅ |
+| Report structure | 10 sections (6 free, 4 locked) | ✅ |
+| Free sections | 1-6 (Messaging, SEO, Content, Ads, Conversion, Distribution) | ✅ |
+| Paid sections | 7-10 (AI Search, Technical, Brand Health, Design Authenticity) | ✅ |
+| Scores visible to free users | Yes — all 10 scores shown, details locked for 7-10 | ✅ |
 | All sections generated for all users | Yes — paywall is frontend only | ✅ |
 | Pricing | $29/mo for 10 reports | ✅ |
 | Retention hook | Monthly auto re-scan + progress tracking | ✅ |
 | Competitor handling | AI-inferred in v1, live scraping in Phase 1 | ✅ |
 | Auth system | Email-based (no complex auth for v1) | ✅ |
-| Tech stack | Next.js + Claude + Playwright + Supabase + Stripe | ✅ |
+| Tech stack | Next.js + Groq/Claude + Playwright + Supabase + Stripe | ✅ |
 | Hosting | Vercel | ✅ |
 | Scan time promise | "About 60 seconds" (realistic: 60-90s) | ✅ |
+| Analysis modes | Quick (1 page, 30s) OR Full (4 pages, 60s) | ✅ |
+| Page selection | Sitemap intelligence + brand routing + nav fallback | ✅ |
+| Brand recognition | Hybrid (30 instant + dynamic detection + 30-day cache) | ✅ |
+| Brand baseline scores | 88-95 for major brands (Facebook, LinkedIn, Apple, etc.) | ✅ |
 
 ---
 
-## 16. THE ONE RULE
+## 17. THE ONE RULE
 
 **Build insight first, automation later.**
 
