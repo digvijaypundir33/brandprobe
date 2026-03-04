@@ -42,8 +42,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Create magic link for dashboard access (no specific report)
-    const magicLink = await createMagicLink(email, null);
-    const emailResult = await sendMagicLinkEmail(email, magicLink.token, null, true);
+    const magicLink = await createMagicLink(email);
+    const emailResult = await sendMagicLinkEmail(email, magicLink.token, undefined, true);
 
     if (!emailResult.success) {
       return NextResponse.json(
