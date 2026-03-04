@@ -1,17 +1,26 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Report, User, Site } from '@/types/report';
 
+// Determine environment and get appropriate Supabase credentials
+const isLocal = process.env.NEXT_PUBLIC_SUPABASE_ENV === 'local';
+
+const supabaseUrl = isLocal
+  ? process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL!
+  : process.env.NEXT_PUBLIC_SUPABASE_PROD_URL!;
+
+const supabaseAnonKey = isLocal
+  ? process.env.NEXT_PUBLIC_SUPABASE_LOCAL_ANON_KEY!
+  : process.env.NEXT_PUBLIC_SUPABASE_PROD_ANON_KEY!;
+
+const supabaseServiceRoleKey = isLocal
+  ? process.env.SUPABASE_LOCAL_SERVICE_ROLE_KEY!
+  : process.env.SUPABASE_PROD_SERVICE_ROLE_KEY!;
+
 // Client for browser (uses anon key)
-export const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Server client (uses service role key for admin operations)
-export const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
 
 // User operations
 export async function getUserByEmail(email: string): Promise<User | null> {
