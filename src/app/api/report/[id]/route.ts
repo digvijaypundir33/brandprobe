@@ -62,12 +62,12 @@ export async function GET(
       sanitizedReport = {
         ...report,
         // Locked sections - completely remove all data
-        conversionOptimization: undefined,
-        distributionStrategy: undefined,
-        aiSearchVisibility: undefined,
-        technicalPerformance: undefined,
-        brandHealth: undefined,
-        designAuthenticity: undefined,
+        conversionOptimization: null,
+        distributionStrategy: null,
+        aiSearchVisibility: null,
+        technicalPerformance: null,
+        brandHealth: null,
+        designAuthenticity: null,
       };
     }
 

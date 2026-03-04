@@ -1,4 +1,12 @@
-import { Client, Environment, OrdersController, SubscriptionsController } from '@paypal/paypal-server-sdk';
+import {
+  Client,
+  Environment,
+  OrdersController,
+  SubscriptionsController,
+  CheckoutPaymentIntent,
+  OrderApplicationContextLandingPage,
+  ApplicationContextUserAction
+} from '@paypal/paypal-server-sdk';
 
 // PayPal client configuration
 const paypalClient = new Client({
@@ -32,7 +40,7 @@ export async function createPayPalOrder(
   try {
     const response = await ordersController.createOrder({
       body: {
-        intent: 'CAPTURE',
+        intent: CheckoutPaymentIntent.Capture,
         purchaseUnits: [
           {
             referenceId: reportId,
@@ -46,8 +54,7 @@ export async function createPayPalOrder(
         ],
         applicationContext: {
           brandName: 'BrandProbe',
-          landingPage: 'BILLING',
-          userAction: 'PAY_NOW',
+          landingPage: OrderApplicationContextLandingPage.Billing,
           returnUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/paypal/success?reportId=${reportId}`,
           cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL}/report/${reportId}?payment=cancelled`,
         },
@@ -60,8 +67,8 @@ export async function createPayPalOrder(
       (link) => link.rel === 'approve'
     )?.href;
 
-    if (!approvalUrl) {
-      throw new Error('No approval URL found in PayPal response');
+    if (!orderId || !approvalUrl) {
+      throw new Error('Missing orderId or approval URL in PayPal response');
     }
 
     return { orderId, approvalUrl };
@@ -124,7 +131,7 @@ export async function createPayPalSubscription(
         customId: userEmail,
         applicationContext: {
           brandName: 'BrandProbe',
-          userAction: 'SUBSCRIBE_NOW',
+          userAction: ApplicationContextUserAction.SubscribeNow,
           returnUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/paypal/subscription/success${reportId ? `?reportId=${reportId}` : ''}`,
           cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL}${reportId ? `/report/${reportId}` : ''}?payment=cancelled`,
         },
@@ -157,7 +164,7 @@ export async function cancelPayPalSubscription(
 ): Promise<boolean> {
   try {
     await subscriptionsController.cancelSubscription({
-      subscriptionId,
+      id: subscriptionId,
       body: {
         reason,
       },
@@ -180,10 +187,10 @@ export async function getPayPalSubscription(subscriptionId: string): Promise<{
 }> {
   try {
     const response = await subscriptionsController.getSubscription({
-      subscriptionId,
+      id: subscriptionId,
     });
 
-    const subscription = response.result;
+    const subscription = response.result as any;
 
     return {
       status: subscription.status || '',
