@@ -1,6 +1,8 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Initialize Resend with a placeholder key if not set (for build time)
+// The actual key will be checked at runtime before sending emails
+const resend = new Resend(process.env.RESEND_API_KEY || 're_placeholder_key_for_build');
 
 const FROM_EMAIL = process.env.FROM_EMAIL || 'BrandProbe <noreply@brandprobe.io>';
 // Remove trailing slash from APP_URL to avoid double slashes in URLs
