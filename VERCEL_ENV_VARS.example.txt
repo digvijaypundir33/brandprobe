@@ -38,8 +38,9 @@ BROWSERLESS_API_KEY=your_browserless_api_key
 # Resend (Email)
 # ===================
 # Get from: https://resend.com/api-keys
+# IMPORTANT: Domain must be verified in Resend dashboard
 RESEND_API_KEY=your_resend_api_key
-RESEND_FROM_EMAIL=noreply@yourdomain.com
+RESEND_FROM_EMAIL=BrandProbe <team@brandprobe.io>
 
 # ===================
 # App Configuration
