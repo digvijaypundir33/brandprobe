@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
 
     if (!token) {
       return NextResponse.redirect(
-        new URL('/?error=missing_token', process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000')
+        new URL('/?error=missing_token', process.env.NEXT_PUBLIC_APP_URL || 'https://brandprobe.io')
       );
     }
 
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
           reportId
             ? `/report/${reportId}?payment=failed`
             : '/?error=payment_failed',
-          process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+          process.env.NEXT_PUBLIC_APP_URL || 'https://brandprobe.io'
         )
       );
     }
@@ -47,13 +47,13 @@ export async function GET(request: NextRequest) {
       : '/?payment=success&tier=starter';
 
     return NextResponse.redirect(
-      new URL(redirectUrl, process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000')
+      new URL(redirectUrl, process.env.NEXT_PUBLIC_APP_URL || 'https://brandprobe.io')
     );
   } catch (error) {
     console.error('PayPal success handler error:', error);
 
     return NextResponse.redirect(
-      new URL('/?error=payment_error', process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000')
+      new URL('/?error=payment_error', process.env.NEXT_PUBLIC_APP_URL || 'https://brandprobe.io')
     );
   }
 }

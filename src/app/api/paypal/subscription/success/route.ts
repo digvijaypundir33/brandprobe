@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 
     if (!subscriptionId) {
       return NextResponse.redirect(
-        new URL('/?error=missing_subscription', process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000')
+        new URL('/?error=missing_subscription', process.env.NEXT_PUBLIC_APP_URL || 'https://brandprobe.io')
       );
     }
 
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
           reportId
             ? `/report/${reportId}?payment=failed`
             : '/?error=subscription_failed',
-          process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+          process.env.NEXT_PUBLIC_APP_URL || 'https://brandprobe.io'
         )
       );
     }
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
     const session = await getSessionFromRequest(request);
     if (!session) {
       return NextResponse.redirect(
-        new URL('/?error=not_authenticated', process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000')
+        new URL('/?error=not_authenticated', process.env.NEXT_PUBLIC_APP_URL || 'https://brandprobe.io')
       );
     }
 
@@ -58,13 +58,13 @@ export async function GET(request: NextRequest) {
       : '/?payment=success&tier=pro';
 
     return NextResponse.redirect(
-      new URL(redirectUrl, process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000')
+      new URL(redirectUrl, process.env.NEXT_PUBLIC_APP_URL || 'https://brandprobe.io')
     );
   } catch (error) {
     console.error('PayPal subscription success handler error:', error);
 
     return NextResponse.redirect(
-      new URL('/?error=subscription_error', process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000')
+      new URL('/?error=subscription_error', process.env.NEXT_PUBLIC_APP_URL || 'https://brandprobe.io')
     );
   }
 }

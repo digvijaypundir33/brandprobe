@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
                 This magic link is invalid, has already been used, or has expired.
                 Magic links are valid for 15 minutes and can only be used once.
               </p>
-              <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}">
+              <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://brandprobe.io'}">
                 Return to BrandProbe
               </a>
             </div>
@@ -192,7 +192,7 @@ export async function GET(request: NextRequest) {
                 This magic link has expired. For security, links are only valid for 15 minutes.
                 Please request a new link to continue.
               </p>
-              <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}">
+              <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://brandprobe.io'}">
                 Return to BrandProbe
               </a>
             </div>
@@ -264,7 +264,7 @@ export async function GET(request: NextRequest) {
 
     // Redirect to report or dashboard
     return NextResponse.redirect(
-      new URL(redirectUrl, process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000')
+      new URL(redirectUrl, process.env.NEXT_PUBLIC_APP_URL || 'https://brandprobe.io')
     );
   } catch (error) {
     console.error('Verify magic link error:', error);
@@ -342,7 +342,7 @@ export async function GET(request: NextRequest) {
               We encountered an error while verifying your access link.
               Please try again or contact support if the problem persists.
             </p>
-            <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}">
+            <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://brandprobe.io'}">
               Return to BrandProbe
             </a>
           </div>

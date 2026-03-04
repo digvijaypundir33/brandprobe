@@ -4,9 +4,9 @@ import { Resend } from 'resend';
 // The actual key will be checked at runtime before sending emails
 const resend = new Resend(process.env.RESEND_API_KEY || 're_placeholder_key_for_build');
 
-const FROM_EMAIL = process.env.FROM_EMAIL || 'BrandProbe <noreply@brandprobe.io>';
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'BrandProbe <noreply@brandprobe.io>';
 // Remove trailing slash from APP_URL to avoid double slashes in URLs
-const APP_URL = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/$/, '');
+const APP_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://brandprobe.io').replace(/\/$/, '');
 
 /**
  * Send magic link email for authentication
