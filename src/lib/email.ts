@@ -3,7 +3,8 @@ import { Resend } from 'resend';
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 const FROM_EMAIL = process.env.FROM_EMAIL || 'BrandProbe <noreply@brandprobe.io>';
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+// Remove trailing slash from APP_URL to avoid double slashes in URLs
+const APP_URL = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/$/, '');
 
 /**
  * Send magic link email for authentication
@@ -11,7 +12,8 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 export async function sendMagicLinkEmail(
   email: string,
   token: string,
-  reportId?: string
+  reportId?: string | null,
+  isDashboardAccess = false
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const verifyUrl = `${APP_URL}/api/auth/verify?token=${token}${
@@ -25,15 +27,20 @@ export async function sendMagicLinkEmail(
       console.log('========================================');
       console.log(`Email: ${email}`);
       console.log(`Link:  ${verifyUrl}`);
+      console.log(`Type:  ${isDashboardAccess ? 'Dashboard Access' : 'Report Verification'}`);
       console.log('========================================\n');
       return { success: true };
     }
 
+    const subject = isDashboardAccess
+      ? '🔐 Access Your BrandProbe Reports'
+      : '🔐 Your BrandProbe Access Link';
+
     await resend.emails.send({
       from: FROM_EMAIL,
       to: email,
-      subject: '🔐 Your BrandProbe Access Link',
-      html: getMagicLinkEmailTemplate(verifyUrl),
+      subject,
+      html: getMagicLinkEmailTemplate(verifyUrl, isDashboardAccess),
     });
 
     return { success: true };
@@ -77,7 +84,17 @@ export async function sendReportReadyEmail(
 /**
  * Magic link email template
  */
-function getMagicLinkEmailTemplate(verifyUrl: string): string {
+function getMagicLinkEmailTemplate(verifyUrl: string, isDashboardAccess = false): string {
+  const heading = isDashboardAccess
+    ? 'Access Your Reports'
+    : 'Verify Your Email';
+  const message = isDashboardAccess
+    ? 'Click the button below to access your BrandProbe dashboard and view all your reports.'
+    : 'Click the button below to verify your email and access your report.';
+  const buttonText = isDashboardAccess
+    ? 'Go to Dashboard'
+    : 'Verify Email & View Report';
+
   return `
     <!DOCTYPE html>
     <html>
@@ -149,11 +166,10 @@ function getMagicLinkEmailTemplate(verifyUrl: string): string {
         <div class="container">
           <div class="logo">BrandProbe</div>
 
-          <h1>Access Your Report</h1>
+          <h1>${heading}</h1>
+          <p>${message}</p>
 
-          <p>Click the button below to securely access your BrandProbe report:</p>
-
-          <a href="${verifyUrl}" class="button">Access My Report</a>
+          <a href="${verifyUrl}" class="button">${buttonText}</a>
 
           <div class="warning">
             <strong>⏱️ This link expires in 15 minutes</strong><br>

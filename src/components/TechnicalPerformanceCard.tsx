@@ -73,34 +73,34 @@ export default function TechnicalPerformanceCard({ technical }: TechnicalPerform
 
         {/* Analysis Cards */}
         <div className="grid md:grid-cols-2 gap-4 mb-6">
-          <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
+          <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
             <div className="flex items-center gap-2 mb-2">
-              <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
               </svg>
-              <h4 className="font-medium text-blue-800 text-sm">Mobile Readiness</h4>
+              <h4 className="font-medium text-gray-800 text-sm">Mobile Readiness</h4>
             </div>
-            <p className="text-xs text-blue-700">{analysis.mobileReadiness}</p>
+            <p className="text-xs text-gray-600">{analysis.mobileReadiness}</p>
           </div>
 
-          <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
+          <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
             <div className="flex items-center gap-2 mb-2">
-              <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 4 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              <h4 className="font-medium text-blue-800 text-sm">Image Optimization</h4>
+              <h4 className="font-medium text-gray-800 text-sm">Image Optimization</h4>
             </div>
-            <p className="text-xs text-blue-700">{analysis.imageOptimization}</p>
+            <p className="text-xs text-gray-600">{analysis.imageOptimization}</p>
           </div>
 
-          <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-100">
+          <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
             <div className="flex items-center gap-2 mb-2">
-              <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
               </svg>
-              <h4 className="font-medium text-indigo-800 text-sm">Structured Data</h4>
+              <h4 className="font-medium text-gray-800 text-sm">Structured Data</h4>
             </div>
-            <p className="text-xs text-indigo-700">{analysis.structuredDataPresence}</p>
+            <p className="text-xs text-gray-600">{analysis.structuredDataPresence}</p>
           </div>
         </div>
 
@@ -117,7 +117,7 @@ export default function TechnicalPerformanceCard({ technical }: TechnicalPerform
               {securityIndicators.map((indicator, i) => (
                 <span
                   key={i}
-                  className="px-3 py-1.5 bg-green-50 text-green-700 rounded-md text-sm border border-green-200"
+                  className="px-3 py-1.5 bg-gray-50 text-gray-700 rounded-md text-sm border border-gray-200"
                 >
                   {indicator}
                 </span>
@@ -137,8 +137,8 @@ export default function TechnicalPerformanceCard({ technical }: TechnicalPerform
             </h4>
             <ul className="space-y-2">
               {accessibilityFlags.map((flag, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-gray-600 bg-yellow-50 rounded-lg p-3 border border-yellow-100">
-                  <svg className="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <li key={i} className="flex items-start gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg p-3 border border-gray-100">
+                  <svg className="w-4 h-4 text-gray-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
                   {flag}

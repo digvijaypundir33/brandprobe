@@ -22,7 +22,7 @@ export async function createSession(
   email: string,
   subscriptionStatus: string
 ): Promise<string> {
-  const expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
+  const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000; // 30 days
 
   const token = await new SignJWT({
     userId,
@@ -32,7 +32,7 @@ export async function createSession(
   })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime('7d')
+    .setExpirationTime('30d')
     .sign(JWT_SECRET);
 
   return token;
@@ -97,7 +97,7 @@ export async function setSessionCookie(token: string): Promise<void> {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    maxAge: 7 * 24 * 60 * 60, // 7 days
+    maxAge: 30 * 24 * 60 * 60, // 30 days
     path: '/',
   });
 }

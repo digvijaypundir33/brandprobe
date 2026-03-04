@@ -30,9 +30,9 @@ export async function POST(request: NextRequest) {
 
       await updateUser(user.id, {
         subscriptionStatus: 'starter',
-        oneTimePurchaseId: capture.captureId,
+        oneTimePurchaseId: null, // Starter users can create multiple reports, not tied to one
         reportsUsedThisMonth: 0,
-        reportsLimit: 1,
+        reportsLimit: 2, // 2 full reports with all 10 sections unlocked
       });
 
       console.log(`[PayPal Capture] Starter tier activated for ${email}`);

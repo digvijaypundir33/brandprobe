@@ -64,21 +64,21 @@ export default function BrandHealthCard({ brandHealth }: BrandHealthCardProps) {
 
         {/* Key Metrics Row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-          <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
-            <div className="text-xs text-blue-600 uppercase tracking-wide font-semibold mb-2">Voice</div>
-            <div className="text-xs font-medium text-blue-800 line-clamp-3">{toDisplayString(analysis.voiceToneAnalysis).split('.')[0]}</div>
+          <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+            <div className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-2">Voice</div>
+            <div className="text-xs font-medium text-gray-800 line-clamp-3">{toDisplayString(analysis.voiceToneAnalysis).split('.')[0]}</div>
           </div>
-          <div className="bg-purple-50 rounded-lg p-4 border border-purple-100">
-            <div className="text-xs text-purple-600 uppercase tracking-wide font-semibold mb-2">Personality</div>
-            <div className="text-xs font-medium text-purple-800 line-clamp-3">{toDisplayString(analysis.brandPersonality).split('.')[0]}</div>
+          <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+            <div className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-2">Personality</div>
+            <div className="text-xs font-medium text-gray-800 line-clamp-3">{toDisplayString(analysis.brandPersonality).split('.')[0]}</div>
           </div>
-          <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-100">
-            <div className="text-xs text-indigo-600 uppercase tracking-wide font-semibold mb-2">Memorability</div>
-            <div className="text-xs font-medium text-indigo-800 line-clamp-3">{toDisplayString(analysis.memorabilityScore).split('.')[0]}</div>
+          <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+            <div className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-2">Memorability</div>
+            <div className="text-xs font-medium text-gray-800 line-clamp-3">{toDisplayString(analysis.memorabilityScore).split('.')[0]}</div>
           </div>
-          <div className="bg-emerald-50 rounded-lg p-4 border border-emerald-100">
-            <div className="text-xs text-emerald-600 uppercase tracking-wide font-semibold mb-2">Trust</div>
-            <div className="text-xs font-medium text-emerald-800 line-clamp-3">{toDisplayString(analysis.trustPerception).split('.')[0]}</div>
+          <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+            <div className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-2">Trust</div>
+            <div className="text-xs font-medium text-gray-800 line-clamp-3">{toDisplayString(analysis.trustPerception).split('.')[0]}</div>
           </div>
         </div>
 

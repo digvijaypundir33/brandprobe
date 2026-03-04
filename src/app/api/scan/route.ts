@@ -22,6 +22,7 @@ const scanRequestSchema = z.object({
   email: z.string().email('Valid email is required'),
   analysisType: z.enum(['quick', 'full']).default('full').optional(),
   skipVerification: z.boolean().optional(), // For authenticated users
+  forceRescan: z.boolean().optional(), // Allow re-scanning same URL
 });
 
 export async function POST(request: NextRequest) {
@@ -29,28 +30,97 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { url, email, analysisType = 'full', skipVerification = false } = scanRequestSchema.parse(body);
+    const { url, email, analysisType = 'full', skipVerification = false, forceRescan = false } = scanRequestSchema.parse(body);
 
     // Normalize URL
     const normalizedUrl = normalizeUrl(url);
     const domain = extractDomain(normalizedUrl);
 
+    // Get or create user first (needed for checking limits)
+    const user = await getOrCreateUser(email);
+
     // Check for cached report (same URL within 24 hours)
     const cachedReport = await getCachedReport(normalizedUrl);
-    if (cachedReport) {
+    if (cachedReport && !forceRescan) {
+      // Return info about existing report, let client decide to rescan
       return NextResponse.json({
         success: true,
         reportId: cachedReport.id,
         cached: true,
+        existingReport: {
+          id: cachedReport.id,
+          url: cachedReport.url,
+          createdAt: cachedReport.createdAt,
+          overallScore: cachedReport.overallScore,
+        },
+        canRescan: user.subscriptionStatus === 'active', // Only Pro users can rescan for free
       });
     }
-
-    // Get or create user
-    const user = await getOrCreateUser(email);
 
     // Check if user is already authenticated
     const session = await getSessionFromRequest(request);
     const isAuthenticated = session?.email === email;
+
+    // Check report limits for free and starter users BEFORE creating report
+    if (user.subscriptionStatus === 'free' || user.subscriptionStatus === null || user.subscriptionStatus === 'starter') {
+      // Count existing reports for this user
+      const { getReportsByUserId } = await import('@/lib/supabase');
+      const existingReports = await getReportsByUserId(user.id);
+
+      const limit = user.subscriptionStatus === 'starter' ? 2 : 1; // Starter: 2 reports, Free: 1 report
+
+      if (existingReports.length >= limit) {
+        // Starter users only see Pro upgrade option
+        if (user.subscriptionStatus === 'starter') {
+          return NextResponse.json(
+            {
+              success: false,
+              error: 'Starter plan limit reached',
+              message: 'You have used both Starter reports. Upgrade to Pro for $29/month to get 10 reports per month.',
+              requiresUpgrade: true,
+              upgradeOptions: {
+                pro: { price: 29, type: 'monthly', reports: 10, description: '10 full reports per month' },
+              },
+            },
+            { status: 403 }
+          );
+        }
+
+        // Free users see both Starter and Pro options
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Free plan limit reached',
+            message: 'Free users can only create 1 report. Get 2 complete reports for $9 or upgrade to Pro for $29/month.',
+            requiresUpgrade: true,
+            upgradeOptions: {
+              starter: { price: 9, type: 'one-time', reports: 2, description: '2 complete reports with all 10 sections' },
+              pro: { price: 29, type: 'monthly', reports: 10, description: '10 full reports per month' },
+            },
+          },
+          { status: 403 }
+        );
+      }
+
+      // For Starter users, check if they're trying to scan the same website twice
+      if (user.subscriptionStatus === 'starter') {
+        const existingSiteReports = existingReports.filter(report => {
+          const reportDomain = extractDomain(report.url);
+          return reportDomain === domain;
+        });
+
+        if (existingSiteReports.length > 0) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: 'Duplicate website',
+              message: 'You already have a report for this website. Starter plan allows 5 reports for different websites only.',
+            },
+            { status: 403 }
+          );
+        }
+      }
+    }
 
     // If not authenticated and not skipping verification, send magic link
     if (!isAuthenticated && !skipVerification) {

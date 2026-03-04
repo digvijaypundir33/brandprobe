@@ -23,20 +23,22 @@ interface ScoreRadarChartProps {
     brandHealth: number;
     designAuth: number;
   };
+  hasFullAccess?: boolean;
 }
 
-export default function ScoreRadarChart({ scores }: ScoreRadarChartProps) {
+export default function ScoreRadarChart({ scores, hasFullAccess = false }: ScoreRadarChartProps) {
+  // Show all scores for all users (including free users)
   const data = [
-    { subject: 'Messaging', score: scores.messaging, fullMark: 100 },
-    { subject: 'SEO', score: scores.seo, fullMark: 100 },
-    { subject: 'Content', score: scores.content, fullMark: 100 },
-    { subject: 'Ads', score: scores.ads, fullMark: 100 },
-    { subject: 'Conversion', score: scores.conversion, fullMark: 100 },
-    { subject: 'Distribution', score: scores.distribution, fullMark: 100 },
-    { subject: 'AI Search', score: scores.aiSearch, fullMark: 100 },
-    { subject: 'Technical', score: scores.technical, fullMark: 100 },
-    { subject: 'Brand', score: scores.brandHealth, fullMark: 100 },
-    { subject: 'Design', score: scores.designAuth, fullMark: 100 },
+    { subject: 'Messaging', score: scores.messaging, fullMark: 100, locked: false },
+    { subject: 'SEO', score: scores.seo, fullMark: 100, locked: false },
+    { subject: 'Content', score: scores.content, fullMark: 100, locked: false },
+    { subject: 'Ads', score: scores.ads, fullMark: 100, locked: false },
+    { subject: 'Conversion', score: scores.conversion, fullMark: 100, locked: !hasFullAccess },
+    { subject: 'Distribution', score: scores.distribution, fullMark: 100, locked: !hasFullAccess },
+    { subject: 'AI Search', score: scores.aiSearch, fullMark: 100, locked: !hasFullAccess },
+    { subject: 'Technical', score: scores.technical, fullMark: 100, locked: !hasFullAccess },
+    { subject: 'Brand', score: scores.brandHealth, fullMark: 100, locked: !hasFullAccess },
+    { subject: 'Design', score: scores.designAuth, fullMark: 100, locked: !hasFullAccess },
   ];
 
   return (

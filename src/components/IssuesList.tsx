@@ -4,6 +4,7 @@ import type { Report, Issue as ReportIssue } from '@/types/report';
 
 interface IssuesListProps {
   report: Report;
+  hasFullAccess?: boolean;
 }
 
 interface DisplayIssue {
@@ -12,6 +13,7 @@ interface DisplayIssue {
   solution?: string;
   severity: 'critical' | 'warning' | 'info';
   score: number;
+  locked?: boolean;
 }
 
 // Helper to extract text from Issue objects or strings
@@ -22,19 +24,26 @@ function getIssueText(issue: ReportIssue | string): { problem: string; solution?
   return { problem: issue.problem, solution: issue.solution };
 }
 
-function extractIssues(report: Report): DisplayIssue[] {
+function extractIssues(report: Report, hasFullAccess: boolean): DisplayIssue[] {
   const issues: DisplayIssue[] = [];
 
-  const sections = [
-    { name: 'Messaging', data: report.messagingAnalysis, score: report.messagingScore },
-    { name: 'SEO', data: report.seoOpportunities, score: report.seoScore },
-    { name: 'Content', data: report.contentStrategy, score: report.contentScore },
-    { name: 'Ads', data: report.adAngles, score: report.adsScore },
-    { name: 'Conversion', data: report.conversionOptimization, score: report.conversionScore },
-    { name: 'Distribution', data: report.distributionStrategy, score: report.distributionScore },
+  // Show all issues for all users (blur locked ones for free users)
+  const allSections = [
+    { name: 'Messaging', data: report.messagingAnalysis, score: report.messagingScore, free: true },
+    { name: 'SEO', data: report.seoOpportunities, score: report.seoScore, free: true },
+    { name: 'Content', data: report.contentStrategy, score: report.contentScore, free: true },
+    { name: 'Ads', data: report.adAngles, score: report.adsScore, free: true },
+    { name: 'Conversion', data: report.conversionOptimization, score: report.conversionScore, free: false },
+    { name: 'Distribution', data: report.distributionStrategy, score: report.distributionScore, free: false },
+    { name: 'AI Search', data: report.aiSearchVisibility, score: report.aiSearchScore, free: false },
+    { name: 'Technical', data: report.technicalPerformance, score: report.technicalScore, free: false },
+    { name: 'Brand Health', data: report.brandHealth, score: report.brandHealthScore, free: false },
+    { name: 'Design', data: report.designAuthenticity, score: report.designAuthenticityScore, free: false },
   ];
 
-  sections.forEach(({ name, data, score }) => {
+  allSections.forEach(({ name, data, score, free }) => {
+    const isLocked = !free && !hasFullAccess;
+
     if (data?.keyIssues) {
       data.keyIssues.forEach((issue) => {
         const { problem, solution } = getIssueText(issue);
@@ -44,7 +53,18 @@ function extractIssues(report: Report): DisplayIssue[] {
           solution,
           severity: score && score <= 30 ? 'critical' : score && score <= 50 ? 'warning' : 'info',
           score: score || 0,
+          locked: isLocked,
         });
+      });
+    } else if (isLocked && score) {
+      // Add placeholder issues for locked sections (backend stripped the data)
+      issues.push({
+        section: name,
+        problem: 'Upgrade to unlock detailed issues and recommendations for this section.',
+        solution: undefined,
+        severity: score <= 30 ? 'critical' : score <= 50 ? 'warning' : 'info',
+        score: score || 0,
+        locked: true,
       });
     }
   });
@@ -56,8 +76,8 @@ function extractIssues(report: Report): DisplayIssue[] {
   return issues;
 }
 
-export default function IssuesList({ report }: IssuesListProps) {
-  const issues = extractIssues(report);
+export default function IssuesList({ report, hasFullAccess = false }: IssuesListProps) {
+  const issues = extractIssues(report, hasFullAccess);
 
   if (issues.length === 0) return null;
 
@@ -104,12 +124,14 @@ export default function IssuesList({ report }: IssuesListProps) {
         {issues.slice(0, 10).map((issue, index) => (
           <div
             key={index}
-            className="bg-red-50 border border-red-100 rounded-lg p-4 flex items-start gap-3"
+            className={`bg-red-50 border border-red-100 rounded-lg p-4 flex items-start gap-3 relative ${
+              issue.locked ? 'overflow-hidden' : ''
+            }`}
           >
-            <svg className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+            <svg className={`w-5 h-5 text-red-500 flex-shrink-0 mt-0.5 ${issue.locked ? 'blur-sm' : ''}`} fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
             </svg>
-            <div className="flex-1 min-w-0">
+            <div className={`flex-1 min-w-0 ${issue.locked ? 'blur-sm select-none' : ''}`}>
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-xs font-semibold text-gray-500 uppercase">
                   {issue.section}
@@ -118,6 +140,16 @@ export default function IssuesList({ report }: IssuesListProps) {
               </div>
               <p className="text-sm text-gray-700">{issue.problem}</p>
             </div>
+            {issue.locked && (
+              <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] flex items-center justify-center">
+                <div className="text-center">
+                  <svg className="w-4 h-4 text-gray-400 mx-auto mb-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-[10px] text-gray-500 font-medium">Upgrade</span>
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>

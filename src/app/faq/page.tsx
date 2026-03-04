@@ -90,7 +90,7 @@ export default function FAQPage() {
                   What do I get with the paid tiers?
                 </h3>
                 <p className="text-gray-700 mb-2">
-                  <strong>Starter ($9 one-time):</strong> Unlock all 10 sections for one report including AI Search, Technical Performance, Brand Health, and Design Authenticity.
+                  <strong>Starter ($9 one-time):</strong> 2 complete website analyses with all 10 sections unlocked including AI Search, Technical Performance, Brand Health, and Design Authenticity. Perfect for analyzing your main site plus one competitor or client site.
                 </p>
                 <p className="text-gray-700">
                   <strong>Pro ($29/month):</strong> 10 full reports per month, monthly auto re-scan with progress tracking, and all sections unlocked.

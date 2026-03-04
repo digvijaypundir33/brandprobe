@@ -43,35 +43,49 @@ export async function GET(request: NextRequest) {
                 justify-content: center;
                 min-height: 100vh;
                 margin: 0;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                background: linear-gradient(to bottom, #eff6ff, white);
               }
               .container {
                 background: white;
                 padding: 48px;
-                border-radius: 12px;
-                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                border-radius: 16px;
+                border: 2px solid #e5e7eb;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.1);
                 max-width: 500px;
                 text-align: center;
               }
-              h1 {
+              .icon {
+                width: 64px;
+                height: 64px;
+                margin: 0 auto 24px;
+                border-radius: 50%;
+                background: #fef2f2;
+                display: flex;
+                align-items: center;
+                justify-content: center;
                 font-size: 32px;
+              }
+              h1 {
+                font-size: 28px;
                 margin: 0 0 16px 0;
-                color: #dc2626;
+                color: #111827;
+                font-weight: 700;
               }
               p {
-                color: #666;
+                color: #6b7280;
                 font-size: 16px;
                 line-height: 1.6;
-                margin: 0 0 24px 0;
+                margin: 0 0 32px 0;
               }
               a {
                 display: inline-block;
                 background: rgb(91, 91, 213);
                 color: white;
-                padding: 12px 32px;
-                border-radius: 6px;
+                padding: 14px 32px;
+                border-radius: 8px;
                 text-decoration: none;
                 font-weight: 500;
+                transition: background 0.2s;
               }
               a:hover {
                 background: rgb(71, 71, 193);
@@ -80,7 +94,8 @@ export async function GET(request: NextRequest) {
           </head>
           <body>
             <div class="container">
-              <h1>🔗 Invalid or Expired Link</h1>
+              <div class="icon">🔗</div>
+              <h1>Invalid or Expired Link</h1>
               <p>
                 This magic link is invalid, has already been used, or has expired.
                 Magic links are valid for 15 minutes and can only be used once.
@@ -120,35 +135,49 @@ export async function GET(request: NextRequest) {
                 justify-content: center;
                 min-height: 100vh;
                 margin: 0;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                background: linear-gradient(to bottom, #eff6ff, white);
               }
               .container {
                 background: white;
                 padding: 48px;
-                border-radius: 12px;
-                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                border-radius: 16px;
+                border: 2px solid #e5e7eb;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.1);
                 max-width: 500px;
                 text-align: center;
               }
-              h1 {
+              .icon {
+                width: 64px;
+                height: 64px;
+                margin: 0 auto 24px;
+                border-radius: 50%;
+                background: #fef3c7;
+                display: flex;
+                align-items: center;
+                justify-content: center;
                 font-size: 32px;
+              }
+              h1 {
+                font-size: 28px;
                 margin: 0 0 16px 0;
-                color: #dc2626;
+                color: #111827;
+                font-weight: 700;
               }
               p {
-                color: #666;
+                color: #6b7280;
                 font-size: 16px;
                 line-height: 1.6;
-                margin: 0 0 24px 0;
+                margin: 0 0 32px 0;
               }
               a {
                 display: inline-block;
                 background: rgb(91, 91, 213);
                 color: white;
-                padding: 12px 32px;
-                border-radius: 6px;
+                padding: 14px 32px;
+                border-radius: 8px;
                 text-decoration: none;
                 font-weight: 500;
+                transition: background 0.2s;
               }
               a:hover {
                 background: rgb(71, 71, 193);
@@ -157,7 +186,8 @@ export async function GET(request: NextRequest) {
           </head>
           <body>
             <div class="container">
-              <h1>⏱️ Link Expired</h1>
+              <div class="icon">⏱️</div>
+              <h1>Link Expired</h1>
               <p>
                 This magic link has expired. For security, links are only valid for 15 minutes.
                 Please request a new link to continue.
@@ -230,9 +260,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Determine redirect URL
-    const redirectUrl = targetReportId ? `/report/${targetReportId}` : '/';
+    const redirectUrl = targetReportId ? `/report/${targetReportId}` : '/dashboard';
 
-    // Redirect to report or home
+    // Redirect to report or dashboard
     return NextResponse.redirect(
       new URL(redirectUrl, process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000')
     );
@@ -255,35 +285,49 @@ export async function GET(request: NextRequest) {
               justify-content: center;
               min-height: 100vh;
               margin: 0;
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              background: linear-gradient(to bottom, #eff6ff, white);
             }
             .container {
               background: white;
               padding: 48px;
-              border-radius: 12px;
-              box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+              border-radius: 16px;
+              border: 2px solid #e5e7eb;
+              box-shadow: 0 10px 40px rgba(0,0,0,0.1);
               max-width: 500px;
               text-align: center;
             }
-            h1 {
+            .icon {
+              width: 64px;
+              height: 64px;
+              margin: 0 auto 24px;
+              border-radius: 50%;
+              background: #fef2f2;
+              display: flex;
+              align-items: center;
+              justify-content: center;
               font-size: 32px;
+            }
+            h1 {
+              font-size: 28px;
               margin: 0 0 16px 0;
-              color: #dc2626;
+              color: #111827;
+              font-weight: 700;
             }
             p {
-              color: #666;
+              color: #6b7280;
               font-size: 16px;
               line-height: 1.6;
-              margin: 0 0 24px 0;
+              margin: 0 0 32px 0;
             }
             a {
               display: inline-block;
               background: rgb(91, 91, 213);
               color: white;
-              padding: 12px 32px;
-              border-radius: 6px;
+              padding: 14px 32px;
+              border-radius: 8px;
               text-decoration: none;
               font-weight: 500;
+              transition: background 0.2s;
             }
             a:hover {
               background: rgb(71, 71, 193);
@@ -292,7 +336,8 @@ export async function GET(request: NextRequest) {
         </head>
         <body>
           <div class="container">
-            <h1>⚠️ Something Went Wrong</h1>
+            <div class="icon">⚠️</div>
+            <h1>Something Went Wrong</h1>
             <p>
               We encountered an error while verifying your access link.
               Please try again or contact support if the problem persists.

@@ -33,13 +33,18 @@ export async function POST(request: NextRequest) {
         const email = capture.payer.email_address;
         const captureId = capture.id;
 
+        // Extract reportId from the purchase unit's reference_id
+        const reportId = capture.supplementary_data?.related_ids?.order_id
+          ? body.resource.purchase_units?.[0]?.reference_id
+          : null;
+
         const user = await getOrCreateUser(email);
 
         await updateUser(user.id, {
           subscriptionStatus: 'starter',
-          oneTimePurchaseId: captureId,
+          oneTimePurchaseId: null, // Starter users can create multiple reports, not tied to one
           reportsUsedThisMonth: 0,
-          reportsLimit: 1,
+          reportsLimit: 2, // 2 full reports with all 10 sections unlocked
         });
 
         console.log(`[PayPal Webhook] Starter tier activated for ${email}`);

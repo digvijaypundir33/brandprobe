@@ -1,8 +1,25 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import URLInput from '@/components/URLInput';
+import Link from 'next/link';
 
 export default function Home() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    // Check if user has a session cookie
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/auth/session');
+        const data = await response.json();
+        setIsAuthenticated(data.authenticated);
+      } catch (error) {
+        console.error('Failed to check auth:', error);
+      }
+    };
+    checkAuth();
+  }, []);
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       {/* Header */}
@@ -26,12 +43,29 @@ export default function Home() {
             </div>
             <span className="text-xl font-bold text-gray-900">BrandProbe</span>
           </div>
-          <a
-            href="#pricing"
-            className="text-sm font-medium text-gray-600 hover:text-gray-900"
-          >
-            Pricing
-          </a>
+          <div className="flex items-center gap-4">
+            {isAuthenticated ? (
+              <Link
+                href="/dashboard"
+                className="text-sm font-medium text-gray-600 hover:text-gray-900"
+              >
+                Dashboard
+              </Link>
+            ) : (
+              <Link
+                href="/access-reports"
+                className="text-sm font-medium text-gray-600 hover:text-gray-900"
+              >
+                View My Reports
+              </Link>
+            )}
+            <a
+              href="#pricing"
+              className="text-sm font-medium text-gray-600 hover:text-gray-900"
+            >
+              Pricing
+            </a>
+          </div>
         </div>
       </header>
 

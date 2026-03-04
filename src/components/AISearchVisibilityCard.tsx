@@ -47,15 +47,15 @@ export default function AISearchVisibilityCard({ aiSearch }: AISearchVisibilityC
           <p className="text-gray-700 text-sm">{aiSearch.summary}</p>
         </div>
 
-        {/* AEO Score Badge */}
-        <div className="flex items-center gap-4 mb-6">
-          <div className="bg-indigo-600 rounded-lg px-4 py-3 text-white">
-            <div className="text-xs text-indigo-200 uppercase tracking-wide">AEO Score</div>
-            <div className="text-2xl font-bold">{analysis.aeoScore}</div>
+        {/* AEO Score - Sub-metric */}
+        <div className="bg-gray-50 rounded-lg p-4 mb-6 border border-gray-100">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="font-medium text-gray-800 text-sm">Answer Engine Optimization (AEO)</h4>
+            <span className="text-lg font-semibold text-gray-900">{analysis.aeoScore}/100</span>
           </div>
-          <div className="flex-1 text-sm text-gray-600">
-            Answer Engine Optimization score measures how likely your content is to be cited by AI assistants.
-          </div>
+          <p className="text-xs text-gray-600">
+            Measures how likely your content is to be cited by AI assistants like ChatGPT and Perplexity.
+          </p>
         </div>
 
         {/* Analysis Cards */}
@@ -105,7 +105,7 @@ export default function AISearchVisibilityCard({ aiSearch }: AISearchVisibilityC
         {aiSearchAppearance.length > 0 && (
           <div className="mb-6">
             <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-              <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               Potential AI Search Queries
@@ -114,7 +114,7 @@ export default function AISearchVisibilityCard({ aiSearch }: AISearchVisibilityC
               {aiSearchAppearance.map((query, i) => (
                 <span
                   key={i}
-                  className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-md text-sm border border-blue-200"
+                  className="px-3 py-1.5 bg-gray-50 text-gray-700 rounded-md text-sm border border-gray-200"
                 >
                   {query}
                 </span>
@@ -127,15 +127,15 @@ export default function AISearchVisibilityCard({ aiSearch }: AISearchVisibilityC
         {faqOpportunities.length > 0 && (
           <div className="mb-6">
             <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-              <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               FAQ Opportunities
             </h4>
             <ul className="space-y-2">
               {faqOpportunities.map((faq, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-indigo-700 bg-indigo-50 rounded-lg p-3 border border-indigo-100">
-                  <span className="text-indigo-400 font-medium">Q:</span>
+                <li key={i} className="flex items-start gap-2 text-sm text-gray-700 bg-gray-50 rounded-lg p-3 border border-gray-100">
+                  <span className="text-gray-500 font-medium">Q:</span>
                   {faq}
                 </li>
               ))}

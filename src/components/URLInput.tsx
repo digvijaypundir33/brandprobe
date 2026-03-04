@@ -3,6 +3,18 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+interface UpgradeOptions {
+  starter: { price: number; type: string; reports: number; description?: string };
+  pro: { price: number; type: string; reports: number; description?: string };
+}
+
+interface ExistingReport {
+  id: string;
+  url: string;
+  createdAt: string;
+  overallScore: number | null;
+}
+
 export default function URLInput() {
   const router = useRouter();
   const [url, setUrl] = useState('');
@@ -10,23 +22,87 @@ export default function URLInput() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [verificationSent, setVerificationSent] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeOptions, setUpgradeOptions] = useState<UpgradeOptions | null>(null);
+  const [showRescanModal, setShowRescanModal] = useState(false);
+  const [existingReport, setExistingReport] = useState<ExistingReport | null>(null);
+  const [canRescan, setCanRescan] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, forceRescan = false) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
+
+    // Client-side URL validation
+    const trimmedUrl = url.trim();
+    if (!trimmedUrl) {
+      setError('Please enter a website URL');
+      setLoading(false);
+      return;
+    }
+
+    // Basic URL validation
+    try {
+      let testUrl = trimmedUrl;
+      if (!testUrl.startsWith('http://') && !testUrl.startsWith('https://')) {
+        testUrl = `https://${testUrl}`;
+      }
+      const parsed = new URL(testUrl);
+
+      // Check for valid hostname
+      if (!parsed.hostname || parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') {
+        setError('Please enter a valid public website URL');
+        setLoading(false);
+        return;
+      }
+
+      // Check for TLD (at least one dot in hostname)
+      if (!parsed.hostname.includes('.')) {
+        setError('Please enter a valid website URL (e.g., example.com)');
+        setLoading(false);
+        return;
+      }
+    } catch (err) {
+      setError('Please enter a valid website URL (e.g., example.com)');
+      setLoading(false);
+      return;
+    }
+
+    // Email validation
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      setError('Please enter a valid email address');
+      setLoading(false);
+      return;
+    }
 
     try {
       const response = await fetch('/api/scan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url, email }),
+        body: JSON.stringify({ url: trimmedUrl, email: trimmedEmail, forceRescan }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
+        // Check if this is an upgrade required error
+        if (data.requiresUpgrade && data.upgradeOptions) {
+          setUpgradeOptions(data.upgradeOptions);
+          setShowUpgradeModal(true);
+          setLoading(false);
+          return;
+        }
         throw new Error(data.message || data.error || 'Failed to start scan');
+      }
+
+      // Check if there's an existing report (cached)
+      if (data.cached && data.existingReport && !forceRescan) {
+        setExistingReport(data.existingReport);
+        setCanRescan(data.canRescan);
+        setShowRescanModal(true);
+        setLoading(false);
+        return;
       }
 
       // Check if verification is required
@@ -36,13 +112,185 @@ export default function URLInput() {
         return;
       }
 
-      // Redirect to report page (for authenticated users or cached reports)
+      // Redirect to report page (for authenticated users or new reports)
       router.push(`/report/${data.reportId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
       setLoading(false);
     }
   };
+
+  const handleRescan = async () => {
+    setShowRescanModal(false);
+    const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
+    await handleSubmit(fakeEvent, true);
+  };
+
+  const handleViewExisting = () => {
+    if (existingReport) {
+      router.push(`/report/${existingReport.id}`);
+    }
+  };
+
+  // Rescan Modal
+  if (showRescanModal && existingReport) {
+    const reportDate = new Date(existingReport.createdAt);
+    const daysAgo = Math.floor((Date.now() - reportDate.getTime()) / (1000 * 60 * 60 * 24));
+
+    return (
+      <div className="w-full max-w-2xl mx-auto">
+        <div className="p-8 bg-white rounded-2xl border-2 border-gray-200 shadow-lg">
+          <div className="text-center mb-8">
+            <div className="mx-auto w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mb-4">
+              <svg className="w-8 h-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <h3 className="text-2xl font-bold mb-2 text-gray-900">Report Already Exists</h3>
+            <p className="text-gray-600 mb-4">
+              We found an existing report for this website created {daysAgo === 0 ? 'today' : `${daysAgo} day${daysAgo > 1 ? 's' : ''} ago`}
+            </p>
+            {existingReport.overallScore !== null && (
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg">
+                <span className="text-sm text-gray-600">Previous Score:</span>
+                <span className="text-2xl font-bold" style={{ color: 'var(--brand-primary)' }}>
+                  {existingReport.overallScore}/100
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-4 mb-6">
+            {/* View Existing */}
+            <button
+              onClick={handleViewExisting}
+              className="py-4 px-6 bg-white border-2 border-gray-300 text-gray-900 rounded-xl font-medium hover:bg-gray-50 transition-colors"
+            >
+              <div className="text-left">
+                <div className="font-semibold mb-1">View Existing Report</div>
+                <div className="text-xs text-gray-600">Free • See your previous analysis</div>
+              </div>
+            </button>
+
+            {/* Re-analyze */}
+            <button
+              onClick={handleRescan}
+              disabled={!canRescan}
+              className="py-4 px-6 text-white rounded-xl font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ backgroundColor: canRescan ? 'var(--brand-primary)' : '#9ca3af' }}
+            >
+              <div className="text-left">
+                <div className="font-semibold mb-1">
+                  {canRescan ? 'Re-analyze Now' : 'Re-analyze (Pro Only)'}
+                </div>
+                <div className="text-xs text-white/80">
+                  {canRescan ? 'Get fresh insights' : 'Upgrade to re-scan'}
+                </div>
+              </div>
+            </button>
+          </div>
+
+          {!canRescan && (
+            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg mb-4">
+              <p className="text-sm text-gray-700 text-center">
+                <strong>Pro users</strong> can re-analyze websites anytime to track improvements. Free users get 1 report per website.
+              </p>
+            </div>
+          )}
+
+          <button
+            onClick={() => {
+              setShowRescanModal(false);
+              setUrl('');
+              setEmail('');
+            }}
+            className="text-sm text-gray-500 hover:text-gray-700 mx-auto block"
+          >
+            ← Try a different website
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Upgrade Modal
+  if (showUpgradeModal && upgradeOptions) {
+    return (
+      <div className="w-full max-w-2xl mx-auto">
+        <div className="p-8 bg-white rounded-2xl border-2 border-gray-200 shadow-lg">
+          <div className="text-center mb-8">
+            <div className="mx-auto w-16 h-16 rounded-full bg-yellow-100 flex items-center justify-center mb-4">
+              <svg className="w-8 h-8 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <h3 className="text-2xl font-bold mb-2 text-gray-900">Free Plan Limit Reached</h3>
+            <p className="text-gray-600">
+              You've already created your free report. Choose an option below to continue:
+            </p>
+          </div>
+
+          {/* Pricing Options */}
+          <div className="grid md:grid-cols-2 gap-4 mb-6">
+            {/* Starter Plan */}
+            <div className="border-2 border-gray-200 rounded-xl p-6 hover:border-blue-300 transition-colors">
+              <div className="mb-4">
+                <h4 className="text-lg font-bold text-gray-900">Starter</h4>
+                <p className="text-sm text-gray-600">{upgradeOptions.starter.description || 'One-time purchase'}</p>
+              </div>
+              <div className="mb-4">
+                <span className="text-3xl font-bold text-gray-900">${upgradeOptions.starter.price}</span>
+                <span className="text-gray-600 ml-2">one-time</span>
+              </div>
+              <a
+                href="#pricing"
+                className="block w-full py-3 px-4 bg-gray-900 text-white text-center rounded-lg font-medium hover:bg-gray-800 transition-colors"
+                onClick={() => setShowUpgradeModal(false)}
+              >
+                Get Starter
+              </a>
+            </div>
+
+            {/* Pro Plan */}
+            <div className="border-2 rounded-xl p-6 relative overflow-hidden hover:border-blue-400 transition-colors"
+              style={{ borderColor: 'var(--brand-primary)' }}>
+              <div className="absolute top-0 right-0 px-3 py-1 text-xs font-bold text-white rounded-bl-lg"
+                style={{ backgroundColor: 'var(--brand-primary)' }}>
+                POPULAR
+              </div>
+              <div className="mb-4">
+                <h4 className="text-lg font-bold text-gray-900">Pro</h4>
+                <p className="text-sm text-gray-600">{upgradeOptions.pro.description || 'Monthly subscription'}</p>
+              </div>
+              <div className="mb-4">
+                <span className="text-3xl font-bold text-gray-900">${upgradeOptions.pro.price}</span>
+                <span className="text-gray-600 ml-2">/month</span>
+              </div>
+              <a
+                href="#pricing"
+                className="block w-full py-3 px-4 text-white text-center rounded-lg font-medium transition-colors"
+                style={{ backgroundColor: 'var(--brand-primary)' }}
+                onClick={() => setShowUpgradeModal(false)}
+              >
+                Get Pro
+              </a>
+            </div>
+          </div>
+
+          <button
+            onClick={() => {
+              setShowUpgradeModal(false);
+              setUrl('');
+              setEmail('');
+            }}
+            className="text-sm text-gray-500 hover:text-gray-700 mx-auto block"
+          >
+            ← Go back
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (verificationSent) {
     return (

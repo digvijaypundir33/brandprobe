@@ -5,6 +5,7 @@ import type { Report } from '@/types/report';
 
 interface ExecutiveSummaryProps {
   report: Report;
+  hasFullAccess?: boolean;
 }
 
 function getScoreLabel(score: number): string {
@@ -14,15 +15,22 @@ function getScoreLabel(score: number): string {
   return 'Critical';
 }
 
-export default function ExecutiveSummary({ report }: ExecutiveSummaryProps) {
-  const sections = [
-    { name: 'Messaging', score: report.messagingScore || 0, summary: report.messagingAnalysis?.summary },
-    { name: 'SEO', score: report.seoScore || 0, summary: report.seoOpportunities?.summary },
-    { name: 'Content', score: report.contentScore || 0, summary: report.contentStrategy?.summary },
-    { name: 'Ads', score: report.adsScore || 0, summary: report.adAngles?.summary },
-    { name: 'Conversion', score: report.conversionScore || 0, summary: report.conversionOptimization?.summary },
-    { name: 'Distribution', score: report.distributionScore || 0, summary: report.distributionStrategy?.summary },
+export default function ExecutiveSummary({ report, hasFullAccess = false }: ExecutiveSummaryProps) {
+  // Show all 10 sections for all users (blur locked ones for free users)
+  const allSections = [
+    { name: 'Messaging', score: report.messagingScore || 0, summary: report.messagingAnalysis?.summary, free: true },
+    { name: 'SEO', score: report.seoScore || 0, summary: report.seoOpportunities?.summary, free: true },
+    { name: 'Content', score: report.contentScore || 0, summary: report.contentStrategy?.summary, free: true },
+    { name: 'Ads', score: report.adsScore || 0, summary: report.adAngles?.summary, free: true },
+    { name: 'Conversion', score: report.conversionScore || 0, summary: hasFullAccess ? report.conversionOptimization?.summary : 'Unlock to see detailed conversion optimization insights and recommendations.', free: false },
+    { name: 'Distribution', score: report.distributionScore || 0, summary: hasFullAccess ? report.distributionStrategy?.summary : 'Unlock to see detailed distribution strategy insights and recommendations.', free: false },
+    { name: 'AI Search', score: report.aiSearchScore || 0, summary: hasFullAccess ? report.aiSearchVisibility?.summary : 'Unlock to see detailed AI search visibility insights and recommendations.', free: false },
+    { name: 'Technical', score: report.technicalScore || 0, summary: hasFullAccess ? report.technicalPerformance?.summary : 'Unlock to see detailed technical performance insights and recommendations.', free: false },
+    { name: 'Brand Health', score: report.brandHealthScore || 0, summary: hasFullAccess ? report.brandHealth?.summary : 'Unlock to see detailed brand health insights and recommendations.', free: false },
+    { name: 'Design', score: report.designAuthenticityScore || 0, summary: hasFullAccess ? report.designAuthenticity?.summary : 'Unlock to see detailed design authenticity insights and recommendations.', free: false },
   ];
+
+  const sections = allSections;
 
   const topStrengths = sections
     .filter(s => s.score >= 70)
@@ -141,20 +149,44 @@ export default function ExecutiveSummary({ report }: ExecutiveSummaryProps) {
           Section Summaries
         </h4>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {sections.map((section) => (
-            <div
-              key={section.name}
-              className="bg-gray-50 rounded-lg p-3 border border-gray-100"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-medium text-gray-800 text-sm">{section.name}</span>
-                <span className="text-sm font-semibold text-gray-900">
-                  {section.score}
-                </span>
+          {sections.map((section) => {
+            const isLocked = !section.free && !hasFullAccess;
+            return (
+              <div
+                key={section.name}
+                className={`bg-gray-50 rounded-lg p-3 border border-gray-100 relative ${
+                  isLocked ? 'overflow-hidden' : ''
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-medium text-gray-800 text-sm flex items-center gap-1">
+                    {section.name}
+                    {isLocked && (
+                      <svg className="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </span>
+                  <span className={`text-sm font-semibold text-gray-900 ${isLocked ? 'blur-sm' : ''}`}>
+                    {section.score}
+                  </span>
+                </div>
+                <p className={`text-xs text-gray-600 line-clamp-2 ${isLocked ? 'blur-sm select-none' : ''}`}>
+                  {section.summary || 'Analysis pending...'}
+                </p>
+                {isLocked && (
+                  <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] flex items-center justify-center">
+                    <div className="text-center">
+                      <svg className="w-4 h-4 text-gray-400 mx-auto mb-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-[10px] text-gray-500 font-medium">Upgrade</span>
+                    </div>
+                  </div>
+                )}
               </div>
-              <p className="text-xs text-gray-600 line-clamp-2">{section.summary || 'Analysis pending...'}</p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </motion.div>

@@ -187,6 +187,20 @@ export async function getLatestReportForSite(siteId: string): Promise<Report | n
   return transformReport(data);
 }
 
+export async function getReportsByUserId(userId: string): Promise<Report[]> {
+  const { data, error } = await supabaseAdmin
+    .from('reports')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Failed to get reports by user ID:', error);
+    return [];
+  }
+  return data.map(transformReport);
+}
+
 export async function updateReport(
   reportId: string,
   updates: Partial<{
@@ -317,6 +331,7 @@ function transformUser(row: Record<string, unknown>): User {
     stripeCustomerId: row.stripe_customer_id as string | null,
     subscriptionStatus: row.subscription_status as User['subscriptionStatus'],
     subscriptionId: row.subscription_id as string | null,
+    oneTimePurchaseId: row.one_time_purchase_id as string | null,
     reportsUsedThisMonth: row.reports_used_this_month as number,
     reportsLimit: row.reports_limit as number,
     currentPeriodStart: row.current_period_start as string | null,
@@ -372,6 +387,7 @@ function transformReport(row: Record<string, unknown>): Report {
     scoreChange: row.score_change as number | null,
     scanTimeMs: row.scan_time_ms as number | null,
     isAutoRescan: row.is_auto_rescan as boolean,
+    isPublic: row.is_public !== false, // Default to true (public) if not set
     createdAt: row.created_at as string,
   };
 }

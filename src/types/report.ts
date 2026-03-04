@@ -196,6 +196,7 @@ export interface Report {
   // Meta
   scanTimeMs: number | null;
   isAutoRescan: boolean;
+  isPublic: boolean;
   createdAt: string;
 }
 
@@ -269,6 +270,7 @@ export interface User {
   stripeCustomerId: string | null;
   subscriptionStatus: 'free' | 'starter' | 'active' | 'cancelled' | 'past_due';
   subscriptionId: string | null;
+  oneTimePurchaseId: string | null;
   reportsUsedThisMonth: number;
   reportsLimit: number;
   currentPeriodStart: string | null;

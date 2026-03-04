@@ -21,6 +21,7 @@ import AISearchVisibilityCard from '@/components/AISearchVisibilityCard';
 import TechnicalPerformanceCard from '@/components/TechnicalPerformanceCard';
 import BrandHealthCard from '@/components/BrandHealthCard';
 import DesignAuthenticityCard from '@/components/DesignAuthenticityCard';
+import AuthenticatedHeader from '@/components/AuthenticatedHeader';
 import type { Report } from '@/types/report';
 
 type TabType = 'overview' | 'messaging' | 'seo' | 'content' | 'ads' | 'conversion' | 'distribution' | 'aiSearch' | 'technical' | 'brandHealth' | 'designAuth';
@@ -32,9 +33,16 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
   const [error, setError] = useState<string | null>(null);
   const [hasFullAccess, setHasFullAccess] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState<string>('free');
-  const [userEmail, setUserEmail] = useState<string>('');
+  const [userEmail, setUserEmail] = useState<string>(''); // Report owner's email
+  const [visitorEmail, setVisitorEmail] = useState<string>(''); // Current visitor's email (if authenticated)
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [paymentCancelled, setPaymentCancelled] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [pendingTier, setPendingTier] = useState<'starter' | 'pro' | null>(null);
+  const [emailInput, setEmailInput] = useState('');
+  const [isPublic, setIsPublic] = useState(true);
+  const [isTogglingPrivacy, setIsTogglingPrivacy] = useState(false);
 
   useEffect(() => {
     // Check for payment cancelled query parameter
@@ -43,9 +51,29 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
       setPaymentCancelled(true);
     }
 
+    // Check if user is authenticated
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/auth/session');
+        const data = await response.json();
+        setIsAuthenticated(data.authenticated);
+        if (data.authenticated && data.email) {
+          setVisitorEmail(data.email);
+        }
+      } catch (error) {
+        console.error('Failed to check auth:', error);
+      }
+    };
+    checkAuth();
+
     const fetchReport = async () => {
       try {
-        const response = await fetch(`/api/report/${id}`);
+        // Get share token from URL if present
+        const urlParams = new URLSearchParams(window.location.search);
+        const shareToken = urlParams.get('share');
+        const apiUrl = shareToken ? `/api/report/${id}?share=${shareToken}` : `/api/report/${id}`;
+
+        const response = await fetch(apiUrl);
         const data = await response.json();
 
         if (!response.ok) {
@@ -56,11 +84,12 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
         setHasFullAccess(data.hasFullAccess || false);
         setSubscriptionStatus(data.subscriptionStatus || 'free');
         setUserEmail(data.userEmail || '');
+        setIsPublic(data.report.isPublic !== false); // Default to public
 
         // If still scanning, poll for updates (but not if payment was cancelled)
         if (data.report.status === 'scanning' && !paymentCancelled) {
           const pollInterval = setInterval(async () => {
-            const pollResponse = await fetch(`/api/report/${id}`);
+            const pollResponse = await fetch(apiUrl);
             const pollData = await pollResponse.json();
 
             if (pollData.report.status !== 'scanning') {
@@ -83,39 +112,201 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
   }, [id, paymentCancelled]);
 
   const handleUnlock = (tier: 'starter' | 'pro') => {
+    // If visitor has no email, show email input modal first
+    if (!visitorEmail && !emailInput) {
+      setPendingTier(tier);
+      setShowEmailModal(true);
+      return;
+    }
+
     // Redirect to checkout page with tier, reportId, and email
-    const checkoutUrl = `/checkout?tier=${tier}&reportId=${id}&email=${encodeURIComponent(userEmail)}`;
+    const email = emailInput || visitorEmail || userEmail;
+    const checkoutUrl = `/checkout?tier=${tier}&reportId=${id}&email=${encodeURIComponent(email)}`;
     router.push(checkoutUrl);
+  };
+
+  const handleEmailSubmit = async () => {
+    if (!emailInput || !emailInput.includes('@')) {
+      alert('Please enter a valid email address');
+      return;
+    }
+
+    // Check if user already has access
+    try {
+      const response = await fetch(`/api/user/check?email=${encodeURIComponent(emailInput)}`);
+      const data = await response.json();
+
+      if (data.exists && (data.subscriptionStatus === 'active' || data.subscriptionStatus === 'starter')) {
+        // User has active subscription
+        alert(`This email already has an ${data.subscriptionStatus === 'active' ? 'Pro' : 'Starter'} plan! Please log in to access your reports.`);
+        setShowEmailModal(false);
+        setPendingTier(null);
+        setEmailInput('');
+        return;
+      }
+
+      // Email is new or has no subscription - continue to checkout
+      setShowEmailModal(false);
+      if (pendingTier) {
+        handleUnlock(pendingTier);
+      }
+    } catch (error) {
+      console.error('Error checking email:', error);
+      // On error, proceed anyway
+      setShowEmailModal(false);
+      if (pendingTier) {
+        handleUnlock(pendingTier);
+      }
+    }
+  };
+
+  const handleTogglePrivacy = async () => {
+    if (!visitorEmail || visitorEmail !== userEmail) {
+      alert('Only the report owner can change privacy settings');
+      return;
+    }
+
+    const newPrivacyState = !isPublic;
+    setIsTogglingPrivacy(true);
+
+    try {
+      const response = await fetch(`/api/report/${id}/privacy`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isPublic: newPrivacyState }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setIsPublic(newPrivacyState);
+      } else {
+        alert(data.error || 'Failed to update privacy setting');
+      }
+    } catch (error) {
+      alert('Failed to update privacy setting');
+    } finally {
+      setIsTogglingPrivacy(false);
+    }
   };
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           className="text-center bg-white rounded-2xl shadow-xl p-8 max-w-md"
         >
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'rgba(91, 91, 213, 0.1)' }}>
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'var(--brand-primary)' }}>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Error</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Private Report</h1>
           <p className="text-gray-600 mb-6">{error}</p>
+          <p className="text-sm text-gray-500 mb-6">
+            Want your own BrandProbe report? Analyze any website in 60 seconds.
+          </p>
           <button
             onClick={() => router.push('/')}
-            className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium"
+            className="px-6 py-3 text-white rounded-xl transition-all font-medium hover:opacity-90"
+            style={{ backgroundColor: 'var(--brand-primary)' }}
           >
-            Go Home
+            Try BrandProbe
           </button>
         </motion.div>
       </div>
     );
   }
 
-  if (!report || (report.status === 'scanning' && !paymentCancelled)) {
-    return <ScanningAnimation />;
+  // Show scanning animation only if report hasn't loaded yet OR if it's actively scanning
+  if (!report) {
+    // Skeleton loader matching report layout
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 animate-pulse">
+        {/* Header Skeleton */}
+        <header className="bg-white border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-gray-100 rounded-lg"></div>
+              <div className="w-24 h-6 bg-gray-100 rounded"></div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="w-32 h-4 bg-gray-100 rounded"></div>
+            </div>
+          </div>
+        </header>
+
+        <main className="max-w-7xl mx-auto px-4 py-8">
+          {/* Hero Section Skeleton */}
+          <div className="mb-8">
+            <div className="grid lg:grid-cols-3 gap-6">
+              {/* Score Card Skeleton */}
+              <div className="lg:col-span-1">
+                <div className="bg-white rounded-xl border border-gray-200 p-6">
+                  <div className="w-32 h-32 bg-gray-100 rounded-full mx-auto mb-4"></div>
+                  <div className="w-24 h-8 bg-gray-100 rounded mx-auto mb-2"></div>
+                  <div className="w-16 h-4 bg-gray-100 rounded mx-auto"></div>
+                </div>
+              </div>
+
+              {/* URL and Details Skeleton */}
+              <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-6">
+                <div className="w-48 h-8 bg-gray-100 rounded mb-4"></div>
+                <div className="w-64 h-6 bg-gray-100 rounded mb-6"></div>
+                <div className="grid grid-cols-4 gap-4">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                      <div className="w-8 h-8 bg-gray-100 rounded mx-auto mb-2"></div>
+                      <div className="w-12 h-4 bg-gray-100 rounded mx-auto"></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Tab Navigation Skeleton */}
+          <div className="mb-6">
+            <div className="bg-white rounded-xl p-1 shadow-sm border border-gray-100">
+              <div className="grid grid-cols-5 lg:grid-cols-10 gap-1">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
+                  <div key={i} className="h-10 bg-gray-50 rounded-lg"></div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Content Skeleton */}
+          <div className="space-y-6">
+            <div className="bg-white rounded-xl border border-gray-200 p-6">
+              <div className="w-48 h-6 bg-gray-100 rounded mb-4"></div>
+              <div className="space-y-3">
+                <div className="w-full h-4 bg-gray-100 rounded"></div>
+                <div className="w-full h-4 bg-gray-100 rounded"></div>
+                <div className="w-3/4 h-4 bg-gray-100 rounded"></div>
+              </div>
+            </div>
+
+            <div className="grid lg:grid-cols-2 gap-6">
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <div className="w-40 h-6 bg-gray-100 rounded mb-4"></div>
+                <div className="w-full h-64 bg-gray-100 rounded"></div>
+              </div>
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <div className="w-40 h-6 bg-gray-100 rounded mb-4"></div>
+                <div className="w-full h-64 bg-gray-100 rounded"></div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (report.status === 'scanning' && !paymentCancelled) {
+    return <ScanningAnimation websiteUrl={report.url} />;
   }
 
   // If payment was cancelled and report is still scanning, show a message instead of loading animation
@@ -226,7 +417,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
     designAuth: report.designAuthenticityScore || 0,
   };
 
-  // Free tier: 4 sections visible (Messaging, SEO, Content, Ad Angles)
+  // Free tier: 4 sections visible (Messaging, SEO, Content, Ads)
   // Paid tiers (Starter/Pro): All 10 sections visible
   const tabs: { id: TabType; label: string; score?: number; locked?: boolean }[] = [
     { id: 'overview', label: 'Overview' },
@@ -257,66 +448,76 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <a href="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 bg-gray-900 rounded-lg flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-            <span className="text-xl font-bold text-gray-900">
-              BrandProbe
-            </span>
-          </a>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-500 hidden md:block">
-                Report generated {new Date(report.createdAt).toLocaleDateString()}
+      {isAuthenticated ? (
+        <AuthenticatedHeader
+          email={userEmail}
+          subscriptionStatus={subscriptionStatus}
+          pageTitle={`Report for ${new URL(report.url).hostname}`}
+          showUpgradeButton={!hasFullAccess}
+          reportId={id}
+        />
+      ) : (
+        <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+          <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+            <a href="/" className="flex items-center gap-2 group">
+              <div className="w-10 h-10 bg-gray-900 rounded-lg flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <span className="text-xl font-bold text-gray-900">
+                BrandProbe
               </span>
-              {hasFullAccess && (
-                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
-                  subscriptionStatus === 'active'
-                    ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white'
-                    : 'bg-green-100 text-green-800'
-                }`}>
-                  {subscriptionStatus === 'active' ? (
-                    <>
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      PRO
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                      PAID
-                    </>
-                  )}
+            </a>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-500 hidden md:block">
+                  Report generated {new Date(report.createdAt).toLocaleDateString()}
                 </span>
+                {hasFullAccess && (
+                  <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                    subscriptionStatus === 'active'
+                      ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white'
+                      : 'bg-green-100 text-green-800'
+                  }`}>
+                    {subscriptionStatus === 'active' ? (
+                      <>
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                        PRO
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        PAID
+                      </>
+                    )}
+                  </span>
+                )}
+              </div>
+              {!hasFullAccess && (
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => handleUnlock('starter')}
+                    className="px-4 py-2 bg-white border-2 border-gray-900 text-gray-900 text-sm font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    Unlock for $9
+                  </button>
+                  <button
+                    onClick={() => handleUnlock('pro')}
+                    className="px-4 py-2 bg-gray-900 text-white text-sm font-semibold rounded-lg hover:bg-gray-800 transition-colors"
+                  >
+                    Get Pro - $29/mo
+                  </button>
+                </div>
               )}
             </div>
-            {!hasFullAccess && (
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => handleUnlock('starter')}
-                  className="px-4 py-2 bg-white border-2 border-gray-900 text-gray-900 text-sm font-semibold rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  Unlock for $9
-                </button>
-                <button
-                  onClick={() => handleUnlock('pro')}
-                  className="px-4 py-2 bg-gray-900 text-white text-sm font-semibold rounded-lg hover:bg-gray-800 transition-colors"
-                >
-                  Get Pro - $29/mo
-                </button>
-              </div>
-            )}
           </div>
-        </div>
-      </header>
+        </header>
+      )}
 
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* Hero Section with Score */}
@@ -355,11 +556,31 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
                   </a>
                 </div>
                 <div className="flex gap-2">
-                  <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors" title="Share Report">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                    </svg>
-                  </button>
+                  {/* Privacy Toggle - Only show for owner */}
+                  {visitorEmail === userEmail && (
+                    <button
+                      onClick={handleTogglePrivacy}
+                      disabled={isTogglingPrivacy}
+                      className={`p-2 rounded-lg transition-colors ${
+                        isPublic
+                          ? 'text-blue-600 bg-blue-50 hover:bg-blue-100'
+                          : 'text-gray-600 bg-gray-50 hover:bg-gray-100'
+                      } ${isTogglingPrivacy ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      title={isPublic ? 'Report is Public (click to make private)' : 'Report is Private (click to make public)'}
+                    >
+                      {isPublic ? (
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      ) : (
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                        </svg>
+                      )}
+                    </button>
+                  )}
+
                   <a
                     href={`/report/${id}/print`}
                     target="_blank"
@@ -444,7 +665,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
           {activeTab === 'overview' && (
             <div className="space-y-8">
               {/* Executive Summary */}
-              <ExecutiveSummary report={report} />
+              <ExecutiveSummary report={report} hasFullAccess={hasFullAccess} />
 
               {/* Charts Section */}
               <div className="grid lg:grid-cols-2 gap-6">
@@ -461,7 +682,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
                       <p className="text-sm text-gray-500">Performance across all areas</p>
                     </div>
                   </div>
-                  <ScoreRadarChart scores={scores} />
+                  <ScoreRadarChart scores={scores} hasFullAccess={hasFullAccess} />
                 </div>
 
                 {/* Bar Chart */}
@@ -477,7 +698,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
                       <p className="text-sm text-gray-500">Score comparison by category</p>
                     </div>
                   </div>
-                  <ScoreBarChart scores={scores} />
+                  <ScoreBarChart scores={scores} hasFullAccess={hasFullAccess} />
                 </div>
               </div>
 
@@ -487,10 +708,10 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
               )}
 
               {/* Issues List */}
-              <IssuesList report={report} />
+              <IssuesList report={report} hasFullAccess={hasFullAccess} />
 
               {/* Quick Wins */}
-              <QuickWinsSection report={report} />
+              <QuickWinsSection report={report} hasFullAccess={hasFullAccess} />
             </div>
           )}
 
@@ -606,6 +827,51 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
           </div>
         </div>
       </footer>
+
+      {/* Email Input Modal */}
+      {showEmailModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-xl shadow-xl max-w-md w-full p-6"
+          >
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Enter Your Email</h3>
+            <p className="text-gray-600 text-sm mb-6">
+              We'll send your receipt and report access link to this email.
+            </p>
+
+            <input
+              type="email"
+              value={emailInput}
+              onChange={(e) => setEmailInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleEmailSubmit()}
+              placeholder="your@email.com"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 mb-4"
+              autoFocus
+            />
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowEmailModal(false);
+                  setPendingTier(null);
+                  setEmailInput('');
+                }}
+                className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleEmailSubmit}
+                className="flex-1 px-4 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors"
+              >
+                Continue
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

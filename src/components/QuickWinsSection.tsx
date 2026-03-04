@@ -5,6 +5,7 @@ import type { Report, QuickWin as ReportQuickWin } from '@/types/report';
 
 interface QuickWinsSectionProps {
   report: Report;
+  hasFullAccess?: boolean;
 }
 
 interface DisplayQuickWin {
@@ -13,6 +14,7 @@ interface DisplayQuickWin {
   priority: 'high' | 'medium' | 'low';
   timeEstimate: string;
   category: string;
+  locked?: boolean;
 }
 
 // Helper to extract text from QuickWin objects or strings
@@ -23,10 +25,10 @@ function getQuickWinText(win: ReportQuickWin | string): string {
   return win.action;
 }
 
-function extractQuickWins(report: Report): DisplayQuickWin[] {
+function extractQuickWins(report: Report, hasFullAccess: boolean): DisplayQuickWin[] {
   const wins: DisplayQuickWin[] = [];
 
-  // Extract from messaging
+  // Extract from messaging (FREE)
   if (report.messagingAnalysis?.quickWins) {
     report.messagingAnalysis.quickWins.slice(0, 2).forEach((win, i) => {
       wins.push({
@@ -39,7 +41,7 @@ function extractQuickWins(report: Report): DisplayQuickWin[] {
     });
   }
 
-  // Extract from SEO
+  // Extract from SEO (FREE)
   if (report.seoOpportunities?.quickWins) {
     report.seoOpportunities.quickWins.slice(0, 2).forEach((win, i) => {
       wins.push({
@@ -52,8 +54,8 @@ function extractQuickWins(report: Report): DisplayQuickWin[] {
     });
   }
 
-  // Extract from conversion
-  if (report.conversionOptimization?.quickWins) {
+  // Extract from conversion (PAID) - Show for all users but blur for free users
+  if (hasFullAccess && report.conversionOptimization?.quickWins) {
     report.conversionOptimization.quickWins.slice(0, 2).forEach((win, i) => {
       wins.push({
         title: `Conversion Boost ${i + 1}`,
@@ -61,7 +63,18 @@ function extractQuickWins(report: Report): DisplayQuickWin[] {
         priority: report.conversionScore && report.conversionScore < 40 ? 'high' : 'medium',
         timeEstimate: '1-3 hours',
         category: 'Conversion',
+        locked: false,
       });
+    });
+  } else if (!hasFullAccess && report.conversionScore) {
+    // Add placeholder quick wins for locked sections (backend stripped the data)
+    wins.push({
+      title: 'Conversion Optimization',
+      description: 'Upgrade to unlock actionable conversion optimization recommendations.',
+      priority: 'medium',
+      timeEstimate: '1-3 hours',
+      category: 'Conversion',
+      locked: true,
     });
   }
 
@@ -72,8 +85,8 @@ function extractQuickWins(report: Report): DisplayQuickWin[] {
   return wins.slice(0, 6);
 }
 
-export default function QuickWinsSection({ report }: QuickWinsSectionProps) {
-  const quickWins = extractQuickWins(report);
+export default function QuickWinsSection({ report, hasFullAccess = false }: QuickWinsSectionProps) {
+  const quickWins = extractQuickWins(report, hasFullAccess);
 
   if (quickWins.length === 0) return null;
 
@@ -104,6 +117,7 @@ export default function QuickWinsSection({ report }: QuickWinsSectionProps) {
               priority={win.priority}
               timeEstimate={win.timeEstimate}
               category={win.category}
+              locked={win.locked}
             />
           ))}
         </div>

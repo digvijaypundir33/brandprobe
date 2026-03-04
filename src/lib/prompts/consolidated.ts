@@ -49,11 +49,11 @@ Return JSON in this exact format:
     "keyIssues": [{"problem": "<issue>", "solution": "<fix>", "priority": "high"|"medium"|"low"}],
     "quickWins": [{"action": "<action>", "impact": "<result>", "effort": "easy"|"medium"|"hard"}],
     "detailedAnalysis": {
-      "valueProposition": "<analysis>",
-      "targetAudience": "<identified audience>",
-      "emotionalHooks": ["<hook1>", "<hook2>"],
-      "credibilityIndicators": ["<indicator1>", "<indicator2>"],
-      "ctaAnalysis": "<cta effectiveness>"
+      "headlineAnalysis": "<headline effectiveness and clarity analysis>",
+      "valuePropositionClarity": "<value proposition clarity and strength>",
+      "differentiationSignals": "<how they differentiate from competitors>",
+      "ctaAnalysis": "<cta effectiveness and recommendations>",
+      "brandVoice": "<brand voice consistency and personality>"
     }
   },
   "brandHealth": {
@@ -187,11 +187,11 @@ Return JSON in this exact format:
     "keyIssues": [{"problem": "<issue>", "solution": "<fix>", "priority": "high"|"medium"|"low"}],
     "quickWins": [{"action": "<action>", "impact": "<result>", "effort": "easy"|"medium"|"hard"}],
     "detailedAnalysis": {
-      "keywordOpportunities": ["<keyword1>", "<keyword2>"],
-      "metaTagAssessment": "<assessment>",
-      "contentGaps": ["<gap1>", "<gap2>"],
-      "linkBuildingOpportunities": ["<opportunity1>"],
-      "localSeoRecommendations": "<recommendations>"
+      "keywordGapAnalysis": "<keyword opportunities and gaps analysis>",
+      "metaTagReview": "<meta tags assessment and recommendations>",
+      "contentGapIdentification": "<content gaps and missing topics>",
+      "competitorKeywordInference": "<competitor keyword analysis>",
+      "technicalSeoFlags": ["<flag1>", "<flag2>"]
     }
   },
   "conversion": {

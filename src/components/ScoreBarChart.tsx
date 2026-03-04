@@ -24,9 +24,11 @@ interface ScoreBarChartProps {
     brandHealth: number;
     designAuth: number;
   };
+  hasFullAccess?: boolean;
 }
 
-function getScoreColor(score: number): string {
+function getScoreColor(score: number, locked: boolean): string {
+  if (locked) return '#9ca3af'; // gray for locked sections
   if (score <= 25) return '#ef4444'; // red
   if (score <= 50) return '#f97316'; // orange
   if (score <= 70) return '#eab308'; // yellow
@@ -34,18 +36,19 @@ function getScoreColor(score: number): string {
   return '#10b981'; // emerald
 }
 
-export default function ScoreBarChart({ scores }: ScoreBarChartProps) {
+export default function ScoreBarChart({ scores, hasFullAccess = false }: ScoreBarChartProps) {
+  // Show all scores for all users (including free users)
   const data = [
-    { name: 'Messaging', score: scores.messaging },
-    { name: 'SEO', score: scores.seo },
-    { name: 'Content', score: scores.content },
-    { name: 'Ads', score: scores.ads },
-    { name: 'Conversion', score: scores.conversion },
-    { name: 'Distribution', score: scores.distribution },
-    { name: 'AI Search', score: scores.aiSearch },
-    { name: 'Technical', score: scores.technical },
-    { name: 'Brand Health', score: scores.brandHealth },
-    { name: 'Design Auth', score: scores.designAuth },
+    { name: 'Messaging', score: scores.messaging, locked: false },
+    { name: 'SEO', score: scores.seo, locked: false },
+    { name: 'Content', score: scores.content, locked: false },
+    { name: 'Ads', score: scores.ads, locked: false },
+    { name: 'Conversion', score: scores.conversion, locked: !hasFullAccess },
+    { name: 'Distribution', score: scores.distribution, locked: !hasFullAccess },
+    { name: 'AI Search', score: scores.aiSearch, locked: !hasFullAccess },
+    { name: 'Technical', score: scores.technical, locked: !hasFullAccess },
+    { name: 'Brand Health', score: scores.brandHealth, locked: !hasFullAccess },
+    { name: 'Design Auth', score: scores.designAuth, locked: !hasFullAccess },
   ];
 
   return (
@@ -70,7 +73,7 @@ export default function ScoreBarChart({ scores }: ScoreBarChartProps) {
           />
           <Bar dataKey="score" radius={[0, 4, 4, 0]}>
             {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={getScoreColor(entry.score)} />
+              <Cell key={`cell-${index}`} fill={getScoreColor(entry.score, entry.locked)} />
             ))}
           </Bar>
         </BarChart>
