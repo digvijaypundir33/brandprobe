@@ -35,8 +35,8 @@ export async function sendMagicLinkEmail(
     }
 
     const subject = isDashboardAccess
-      ? '🔐 Access Your BrandProbe Reports'
-      : '🔐 Your BrandProbe Access Link';
+      ? 'Access Your BrandProbe Reports'
+      : 'Your BrandProbe Access Link';
 
     await resend.emails.send({
       from: FROM_EMAIL,
@@ -69,7 +69,7 @@ export async function sendReportReadyEmail(
     await resend.emails.send({
       from: FROM_EMAIL,
       to: email,
-      subject: '✅ Your BrandProbe Report is Ready!',
+      subject: 'Your BrandProbe Report is Ready',
       html: getReportReadyEmailTemplate(url, reportUrl),
     });
 
@@ -111,82 +111,140 @@ function getMagicLinkEmailTemplate(verifyUrl: string, isDashboardAccess = false)
             max-width: 600px;
             margin: 0 auto;
             padding: 20px;
+            background: #f9fafb;
           }
           .container {
             background: #ffffff;
-            border-radius: 8px;
-            padding: 40px;
-            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 48px 40px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
           }
-          .logo {
-            font-size: 24px;
+          .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 32px;
+          }
+          .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: rgb(91, 91, 213);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          .logo-text {
+            font-size: 20px;
             font-weight: 700;
-            color: rgb(91, 91, 213);
-            margin-bottom: 24px;
+            color: #111827;
           }
           h1 {
-            font-size: 24px;
-            font-weight: 600;
+            font-size: 28px;
+            font-weight: 700;
             margin: 0 0 16px 0;
-            color: #111;
+            color: #111827;
+            line-height: 1.3;
           }
           p {
             margin: 0 0 24px 0;
-            color: #666;
+            color: #6b7280;
+            font-size: 16px;
+          }
+          .button-container {
+            margin: 32px 0;
           }
           .button {
             display: inline-block;
             background: rgb(91, 91, 213);
             color: white !important;
-            padding: 14px 32px;
-            border-radius: 6px;
+            padding: 16px 40px;
+            border-radius: 8px;
             text-decoration: none;
-            font-weight: 500;
-            margin: 8px 0;
+            font-weight: 600;
+            font-size: 16px;
           }
-          .button:hover {
-            background: rgb(71, 71, 193);
+          .notice {
+            background: #f3f4f6;
+            border-left: 4px solid rgb(91, 91, 213);
+            padding: 16px 20px;
+            margin: 32px 0;
+            border-radius: 4px;
+          }
+          .notice-title {
+            font-weight: 600;
+            color: #374151;
+            margin: 0 0 4px 0;
+          }
+          .notice-text {
+            color: #6b7280;
+            font-size: 14px;
+            margin: 0;
           }
           .footer {
-            margin-top: 32px;
-            padding-top: 24px;
+            margin-top: 40px;
+            padding-top: 32px;
             border-top: 1px solid #e5e7eb;
-            font-size: 14px;
-            color: #999;
+            text-align: center;
           }
-          .warning {
-            background: #fef3c7;
-            border-left: 4px solid #f59e0b;
-            padding: 12px 16px;
-            margin: 24px 0;
+          .footer-text {
             font-size: 14px;
-            color: #92400e;
+            color: #9ca3af;
+            margin: 0 0 8px 0;
+          }
+          .footer-link {
+            color: rgb(91, 91, 213);
+            text-decoration: none;
+            font-weight: 500;
+          }
+          .divider {
+            height: 1px;
+            background: #e5e7eb;
+            margin: 32px 0;
           }
         </style>
       </head>
       <body>
         <div class="container">
-          <div class="logo">BrandProbe</div>
+          <!-- Header with Logo -->
+          <div class="header">
+            <div class="logo-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="M21 21l-4.35-4.35"></path>
+              </svg>
+            </div>
+            <span class="logo-text">BrandProbe</span>
+          </div>
 
+          <!-- Main Content -->
           <h1>${heading}</h1>
           <p>${message}</p>
 
-          <a href="${verifyUrl}" class="button">${buttonText}</a>
-
-          <div class="warning">
-            <strong>⏱️ This link expires in 15 minutes</strong><br>
-            For security, this access link can only be used once.
+          <!-- CTA Button -->
+          <div class="button-container">
+            <a href="${verifyUrl}" class="button">${buttonText}</a>
           </div>
 
-          <p style="font-size: 14px; color: #999;">
+          <!-- Security Notice -->
+          <div class="notice">
+            <p class="notice-title">Security Notice</p>
+            <p class="notice-text">This link expires in 15 minutes and can only be used once for your security.</p>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- Footer Note -->
+          <p style="font-size: 14px; color: #9ca3af; margin-bottom: 0;">
             If you didn't request this, you can safely ignore this email.
           </p>
 
+          <!-- Footer -->
           <div class="footer">
-            <p>
-              © ${new Date().getFullYear()} BrandProbe. All rights reserved.<br>
-              <a href="${APP_URL}" style="color: rgb(91, 91, 213);">Visit BrandProbe</a>
+            <p class="footer-text">
+              &copy; ${new Date().getFullYear()} BrandProbe. All rights reserved.
             </p>
+            <a href="${APP_URL}" class="footer-link">Visit BrandProbe &rarr;</a>
           </div>
         </div>
       </body>
@@ -212,82 +270,137 @@ function getReportReadyEmailTemplate(websiteUrl: string, reportUrl: string): str
             max-width: 600px;
             margin: 0 auto;
             padding: 20px;
+            background: #f9fafb;
           }
           .container {
             background: #ffffff;
-            border-radius: 8px;
-            padding: 40px;
-            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 48px 40px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
           }
-          .logo {
-            font-size: 24px;
+          .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 32px;
+          }
+          .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: rgb(91, 91, 213);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          .logo-text {
+            font-size: 20px;
             font-weight: 700;
-            color: rgb(91, 91, 213);
-            margin-bottom: 24px;
+            color: #111827;
           }
           h1 {
-            font-size: 24px;
-            font-weight: 600;
+            font-size: 28px;
+            font-weight: 700;
             margin: 0 0 16px 0;
-            color: #111;
+            color: #111827;
+            line-height: 1.3;
           }
           p {
             margin: 0 0 24px 0;
-            color: #666;
+            color: #6b7280;
+            font-size: 16px;
+          }
+          .website-url {
+            background: #f3f4f6;
+            padding: 16px 20px;
+            border-radius: 8px;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', monospace;
+            font-size: 14px;
+            margin: 24px 0;
+            color: #374151;
+            border: 1px solid #e5e7eb;
+          }
+          .button-container {
+            margin: 32px 0;
           }
           .button {
             display: inline-block;
             background: rgb(91, 91, 213);
             color: white !important;
-            padding: 14px 32px;
-            border-radius: 6px;
+            padding: 16px 40px;
+            border-radius: 8px;
             text-decoration: none;
-            font-weight: 500;
-            margin: 8px 0;
+            font-weight: 600;
+            font-size: 16px;
           }
-          .button:hover {
-            background: rgb(71, 71, 193);
+          .highlight-box {
+            background: #f0f9ff;
+            border-left: 4px solid rgb(91, 91, 213);
+            padding: 16px 20px;
+            margin: 32px 0;
+            border-radius: 4px;
           }
-          .website-url {
-            background: #f3f4f6;
-            padding: 12px 16px;
-            border-radius: 6px;
-            font-family: monospace;
+          .highlight-text {
+            color: #374151;
             font-size: 14px;
-            margin: 16px 0;
+            margin: 0;
           }
           .footer {
-            margin-top: 32px;
-            padding-top: 24px;
+            margin-top: 40px;
+            padding-top: 32px;
             border-top: 1px solid #e5e7eb;
+            text-align: center;
+          }
+          .footer-text {
             font-size: 14px;
-            color: #999;
+            color: #9ca3af;
+            margin: 0 0 8px 0;
+          }
+          .footer-link {
+            color: rgb(91, 91, 213);
+            text-decoration: none;
+            font-weight: 500;
           }
         </style>
       </head>
       <body>
         <div class="container">
-          <div class="logo">BrandProbe</div>
-
-          <h1>✅ Your Report is Ready!</h1>
-
-          <p>We've finished analyzing your website and your comprehensive marketing report is ready to view.</p>
-
-          <div class="website-url">
-            ${websiteUrl}
+          <!-- Header with Logo -->
+          <div class="header">
+            <div class="logo-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="M21 21l-4.35-4.35"></path>
+              </svg>
+            </div>
+            <span class="logo-text">BrandProbe</span>
           </div>
 
-          <a href="${reportUrl}" class="button">View My Report</a>
+          <!-- Main Content -->
+          <h1>Your Report is Ready</h1>
+          <p>We've finished analyzing your website and your comprehensive marketing report is ready to view.</p>
 
-          <p style="font-size: 14px; color: #666; margin-top: 24px;">
-            Your report includes insights on messaging, SEO, content strategy, ad angles, conversion optimization, and more.
-          </p>
+          <!-- Website URL -->
+          <div class="website-url">${websiteUrl}</div>
 
-          <div class="footer">
-            <p>
-              © ${new Date().getFullYear()} BrandProbe. All rights reserved.<br>
-              <a href="${APP_URL}" style="color: rgb(91, 91, 213);">Visit BrandProbe</a>
+          <!-- CTA Button -->
+          <div class="button-container">
+            <a href="${reportUrl}" class="button">View My Report</a>
+          </div>
+
+          <!-- Report Details -->
+          <div class="highlight-box">
+            <p class="highlight-text">
+              Your report includes insights on messaging, SEO, content strategy, ad angles, conversion optimization, and more.
             </p>
+          </div>
+
+          <!-- Footer -->
+          <div class="footer">
+            <p class="footer-text">
+              &copy; ${new Date().getFullYear()} BrandProbe. All rights reserved.
+            </p>
+            <a href="${APP_URL}" class="footer-link">Visit BrandProbe &rarr;</a>
           </div>
         </div>
       </body>
