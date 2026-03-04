@@ -1,0 +1,69 @@
+# Copy these to Vercel Project Settings → Environment Variables
+# Apply to: Production, Preview, and Development
+
+# ===================
+# Environment Configuration
+# ===================
+NEXT_PUBLIC_SUPABASE_ENV=production
+
+# ===================
+# Supabase (Production)
+# ===================
+# Get these from: https://supabase.com/dashboard/project/_/settings/api
+
+# Primary variables (with _PROD_ prefix for clarity)
+NEXT_PUBLIC_SUPABASE_PROD_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_PROD_ANON_KEY=your_supabase_anon_key
+SUPABASE_PROD_SERVICE_ROLE_KEY=your_supabase_service_role_key
+
+# Fallback variables (without _PROD_ prefix, for compatibility)
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+
+# ===================
+# AI Provider
+# ===================
+# Get from: https://console.groq.com/keys
+AI_PROVIDER=groq
+GROQ_API_KEY=your_groq_api_key
+
+# ===================
+# Browserless (Web Scraping)
+# ===================
+# Get from: https://browserless.io
+BROWSERLESS_API_KEY=your_browserless_api_key
+
+# ===================
+# Resend (Email)
+# ===================
+# Get from: https://resend.com/api-keys
+RESEND_API_KEY=your_resend_api_key
+RESEND_FROM_EMAIL=noreply@yourdomain.com
+
+# ===================
+# App Configuration
+# ===================
+NEXT_PUBLIC_APP_URL=https://yourdomain.com
+
+# ===================
+# Performance
+# ===================
+USE_CONSOLIDATED_PROMPTS=true
+AI_PARALLEL_CALLS=9
+
+# ===================
+# PayPal (Production) - ⚠️ CHANGE TO PRODUCTION KEYS
+# ===================
+# Get from: https://developer.paypal.com/dashboard/applications
+PAYPAL_MODE=production
+PAYPAL_CLIENT_ID=your_production_paypal_client_id
+PAYPAL_CLIENT_SECRET=your_production_paypal_client_secret
+NEXT_PUBLIC_PAYPAL_CLIENT_ID=your_production_paypal_client_id
+PAYPAL_PRO_PLAN_ID=your_production_plan_id
+
+# ===================
+# Authentication
+# ===================
+# Generate with: openssl rand -base64 32
+JWT_SECRET=your_random_jwt_secret
