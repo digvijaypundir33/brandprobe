@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { chromium } from 'playwright';
+import playwrightAWS from 'playwright-aws-lambda';
 
 export async function GET() {
   const logs: string[] = [];
@@ -12,17 +12,11 @@ export async function GET() {
     logs.push('Step 2: Checking chromium availability...');
 
     // Test 2: Launch browser
-    logs.push('Step 3: Launching chromium browser...');
+    logs.push('Step 3: Launching chromium browser with playwright-aws-lambda...');
     const launchStart = Date.now();
 
-    const browser = await chromium.launch({
+    const browser = await playwrightAWS.launchChromium({
       headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-gpu',
-      ],
     });
 
     const launchTime = Date.now() - launchStart;

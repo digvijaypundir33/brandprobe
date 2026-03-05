@@ -1,10 +1,11 @@
-import { chromium, Browser, Page } from 'playwright';
+import { Browser, Page } from 'playwright-core';
 import type { ScrapedData, SubPageData, TechnicalData } from '@/types/report';
 import { normalizeUrl, cleanText } from './utils';
 import { fetchSitemap, selectBestPages, extractSitemapMetadata } from './sitemap-parser';
 import { getBrandUrlsToScrape } from './brand-recognizer';
+import playwrightAWS from 'playwright-aws-lambda';
 
-// Native Playwright browser automation (no external service required)
+// Playwright with serverless support (AWS Lambda / Vercel compatible)
 const TIMEOUT = 30000; // 30 seconds max per page
 const MAX_SUBPAGES = 3;
 
@@ -56,15 +57,9 @@ export async function scrapeWebsite(
       }
     }
 
-    // Step 2: Launch browser (using native Playwright - no external service needed)
-    browser = await chromium.launch({
+    // Step 2: Launch browser (using playwright-aws-lambda for serverless compatibility)
+    browser = await playwrightAWS.launchChromium({
       headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-gpu',
-      ],
     });
 
     const context = await browser.newContext({
@@ -709,15 +704,9 @@ export async function captureScreenshot(url: string): Promise<string | null> {
   let browser: Browser | null = null;
 
   try {
-    // Launch browser (using native Playwright - no external service needed)
-    browser = await chromium.launch({
+    // Launch browser (using playwright-aws-lambda for serverless compatibility)
+    browser = await playwrightAWS.launchChromium({
       headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-gpu',
-      ],
     });
 
     const context = await browser.newContext({

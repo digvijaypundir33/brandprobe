@@ -1,0 +1,173 @@
+================================================================================
+DEPLOYMENT CHECKLIST - Native Playwright Migration
+================================================================================
+
+✅ COMPLETED (Local):
+  ✓ Switched from Browserless to native Playwright
+  ✓ Added development mode console links
+  ✓ Fixed print page locked sections (6 sections)
+  ✓ Created vercel.json for optimal deployment
+  ✓ Updated package.json with postinstall script
+  ✓ All local tests passed
+  ✓ Committed changes: d0d6ffd
+
+📋 PRE-DEPLOYMENT CHECKLIST:
+
+  [ ] 1. Review staged changes
+      → git diff HEAD~1 --stat
+      → Verify 6 files changed: scraper.ts, scan/route.ts, print/page.tsx,
+        package.json, vercel.json, VERCEL_ENV_VARS.example.txt
+
+  [ ] 2. Verify vercel.json exists
+      → ls -la vercel.json
+      → Should show: maxDuration: 300, memory: 3008
+
+  [ ] 3. Check package.json postinstall
+      → grep postinstall package.json
+      → Should show: "playwright install chromium --with-deps"
+
+🚀 DEPLOYMENT STEPS:
+
+  [ ] 1. Push to GitHub
+      → git push origin main
+      → Wait for push to complete
+
+  [ ] 2. Watch Vercel deployment
+      → Go to: https://vercel.com/dashboard
+      → Click: Latest deployment
+      → Monitor build logs
+
+  [ ] 3. Check build logs for Playwright installation
+      → Look for: "playwright install chromium --with-deps"
+      → Should see: "Chromium x.x.x downloaded successfully"
+      → Should see: "Build completed successfully"
+
+  [ ] 4. Remove BROWSERLESS_API_KEY from Vercel
+      → Go to: Vercel Dashboard → Settings → Environment Variables
+      → Find: BROWSERLESS_API_KEY
+      → Click: Delete (on Production, Preview, Development)
+      → Confirm deletion
+
+  [ ] 5. Verify environment variables
+      → Ensure NEXT_PUBLIC_SUPABASE_ENV = "production" (for Production)
+      → This ensures emails are sent (not console links)
+
+  [ ] 6. Redeploy (if needed after env var changes)
+      → Vercel Dashboard → Deployments
+      → Click "..." on latest → Redeploy
+      → Select: Use existing build cache
+
+🧪 POST-DEPLOYMENT TESTING:
+
+  [ ] 1. Test homepage
+      → Go to: https://brandprobe.io
+      → Should load normally
+
+  [ ] 2. Submit a test scan
+      → Enter URL: https://stripe.com
+      → Enter your real email address
+      → Click: "Probe Your Brand"
+
+  [ ] 3. Check email
+      → Should receive magic link email
+      → From: BrandProbe <team@brandprobe.io>
+      → Subject: "Your BrandProbe Magic Link"
+
+  [ ] 4. Click magic link
+      → Should redirect to report page
+      → Should show: "Probing Your Brand..." with progress
+
+  [ ] 5. Wait for scan completion (60-90 seconds)
+      → Progress bar should advance
+      → Should see step updates
+
+  [ ] 6. Verify report generated
+      → Should show complete report
+      → Should have overall score
+      → Should show all sections
+
+  [ ] 7. Test print page
+      → Click: "Print Report" button
+      → For free user: Should show "6 Sections Locked"
+      → Should list: Conversion, Distribution, AI Search, Technical,
+        Brand Health, Design Authenticity
+
+  [ ] 8. Check Vercel function logs
+      → Vercel Dashboard → Logs
+      → Look for: "[Scraper] Analysis type: full"
+      → Look for: "[reportId] Report complete"
+      → Should NOT see browser launch errors
+
+🐛 TROUBLESHOOTING:
+
+  If scan fails:
+
+  → Check Vercel function logs for errors
+  → Look for "Executable doesn't exist" error
+  → Verify Playwright was installed in build logs
+  → Check function memory (should be 3008MB)
+  → Check function timeout (should be 300s)
+
+  If you see "Executable doesn't exist":
+
+  → Playwright didn't install correctly
+  → Check vercel.json is committed and deployed
+  → Try manual redeploy with cache cleared
+  → Check build logs for installation errors
+
+  If scraping is slow:
+
+  → Check function region (should be closest to users)
+  → Monitor function execution time in logs
+  → Expected: 45-90 seconds for full scan
+
+💰 POST-DEPLOYMENT CLEANUP:
+
+  [ ] 1. Verify Playwright is working in production
+      → Complete at least 2-3 test scans
+      → Confirm no browser launch errors
+
+  [ ] 2. Cancel Browserless subscription
+      → Go to: https://browserless.io
+      → Account → Billing
+      → Cancel subscription
+      → Savings: $228-$1,188/year
+
+  [ ] 3. Update internal documentation
+      → Note that scraping now uses native Playwright
+      → Document that BROWSERLESS_API_KEY is no longer needed
+
+  [ ] 4. Monitor costs
+      → Vercel function invocations should be same
+      → Vercel function duration may be slightly lower (no network to Browserless)
+      → No more Browserless charges
+
+📊 SUCCESS METRICS:
+
+  After deployment, you should see:
+
+  ✓ Scans complete successfully
+  ✓ Reports generate with all data
+  ✓ No browser launch errors in logs
+  ✓ Scan time: 60-90 seconds (same as before)
+  ✓ No Browserless charges
+  ✓ Unlimited concurrent scans (no throttling)
+
+================================================================================
+CURRENT STATUS: ✅ Ready to deploy
+COMMIT: d0d6ffd
+BRANCH: main
+NEXT STEP: git push origin main
+================================================================================
+
+Questions? Check these files:
+- TESTING_GUIDE.md - Local testing results
+- BROWSERLESS_TO_PLAYWRIGHT_MIGRATION.md - Technical details
+- WEB_SCRAPING_ALTERNATIVES.md - Service comparison
+
+Need to rollback? Run:
+  git revert HEAD
+  git push origin main
+  (Then re-add BROWSERLESS_API_KEY to Vercel)
+
+================================================================================

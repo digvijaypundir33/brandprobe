@@ -817,5 +817,388 @@ Everything else is a distraction.
 
 ---
 
+## 18. SHOWCASE & PROMOTION FEATURE
+
+### Purpose
+Allow analyzed websites/applications to be showcased on BrandProbe, creating a discovery platform where:
+1. **Users benefit:** Get exposure and promotion for their websites
+2. **BrandProbe benefits:** More organic traffic, social proof, and content
+3. **Visitors benefit:** Discover and explore real website analyses
+
+### Phase Strategy
+| Phase | Who Gets Showcased | Priority |
+|-------|-------------------|----------|
+| **Phase 1 (Now)** | All users (free + paid) who opt-in | Equal visibility |
+| **Phase 2 (Later)** | Paid users get priority placement | Featured sections for paid |
+| **Phase 3 (Future)** | Paid-only featured spots, free in general listing | Premium showcase tiers |
+
+---
+
+### 18.1 DATABASE SCHEMA CHANGES
+
+```sql
+-- Add showcase fields to reports table
+ALTER TABLE reports ADD COLUMN showcase_enabled BOOLEAN DEFAULT false;
+ALTER TABLE reports ADD COLUMN showcase_approved BOOLEAN DEFAULT false;  -- Admin approval for quality
+ALTER TABLE reports ADD COLUMN showcase_rank INT DEFAULT 0;  -- For sorting (higher = better placement)
+ALTER TABLE reports ADD COLUMN showcase_featured BOOLEAN DEFAULT false;  -- Manual feature flag
+ALTER TABLE reports ADD COLUMN showcase_featured_at TIMESTAMPTZ;
+ALTER TABLE reports ADD COLUMN showcase_views INT DEFAULT 0;  -- Track showcase-specific views
+ALTER TABLE reports ADD COLUMN showcase_clicks INT DEFAULT 0;  -- Track click-throughs
+
+-- Showcase profile for customization
+CREATE TABLE showcase_profiles (
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  report_id         UUID REFERENCES reports(id) ON DELETE CASCADE,
+  user_id           UUID REFERENCES users(id),
+
+  -- Display Information (user-editable)
+  display_name      TEXT,                    -- App/Company name (default: extracted from site)
+  tagline           TEXT,                    -- Short description (max 120 chars)
+  description       TEXT,                    -- Longer description (max 500 chars)
+  icon_url          TEXT,                    -- App icon URL (default: favicon)
+  screenshot_url    TEXT,                    -- Hero screenshot (default: scraped screenshot)
+  category          TEXT,                    -- Business category (SaaS, E-commerce, Agency, etc.)
+
+  -- Auto-extracted defaults (populated from report)
+  default_name      TEXT,                    -- Auto-extracted from scraped data
+  default_tagline   TEXT,                    -- Auto-extracted headline/value prop
+  default_icon_url  TEXT,                    -- Favicon from site
+
+  -- Social links (optional)
+  website_url       TEXT NOT NULL,           -- The analyzed URL
+  twitter_url       TEXT,
+  linkedin_url      TEXT,
+
+  -- Timestamps
+  created_at        TIMESTAMPTZ DEFAULT NOW(),
+  updated_at        TIMESTAMPTZ DEFAULT NOW(),
+
+  UNIQUE(report_id)
+);
+
+-- User showcase preferences
+ALTER TABLE users ADD COLUMN showcase_opt_in_global BOOLEAN DEFAULT false;  -- Global preference
+ALTER TABLE users ADD COLUMN showcase_notifications BOOLEAN DEFAULT true;    -- Notify on views/features
+
+-- Indexes for showcase queries
+CREATE INDEX idx_reports_showcase ON reports(showcase_enabled, showcase_approved)
+  WHERE showcase_enabled = true AND showcase_approved = true;
+CREATE INDEX idx_reports_showcase_rank ON reports(showcase_rank DESC)
+  WHERE showcase_enabled = true;
+CREATE INDEX idx_reports_showcase_featured ON reports(showcase_featured, showcase_featured_at DESC)
+  WHERE showcase_featured = true;
+CREATE INDEX idx_showcase_profiles_category ON showcase_profiles(category);
+CREATE INDEX idx_showcase_profiles_user ON showcase_profiles(user_id);
+```
+
+---
+
+### 18.2 RANKING ALGORITHM
+
+Showcase ranking determines visibility on the homepage and showcase page:
+
+```typescript
+// Ranking factors and weights
+const calculateShowcaseRank = (report: Report, profile: ShowcaseProfile, user: User): number => {
+  let rank = 0;
+
+  // Base score (0-100 points) - Quality indicator
+  rank += report.overall_score;
+
+  // Paid user bonus (+50 points) - Phase 2+
+  if (user.subscription_status === 'active') {
+    rank += 50;
+  }
+
+  // Profile completeness (+30 points max)
+  if (profile.display_name) rank += 5;
+  if (profile.tagline) rank += 5;
+  if (profile.description) rank += 10;
+  if (profile.icon_url && profile.icon_url !== profile.default_icon_url) rank += 5;
+  if (profile.category) rank += 5;
+
+  // Engagement bonus (+20 points max)
+  rank += Math.min(profile.showcase_views / 100, 10);  // Up to 10 points for views
+  rank += Math.min(profile.showcase_clicks / 50, 10);  // Up to 10 points for clicks
+
+  // Recency bonus (+20 points, decays over 30 days)
+  const daysSinceCreated = daysSince(report.created_at);
+  rank += Math.max(0, 20 - (daysSinceCreated * 0.67));
+
+  // Featured bonus (+100 points) - Admin-controlled
+  if (report.showcase_featured) {
+    rank += 100;
+  }
+
+  return Math.round(rank);
+};
+```
+
+**Ranking Update Triggers:**
+- On report creation (if auto-showcase enabled)
+- On profile update
+- Daily cron job to refresh engagement-based rankings
+- On admin feature/unfeature action
+
+---
+
+### 18.3 SHOWCASE CATEGORIES
+
+Predefined categories for filtering and organization:
+
+| Category | Examples |
+|----------|----------|
+| **SaaS** | Software products, web apps |
+| **E-commerce** | Online stores, marketplaces |
+| **Agency** | Marketing, design, dev agencies |
+| **Portfolio** | Personal sites, freelancer portfolios |
+| **Startup** | Early-stage companies |
+| **Blog/Media** | Content sites, publications |
+| **Non-profit** | Charities, foundations |
+| **Local Business** | Restaurants, services, retail |
+| **Other** | Doesn't fit other categories |
+
+---
+
+### 18.4 USER FLOW — ENABLING SHOWCASE
+
+```
+1. User completes a report scan
+2. On report page, sees "Showcase this site" toggle (off by default)
+3. User clicks toggle → Modal appears:
+
+   ┌─────────────────────────────────────────────────┐
+   │  🎉 Showcase Your Site on BrandProbe           │
+   │                                                 │
+   │  Get discovered by other founders and          │
+   │  marketers browsing BrandProbe!                │
+   │                                                 │
+   │  [Icon Preview]  [Upload Custom Icon]          │
+   │                                                 │
+   │  Display Name: [Auto-filled: Company Name]     │
+   │  Tagline:      [Auto-filled: Hero text]        │
+   │  Category:     [Dropdown: SaaS ▼]              │
+   │                                                 │
+   │  Description (optional):                       │
+   │  [                                         ]   │
+   │                                                 │
+   │  ☑ Use my BrandProbe score as a badge         │
+   │  ☑ Notify me when someone views my showcase   │
+   │                                                 │
+   │  [Cancel]              [Enable Showcase →]     │
+   └─────────────────────────────────────────────────┘
+
+4. User fills/confirms details → showcase_enabled = true
+5. Site appears on /showcase page (pending approval if configured)
+6. User can edit/disable from Dashboard
+```
+
+---
+
+### 18.5 PAGES & COMPONENTS
+
+#### New Pages
+
+| Route | Purpose |
+|-------|---------|
+| `/showcase` | Main showcase gallery with search/filters |
+| `/showcase/[id]` | Individual showcase profile (redirects to report) |
+
+#### New Components
+
+| Component | Purpose |
+|-----------|---------|
+| `ShowcaseGallery.tsx` | Main grid of showcase cards with infinite scroll |
+| `ShowcaseCard.tsx` | Individual card: icon, name, tagline, score, category |
+| `ShowcaseFeatured.tsx` | Carousel of featured sites for homepage |
+| `ShowcaseToggle.tsx` | Toggle + modal for enabling showcase on report |
+| `ShowcaseProfileEditor.tsx` | Edit profile (name, tagline, icon, etc.) |
+| `ShowcaseFilters.tsx` | Category, score range, search filters |
+| `ShowcaseStats.tsx` | Dashboard widget showing views/clicks |
+
+#### Homepage Integration
+
+Add "Featured Sites" section to homepage (below "How It Works"):
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  🏆 Sites Analyzed by BrandProbe                             │
+│                                                              │
+│  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐         │
+│  │  Icon   │  │  Icon   │  │  Icon   │  │  Icon   │         │
+│  │ Name    │  │ Name    │  │ Name    │  │ Name    │         │
+│  │ Score:72│  │ Score:58│  │ Score:84│  │ Score:45│         │
+│  │ SaaS    │  │ Agency  │  │ Startup │  │ E-comm  │         │
+│  └─────────┘  └─────────┘  └─────────┘  └─────────┘         │
+│                                                              │
+│            [View All Analyzed Sites →]                       │
+└──────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 18.6 API ENDPOINTS
+
+```typescript
+// Showcase public endpoints
+GET  /api/showcase                    // List showcase entries (paginated, filtered)
+GET  /api/showcase/featured           // Get featured entries for homepage
+GET  /api/showcase/[id]               // Get single showcase profile
+
+// Showcase management (authenticated)
+POST   /api/showcase                  // Enable showcase for a report
+PATCH  /api/showcase/[id]             // Update showcase profile
+DELETE /api/showcase/[id]             // Disable showcase
+
+// Analytics
+POST /api/showcase/[id]/view          // Track view (called on showcase card view)
+POST /api/showcase/[id]/click         // Track click-through to full report
+
+// User preferences
+PATCH /api/user/showcase-preferences  // Update global showcase settings
+
+// Admin (future)
+POST  /api/admin/showcase/[id]/feature    // Feature a showcase
+POST  /api/admin/showcase/[id]/approve    // Approve for showcase
+DELETE /api/admin/showcase/[id]/feature   // Unfeature
+```
+
+---
+
+### 18.7 SHOWCASE CARD DESIGN
+
+```
+┌────────────────────────────────────┐
+│  [Icon]   Company Name             │
+│  32×32    "Short tagline here"     │
+│                                    │
+│  ┌──────────────────────────────┐  │
+│  │     Screenshot/Preview       │  │
+│  │                              │  │
+│  └──────────────────────────────┘  │
+│                                    │
+│  Score: ██████████░░ 72/100        │
+│                                    │
+│  🏷️ SaaS    👁️ 234 views           │
+│                                    │
+│  [View Full Report →]              │
+└────────────────────────────────────┘
+```
+
+**Card Data:**
+- `icon_url` - 32x32 app icon (fallback: first letter avatar)
+- `display_name` - Company/app name
+- `tagline` - 120 char max
+- `screenshot_url` - Optional preview image
+- `overall_score` - Visual progress bar + number
+- `category` - Badge
+- `showcase_views` - View count
+- Link to `/report/[id]`
+
+---
+
+### 18.8 DEFAULT VALUES & AUTO-EXTRACTION
+
+When user enables showcase, auto-populate from scraped data:
+
+| Field | Source | Fallback |
+|-------|--------|----------|
+| `display_name` | `scraped_data.title` or `scraped_data.og.title` | Domain name |
+| `tagline` | `scraped_data.hero.headline` or `scraped_data.meta.description` (truncated) | "Analyzed by BrandProbe" |
+| `icon_url` | `scraped_data.favicon` | Generated letter avatar |
+| `screenshot_url` | `scraped_data.screenshot` (if captured) | None |
+| `category` | AI-inferred from `messaging_analysis` | "Other" |
+
+---
+
+### 18.9 SEARCH & FILTERING
+
+Showcase page supports:
+
+| Filter | Options |
+|--------|---------|
+| **Search** | Full-text on display_name, tagline, description |
+| **Category** | Dropdown multi-select |
+| **Score Range** | Slider: 0-100 (default: all) |
+| **Sort By** | Featured, Highest Score, Newest, Most Viewed |
+
+**Pagination:** Infinite scroll, 20 items per load
+
+---
+
+### 18.10 PRIVACY & CONSENT
+
+**Explicit Opt-In Only:**
+- Showcase is OFF by default
+- User must actively enable for each report
+- Clear messaging about what's public
+- Easy disable from dashboard
+
+**What's Public on Showcase:**
+- Display name, tagline, description, icon
+- Overall score only (not section scores)
+- Category and website URL
+- View count
+
+**What's NOT Public:**
+- Full report content (behind report link)
+- User email
+- Section-level scores
+- Detailed analysis
+
+**Global Opt-Out:**
+Users can set `showcase_opt_in_global = false` to hide all their showcased sites.
+
+---
+
+### 18.11 BUILD PRIORITY
+
+| Priority | Task | Phase |
+|----------|------|-------|
+| 1 | Database schema changes | Phase 1 |
+| 2 | ShowcaseToggle + modal on report page | Phase 1 |
+| 3 | ShowcaseProfileEditor for editing | Phase 1 |
+| 4 | `/showcase` gallery page with basic grid | Phase 1 |
+| 5 | ShowcaseCard component | Phase 1 |
+| 6 | Homepage featured section (4 cards) | Phase 1 |
+| 7 | Search and category filtering | Phase 1 |
+| 8 | View/click tracking analytics | Phase 2 |
+| 9 | Dashboard showcase stats widget | Phase 2 |
+| 10 | Paid user priority ranking | Phase 2 |
+| 11 | Admin approval workflow | Phase 2 |
+| 12 | Featured curation by admin | Phase 2 |
+
+---
+
+### 18.12 SUCCESS METRICS
+
+| Metric | Target | Why |
+|--------|--------|-----|
+| Showcase opt-in rate | 20%+ of reports | Users see value in exposure |
+| Showcase page visits | 500+/month | Discovery is happening |
+| Click-through rate | 15%+ | Showcase drives report views |
+| Time on showcase page | 2+ min avg | Users exploring |
+| Organic traffic from showcase | 10%+ of total | SEO benefit realized |
+
+---
+
+### 18.13 FUTURE ENHANCEMENTS (Post-Phase 2)
+
+- **Showcase Badges:** Embeddable "Analyzed by BrandProbe" badges for user websites
+- **Score History:** Show score improvement over time on showcase
+- **Comparison View:** Compare two showcased sites side-by-side
+- **Industry Benchmarks:** "Top 10 SaaS sites by score"
+- **Social Sharing:** One-click share to Twitter/LinkedIn with OG preview
+- **Premium Showcase Tier:** $9/mo for permanent featured placement
+- **API Access:** Allow users to fetch their showcase data programmatically
+
+---
+
+*Section added: March 5, 2026*
+
+---
+
 *Document locked: March 1, 2026*
+*Section 18 added: March 5, 2026*
 *Next action: git init brandprobe*
