@@ -389,16 +389,33 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Scan Failed</h1>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-600 mb-4">
             We couldn&apos;t analyze this website. This can happen if the site is down,
             blocks automated access, or uses heavy JavaScript.
           </p>
-          <button
-            onClick={() => router.push('/')}
-            className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium"
-          >
-            Try Another Website
-          </button>
+
+          {/* Don't worry message */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6">
+            <p className="text-sm text-blue-800">
+              <strong>Don&apos;t worry!</strong> Failed scans don&apos;t count against your report limit.
+              Feel free to try again or scan a different website.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={() => router.push(`/?url=${encodeURIComponent(report.url)}`)}
+              className="px-6 py-3 bg-[rgb(91,91,213)] text-white rounded-xl hover:bg-[rgb(71,71,193)] transition-colors font-medium"
+            >
+              Retry This Website
+            </button>
+            <button
+              onClick={() => router.push('/')}
+              className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-medium"
+            >
+              Try Another Website
+            </button>
+          </div>
         </motion.div>
       </div>
     );

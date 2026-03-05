@@ -63,9 +63,10 @@ export async function POST(request: NextRequest) {
 
     // Check report limits for free and starter users BEFORE creating report
     if (user.subscriptionStatus === 'free' || user.subscriptionStatus === null || user.subscriptionStatus === 'starter') {
-      // Count existing reports for this user
+      // Count existing reports for this user (exclude failed reports - they get a retry)
       const { getReportsByUserId } = await import('@/lib/supabase');
-      const existingReports = await getReportsByUserId(user.id);
+      const allReports = await getReportsByUserId(user.id);
+      const existingReports = allReports.filter(report => report.status !== 'failed');
 
       const limit = user.subscriptionStatus === 'starter' ? 2 : 1; // Starter: 2 reports, Free: 1 report
 
