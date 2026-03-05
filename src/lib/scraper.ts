@@ -4,7 +4,7 @@ import { normalizeUrl, cleanText } from './utils';
 import { fetchSitemap, selectBestPages, extractSitemapMetadata } from './sitemap-parser';
 import { getBrandUrlsToScrape } from './brand-recognizer';
 
-// Playwright with serverless support (chrome-aws-lambda for Lambda/Vercel)
+// Playwright with serverless support (@sparticuz/chromium for Lambda/Vercel)
 const TIMEOUT = 30000; // 30 seconds max per page
 const MAX_SUBPAGES = 3;
 
@@ -13,14 +13,14 @@ async function launchBrowser(): Promise<Browser> {
   const isProduction = process.env.VERCEL === '1';
 
   if (isProduction) {
-    // Production (Vercel): Use chrome-aws-lambda
+    // Production (Vercel): Use @sparticuz/chromium
     const { chromium } = await import('playwright-core');
-    const chromiumPkg = await import('chrome-aws-lambda');
+    const chromiumPkg = await import('@sparticuz/chromium');
 
     return await chromium.launch({
       args: chromiumPkg.default.args,
-      executablePath: await chromiumPkg.default.executablePath,
-      headless: chromiumPkg.default.headless,
+      executablePath: await chromiumPkg.default.executablePath(),
+      headless: true,
     });
   } else {
     // Local development: Use regular Playwright
