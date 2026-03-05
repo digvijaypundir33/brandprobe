@@ -110,17 +110,15 @@ export default function PrintReportPage({ params }: { params: Promise<{ id: stri
     design: report.designAuthenticityScore || 0,
   };
 
-  // Count locked sections
+  // Count locked sections - always show all 6 locked sections for free users
   const lockedSections = [];
   if (!hasFullAccess) {
-    if (report.contentStrategy) lockedSections.push('Content Strategy');
-    if (report.adAngles) lockedSections.push('Ad Creative Ideas');
-    if (report.conversionOptimization) lockedSections.push('Conversion Optimization');
-    if (report.distributionStrategy) lockedSections.push('Distribution Channels');
-    if (report.aiSearchVisibility) lockedSections.push('AI Search Visibility');
-    if (report.technicalPerformance) lockedSections.push('Technical Performance');
-    if (report.brandHealth) lockedSections.push('Brand Health');
-    if (report.designAuthenticity) lockedSections.push('Design Authenticity');
+    lockedSections.push('Conversion Optimization');
+    lockedSections.push('Distribution Channels');
+    lockedSections.push('AI Search Visibility');
+    lockedSections.push('Technical Performance');
+    lockedSections.push('Brand Health');
+    lockedSections.push('Design Authenticity');
   }
 
   return (

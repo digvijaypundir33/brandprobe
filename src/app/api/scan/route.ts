@@ -131,25 +131,54 @@ export async function POST(request: NextRequest) {
 
       // Create and send magic link
       const magicLink = await createMagicLink(email, report.id);
-      const emailResult = await sendMagicLinkEmail(email, magicLink.token, report.id);
 
-      if (!emailResult.success) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: 'Failed to send verification email',
-            message: 'Please try again or contact support',
-          },
-          { status: 500 }
-        );
+      // Check if we're in development mode (using NEXT_PUBLIC_SUPABASE_ENV)
+      const isDevelopment = process.env.NEXT_PUBLIC_SUPABASE_ENV === 'local';
+
+      if (isDevelopment) {
+        // Development mode: return console link instead of sending email
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001';
+        const verifyUrl = `${appUrl}/api/auth/verify?token=${magicLink.token}&reportId=${report.id}`;
+
+        console.log('\n========================================');
+        console.log('🔐 MAGIC LINK (Development Mode)');
+        console.log('========================================');
+        console.log(`Email: ${email}`);
+        console.log(`Report ID: ${report.id}`);
+        console.log(`\n🔗 Click to verify and start scan:`);
+        console.log(verifyUrl);
+        console.log('========================================\n');
+
+        return NextResponse.json({
+          success: true,
+          requiresVerification: true,
+          reportId: report.id,
+          message: 'Check console for magic link (development mode)',
+          developmentMode: true,
+          magicLink: verifyUrl, // Include in response for testing
+        });
+      } else {
+        // Production mode: send email as usual
+        const emailResult = await sendMagicLinkEmail(email, magicLink.token, report.id);
+
+        if (!emailResult.success) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: 'Failed to send verification email',
+              message: 'Please try again or contact support',
+            },
+            { status: 500 }
+          );
+        }
+
+        return NextResponse.json({
+          success: true,
+          requiresVerification: true,
+          reportId: report.id,
+          message: 'Check your email to verify and start the scan',
+        });
       }
-
-      return NextResponse.json({
-        success: true,
-        requiresVerification: true,
-        reportId: report.id,
-        message: 'Check your email to verify and start the scan',
-      });
     }
 
     // User is authenticated or verification skipped - proceed with scan

@@ -29,10 +29,10 @@ AI_PROVIDER=groq
 GROQ_API_KEY=your_groq_api_key
 
 # ===================
-# Browserless (Web Scraping)
+# Web Scraping
 # ===================
-# Get from: https://browserless.io
-BROWSERLESS_API_KEY=your_browserless_api_key
+# Now using native Playwright - no external service or API key needed!
+# Playwright runs directly on Vercel with chromium browser
 
 # ===================
 # Resend (Email)

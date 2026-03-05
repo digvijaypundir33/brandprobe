@@ -4,7 +4,6 @@ import { normalizeUrl, cleanText } from './utils';
 import { fetchSitemap, selectBestPages, extractSitemapMetadata } from './sitemap-parser';
 import { getBrandUrlsToScrape } from './brand-recognizer';
 
-const BROWSERLESS_URL = `wss://chrome.browserless.io?token=${process.env.BROWSERLESS_API_KEY}`;
 const TIMEOUT = 30000; // 30 seconds max per page
 const MAX_SUBPAGES = 3;
 
@@ -56,12 +55,16 @@ export async function scrapeWebsite(
       }
     }
 
-    // Step 2: Connect to browser
-    if (process.env.BROWSERLESS_API_KEY) {
-      browser = await chromium.connectOverCDP(BROWSERLESS_URL);
-    } else {
-      browser = await chromium.launch({ headless: true });
-    }
+    // Step 2: Launch browser (using native Playwright - no external service needed)
+    browser = await chromium.launch({
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+      ],
+    });
 
     const context = await browser.newContext({
       userAgent:
@@ -705,12 +708,16 @@ export async function captureScreenshot(url: string): Promise<string | null> {
   let browser: Browser | null = null;
 
   try {
-    // Connect to Browserless or launch local browser for dev
-    if (process.env.BROWSERLESS_API_KEY) {
-      browser = await chromium.connectOverCDP(BROWSERLESS_URL);
-    } else {
-      browser = await chromium.launch({ headless: true });
-    }
+    // Launch browser (using native Playwright - no external service needed)
+    browser = await chromium.launch({
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+      ],
+    });
 
     const context = await browser.newContext({
       viewport: { width: 1280, height: 1024 },
