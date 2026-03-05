@@ -4,6 +4,7 @@ import { normalizeUrl, cleanText } from './utils';
 import { fetchSitemap, selectBestPages, extractSitemapMetadata } from './sitemap-parser';
 import { getBrandUrlsToScrape } from './brand-recognizer';
 
+// Native Playwright browser automation (no external service required)
 const TIMEOUT = 30000; // 30 seconds max per page
 const MAX_SUBPAGES = 3;
 
