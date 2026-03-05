@@ -2,6 +2,8 @@
 
 **Paste your website. Know why you're not growing in 60 seconds.**
 
+> Testing Playwright deployment
+
 BrandProbe is an AI-powered marketing intelligence tool that analyzes your website and delivers a brutally honest diagnosis of your positioning, content gaps, conversion leaks, and growth opportunities.
 
 ## What It Does
