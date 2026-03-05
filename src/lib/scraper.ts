@@ -3,11 +3,34 @@ import type { ScrapedData, SubPageData, TechnicalData } from '@/types/report';
 import { normalizeUrl, cleanText } from './utils';
 import { fetchSitemap, selectBestPages, extractSitemapMetadata } from './sitemap-parser';
 import { getBrandUrlsToScrape } from './brand-recognizer';
-import playwrightAWS from 'playwright-aws-lambda';
 
-// Playwright with serverless support (AWS Lambda / Vercel compatible)
+// Playwright with serverless support (@sparticuz/chromium for Lambda/Vercel)
 const TIMEOUT = 30000; // 30 seconds max per page
 const MAX_SUBPAGES = 3;
+
+// Helper function to launch browser (conditional based on environment)
+async function launchBrowser(): Promise<Browser> {
+  const isProduction = process.env.VERCEL === '1';
+
+  if (isProduction) {
+    // Production (Vercel): Use @sparticuz/chromium
+    const { chromium } = await import('playwright-core');
+    const chromiumPkg = (await import('@sparticuz/chromium')).default;
+
+    return await chromium.launch({
+      args: chromiumPkg.args,
+      executablePath: await chromiumPkg.executablePath(),
+      headless: true,
+    });
+  } else {
+    // Local development: Use regular Playwright
+    const { chromium } = await import('playwright');
+
+    return await chromium.launch({
+      headless: true,
+    });
+  }
+}
 
 /**
  * Main scraper function - scrapes a URL and returns structured data
@@ -57,10 +80,8 @@ export async function scrapeWebsite(
       }
     }
 
-    // Step 2: Launch browser (using playwright-aws-lambda for serverless compatibility)
-    browser = await playwrightAWS.launchChromium({
-      headless: true,
-    });
+    // Step 2: Launch browser (conditional based on environment)
+    browser = await launchBrowser();
 
     const context = await browser.newContext({
       userAgent:
@@ -704,10 +725,8 @@ export async function captureScreenshot(url: string): Promise<string | null> {
   let browser: Browser | null = null;
 
   try {
-    // Launch browser (using playwright-aws-lambda for serverless compatibility)
-    browser = await playwrightAWS.launchChromium({
-      headless: true,
-    });
+    // Launch browser (conditional based on environment)
+    browser = await launchBrowser();
 
     const context = await browser.newContext({
       viewport: { width: 1280, height: 1024 },

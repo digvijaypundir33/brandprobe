@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import playwrightAWS from 'playwright-aws-lambda';
 
 export async function GET() {
   const logs: string[] = [];
@@ -8,16 +7,31 @@ export async function GET() {
   try {
     logs.push('Step 1: Starting Playwright test...');
 
-    // Test 1: Check if chromium is available
-    logs.push('Step 2: Checking chromium availability...');
+    // Test 1: Check environment
+    const isProduction = process.env.VERCEL === '1';
+    logs.push(`Step 2: Environment detected: ${isProduction ? 'Production (Vercel)' : 'Local Development'}`);
 
     // Test 2: Launch browser
-    logs.push('Step 3: Launching chromium browser with playwright-aws-lambda...');
+    logs.push(`Step 3: Launching chromium browser...`);
     const launchStart = Date.now();
 
-    const browser = await playwrightAWS.launchChromium({
-      headless: true,
-    });
+    let browser;
+    if (isProduction) {
+      // Production: Use @sparticuz/chromium
+      const { chromium } = await import('playwright-core');
+      const chromiumPkg = (await import('@sparticuz/chromium')).default;
+      browser = await chromium.launch({
+        args: chromiumPkg.args,
+        executablePath: await chromiumPkg.executablePath(),
+        headless: true,
+      });
+    } else {
+      // Local: Use regular Playwright
+      const { chromium } = await import('playwright');
+      browser = await chromium.launch({
+        headless: true,
+      });
+    }
 
     const launchTime = Date.now() - launchStart;
     logs.push(`Step 4: Browser launched successfully in ${launchTime}ms`);
