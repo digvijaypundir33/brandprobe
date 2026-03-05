@@ -17,13 +17,13 @@ export async function GET() {
 
     let browser;
     if (isProduction) {
-      // Production: Use @sparticuz/chromium
+      // Production: Use chrome-aws-lambda
       const { chromium } = await import('playwright-core');
-      const chromiumPkg = (await import('@sparticuz/chromium')).default;
+      const chromiumPkg = await import('chrome-aws-lambda');
       browser = await chromium.launch({
-        args: chromiumPkg.args,
-        executablePath: await chromiumPkg.executablePath(),
-        headless: true,
+        args: chromiumPkg.default.args,
+        executablePath: await chromiumPkg.default.executablePath,
+        headless: chromiumPkg.default.headless,
       });
     } else {
       // Local: Use regular Playwright
