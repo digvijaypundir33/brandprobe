@@ -12,6 +12,7 @@ import {
   getLatestReportForSite,
   updateUser,
   createMagicLink,
+  getUserByEmail,
 } from '@/lib/supabase';
 import { normalizeUrl, extractDomain, isValidEmail, calculateOverallScore } from '@/lib/utils';
 import { sendMagicLinkEmail } from '@/lib/email';
@@ -275,9 +276,19 @@ export async function processReport(
   userEmail?: string
 ): Promise<void> {
   try {
+    // Check if user has paid subscription (for optimizations)
+    let isPaidUser = false;
+    if (userEmail) {
+      const user = await getUserByEmail(userEmail);
+      isPaidUser = user?.subscriptionStatus === 'active' || user?.subscriptionStatus === 'starter';
+    }
+
+    // Optimization: Free users get quick mode (1-2 pages) to stay within 60s timeout
+    const effectiveAnalysisType = isPaidUser ? analysisType : 'quick';
+
     // Step 1: Scrape website
-    console.log(`[${reportId}] Starting scrape for ${url} (${analysisType} mode)`);
-    const scrapedData = await scrapeWebsite(url, { analysisType });
+    console.log(`[${reportId}] Starting scrape for ${url} (${effectiveAnalysisType} mode, paid: ${isPaidUser})`);
+    const scrapedData = await scrapeWebsite(url, { analysisType: effectiveAnalysisType });
 
     // Update report with scraped data
     await updateReport(reportId, {
@@ -287,9 +298,9 @@ export async function processReport(
     // Step 2: Format for Claude
     const websiteContent = formatScrapedDataForPrompt(scrapedData);
 
-    // Step 3: Capture screenshot (parallel with AI analysis)
-    console.log(`[${reportId}] Capturing screenshot`);
-    const screenshotPromise = captureScreenshot(url);
+    // Step 3: Capture screenshot (skip for free users to save 5-10s)
+    console.log(`[${reportId}] ${isPaidUser ? 'Capturing screenshot' : 'Skipping screenshot (free user)'}`);
+    const screenshotPromise = isPaidUser ? captureScreenshot(url) : Promise.resolve(null);
 
     // Step 4a: Analyze technical performance (rules-based, instant)
     console.log(`[${reportId}] Analyzing technical performance (rules-based)`);
