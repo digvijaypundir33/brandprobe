@@ -7,7 +7,7 @@
     "dev:local": "NEXT_PUBLIC_SUPABASE_ENV=local next dev -p 3001",
     "dev:prod": "NEXT_PUBLIC_SUPABASE_ENV=production next dev -p 3001",
     "build": "next build",
-    "postinstall": "playwright install chromium --with-deps",
+    "postinstall": "playwright install --with-deps chromium",
     "start": "next start -p 3001",
     "clean": "rm -rf .next",
     "clean:build": "rm -rf .next && next build",
