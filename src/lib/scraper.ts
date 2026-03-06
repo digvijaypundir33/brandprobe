@@ -1,40 +1,200 @@
-import { Browser, Page } from 'playwright-core';
 import type { ScrapedData, SubPageData, TechnicalData } from '@/types/report';
 import { normalizeUrl, cleanText } from './utils';
 import { fetchSitemap, selectBestPages, extractSitemapMetadata } from './sitemap-parser';
 import { getBrandUrlsToScrape } from './brand-recognizer';
 
-// Playwright with serverless support (@sparticuz/chromium for Lambda/Vercel)
+// Playwright service configuration
 const TIMEOUT = 30000; // 30 seconds max per page
 const MAX_SUBPAGES = 3;
+const PLAYWRIGHT_SERVICE_URL = process.env.PLAYWRIGHT_SERVICE_URL || 'https://playwright-service.fly.dev';
 
-// Helper function to launch browser (conditional based on environment)
-async function launchBrowser(): Promise<Browser> {
-  const isProduction = process.env.VERCEL === '1';
+// Helper function to scrape a URL using the Playwright service
+async function scrapeWithService(url: string): Promise<{
+  url: string;
+  title: string;
+  html: string;
+}> {
+  const response = await fetch(`${PLAYWRIGHT_SERVICE_URL}/scrape`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      url,
+      options: {
+        waitUntil: 'domcontentloaded',
+        timeout: TIMEOUT,
+      },
+    }),
+  });
 
-  if (isProduction) {
-    // Production (Vercel): Use @sparticuz/chromium
-    const { chromium } = await import('playwright-core');
-    const chromiumPkg = await import('@sparticuz/chromium');
-
-    return await chromium.launch({
-      args: chromiumPkg.default.args,
-      executablePath: await chromiumPkg.default.executablePath(),
-      headless: true,
-    });
-  } else {
-    // Local development: Use regular Playwright
-    const { chromium } = await import('playwright');
-
-    return await chromium.launch({
-      headless: true,
-    });
+  if (!response.ok) {
+    throw new Error(`Playwright service error: ${response.statusText}`);
   }
+
+  const result = await response.json();
+  if (!result.success) {
+    throw new Error(result.error || 'Scraping failed');
+  }
+
+  return result.data;
+}
+
+// Parse HTML and extract structured data
+async function parseHTML(url: string, html: string) {
+  const { load } = await import('cheerio');
+  const $ = load(html);
+
+  // Get meta description
+  const metaDescription = $('meta[name="description"]').attr('content') || '';
+
+  // Get headings
+  const h1 = $('h1')
+    .map((_: number, el: any) => $(el).text().trim())
+    .get()
+    .filter(Boolean);
+  const h2 = $('h2')
+    .map((_: number, el: any) => $(el).text().trim())
+    .get()
+    .filter(Boolean);
+
+  // Get hero text
+  const heroSelectors = [
+    'header + section',
+    'main > section:first-child',
+    '[class*="hero"]',
+    '[class*="banner"]',
+    '.hero',
+    '#hero',
+  ];
+  let heroText = '';
+  for (const selector of heroSelectors) {
+    const el = $(selector);
+    if (el.length > 0) {
+      heroText = el.text().slice(0, 1000).trim();
+      break;
+    }
+  }
+  if (!heroText && h1.length > 0) {
+    heroText = h1[0];
+  }
+
+  // Get CTAs
+  const ctaSelectors = [
+    'a[class*="cta"]',
+    'button[class*="cta"]',
+    'a[class*="btn"]',
+    'button[class*="btn"]',
+    'a[class*="button"]',
+    'button',
+    '[role="button"]',
+  ];
+  const ctas: string[] = [];
+  ctaSelectors.forEach((selector) => {
+    $(selector).each((_: number, el: any) => {
+      const text = $(el).text().trim();
+      if (text && text.length < 50 && !ctas.includes(text)) {
+        ctas.push(text);
+      }
+    });
+  });
+
+  // Get nav links
+  const navLinks: string[] = [];
+  $('nav a, header a').each((_: number, el: any) => {
+    const href = $(el).attr('href');
+    const text = $(el).text().trim();
+    if (href && text && !href.startsWith('#') && !href.startsWith('mailto:')) {
+      navLinks.push(href);
+    }
+  });
+
+  // Get testimonials
+  const testimonialSelectors = [
+    '[class*="testimonial"]',
+    '[class*="review"]',
+    '[class*="quote"]',
+    'blockquote',
+  ];
+  const testimonials: string[] = [];
+  testimonialSelectors.forEach((selector) => {
+    $(selector).each((_: number, el: any) => {
+      const text = $(el).text().slice(0, 500).trim();
+      if (text && text.length > 20) {
+        testimonials.push(text);
+      }
+    });
+  });
+
+  // Get trust signals
+  const trustSelectors = [
+    '[class*="trust"]',
+    '[class*="partner"]',
+    '[class*="client"]',
+    '[class*="logo"]',
+    '[class*="badge"]',
+    '[class*="certification"]',
+  ];
+  const trustSignals: string[] = [];
+  trustSelectors.forEach((selector) => {
+    $(selector).each((_: number, el: any) => {
+      const alt = $(el).attr('alt');
+      const title = $(el).attr('title');
+      if (alt) trustSignals.push(alt);
+      if (title) trustSignals.push(title);
+    });
+  });
+
+  // Get pricing info
+  let pricingInfo: string | null = null;
+  const pricingSelectors = [
+    '[class*="pricing"]',
+    '[class*="price"]',
+    '[id*="pricing"]',
+    '[id*="price"]',
+  ];
+  for (const selector of pricingSelectors) {
+    const el = $(selector);
+    if (el.length > 0) {
+      pricingInfo = el.text().slice(0, 1000).trim();
+      break;
+    }
+  }
+
+  // Get social proof
+  const socialSelectors = [
+    '[class*="social-proof"]',
+    '[class*="stats"]',
+    '[class*="numbers"]',
+    '[class*="metric"]',
+  ];
+  const socialProof: string[] = [];
+  socialSelectors.forEach((selector) => {
+    $(selector).each((_: number, el: any) => {
+      const text = $(el).text().trim();
+      if (text && text.length < 200) {
+        socialProof.push(text);
+      }
+    });
+  });
+
+  return {
+    url,
+    metaDescription,
+    h1,
+    h2,
+    heroText,
+    ctas: ctas.slice(0, 10),
+    navLinks: [...new Set(navLinks)].slice(0, 20),
+    testimonials: testimonials.slice(0, 5),
+    trustSignals: [...new Set(trustSignals)].slice(0, 10),
+    pricingInfo,
+    socialProof: socialProof.slice(0, 5),
+  };
 }
 
 /**
  * Main scraper function - scrapes a URL and returns structured data
  * Now supports both Quick (1 page) and Full (4 pages) analysis modes
+ * Uses Fly.io Playwright service for all scraping
  */
 export async function scrapeWebsite(
   url: string,
@@ -42,314 +202,135 @@ export async function scrapeWebsite(
 ): Promise<ScrapedData & { brandConfig?: any; pagesAnalyzed: number }> {
   const { analysisType = 'full' } = options;
   const normalizedUrl = normalizeUrl(url);
-  let browser: Browser | null = null;
 
-  try {
-    // Step 1: Brand detection and URL routing
-    console.log(`[Scraper] Analysis type: ${analysisType}`);
-    const brandRouting = await getBrandUrlsToScrape(normalizedUrl);
+  // Step 1: Brand detection and URL routing
+  console.log(`[Scraper] Analysis type: ${analysisType}`);
+  const brandRouting = await getBrandUrlsToScrape(normalizedUrl);
 
-    let urlsToScrape: string[] = [];
-    let useSitemap = false;
+  let urlsToScrape: string[] = [];
+  let useSitemap = false;
 
-    if (analysisType === 'quick') {
-      // Quick mode: Only scrape the entered URL (or brand's primary URL)
-      urlsToScrape = [brandRouting.urls[0]];
-      console.log('[Scraper] Quick mode: Single page analysis');
+  if (analysisType === 'quick') {
+    // Quick mode: Only scrape the entered URL (or brand's primary URL)
+    urlsToScrape = [brandRouting.urls[0]];
+    console.log('[Scraper] Quick mode: Single page analysis');
+  } else {
+    // Full mode: Use brand routing or sitemap intelligence
+    if (brandRouting.useBrandBaselines) {
+      // Major brand detected - use curated URLs
+      urlsToScrape = brandRouting.urls.slice(0, 4); // Primary + up to 3 additional
+      console.log(`[Scraper] Major brand detected, using ${urlsToScrape.length} curated URLs`);
     } else {
-      // Full mode: Use brand routing or sitemap intelligence
-      if (brandRouting.useBrandBaselines) {
-        // Major brand detected - use curated URLs
-        urlsToScrape = brandRouting.urls.slice(0, 4); // Primary + up to 3 additional
-        console.log(`[Scraper] Major brand detected, using ${urlsToScrape.length} curated URLs`);
-      } else {
-        // Regular site - try sitemap first
-        const sitemap = await fetchSitemap(normalizedUrl);
-
-        if (sitemap.length > 0) {
-          // Use sitemap to find best pages
-          const sitemapPages = selectBestPages(sitemap, normalizedUrl, MAX_SUBPAGES);
-          urlsToScrape = [normalizedUrl, ...sitemapPages];
-          useSitemap = true;
-          console.log(`[Scraper] Using sitemap: ${urlsToScrape.length} pages selected`);
-        } else {
-          // Will fall back to nav-based discovery after scraping main page
-          urlsToScrape = [normalizedUrl];
-          console.log('[Scraper] No sitemap found, will use nav-based discovery');
-        }
-      }
-    }
-
-    // Step 2: Launch browser (conditional based on environment)
-    browser = await launchBrowser();
-
-    const context = await browser.newContext({
-      userAgent:
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      viewport: { width: 1280, height: 720 },
-    });
-
-    const page = await context.newPage();
-
-    // Step 3: Scrape main page
-    const mainPageData = await scrapeMainPage(page, urlsToScrape[0]);
-
-    // Step 4: Scrape technical data
-    const technicalData = await scrapeTechnicalData(page, urlsToScrape[0]);
-
-    // Step 5: Scrape subpages (skip in Quick mode)
-    let subPages: SubPageData[] = [];
-    let subPageUrls: string[] = [];
-
-    if (analysisType === 'full') {
-      if (brandRouting.useBrandBaselines || useSitemap) {
-        // Already have URLs from brand routing or sitemap
-        subPageUrls = urlsToScrape.slice(1);
-      } else {
-        // Fall back to nav-based discovery
-        subPageUrls = getSubPageUrls(mainPageData.navLinks, normalizedUrl);
-      }
-
-      subPages = await scrapeSubPages(page, subPageUrls);
-    }
-
-    // Step 6: Extract sitemap metadata (if available, for SEO analysis)
-    let sitemapMetadata = undefined;
-    if (useSitemap) {
+      // Regular site - try sitemap first
       const sitemap = await fetchSitemap(normalizedUrl);
+
       if (sitemap.length > 0) {
-        sitemapMetadata = extractSitemapMetadata(sitemap);
+        // Use sitemap to find best pages
+        const sitemapPages = selectBestPages(sitemap, normalizedUrl, MAX_SUBPAGES);
+        urlsToScrape = [normalizedUrl, ...sitemapPages];
+        useSitemap = true;
+        console.log(`[Scraper] Using sitemap: ${urlsToScrape.length} pages selected`);
+      } else {
+        // Will fall back to nav-based discovery after scraping main page
+        urlsToScrape = [normalizedUrl];
+        console.log('[Scraper] No sitemap found, will use nav-based discovery');
       }
-    }
-
-    await context.close();
-
-    const pagesAnalyzed = 1 + subPages.length; // Main page + subpages
-
-    return {
-      ...mainPageData,
-      subPages,
-      technicalData,
-      sitemapMetadata,
-      brandConfig: brandRouting.useBrandBaselines ? brandRouting : undefined,
-      pagesAnalyzed,
-    };
-  } finally {
-    if (browser) {
-      await browser.close();
     }
   }
-}
 
-/**
- * Scrape the main homepage
- */
-async function scrapeMainPage(
-  page: Page,
-  url: string
-): Promise<Omit<ScrapedData, 'subPages'>> {
-  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: TIMEOUT });
+  // Step 2: Scrape main page using Playwright service
+  const rawData = await scrapeWithService(urlsToScrape[0]);
+  const parsedData = await parseHTML(rawData.url, rawData.html);
 
-  // Wait a bit for dynamic content
-  await page.waitForTimeout(2000);
+  const mainPageData = {
+    ...rawData,
+    ...parsedData,
+  };
 
-  const data = await page.evaluate(() => {
-    // Helper to get text content
-    const getText = (selector: string): string => {
-      const el = document.querySelector(selector);
-      return el?.textContent?.trim() || '';
-    };
+  // Step 3: Scrape technical data
+  const technicalData = await scrapeTechnicalData(mainPageData.url, mainPageData.html);
 
-    // Helper to get all text from elements
-    const getAllText = (selector: string): string[] => {
-      return Array.from(document.querySelectorAll(selector))
-        .map((el) => el.textContent?.trim() || '')
-        .filter(Boolean);
-    };
+  // Step 4: Scrape subpages (skip in Quick mode)
+  let subPages: SubPageData[] = [];
+  let subPageUrls: string[] = [];
 
-    // Get title
-    const title = document.title || '';
-
-    // Get meta description
-    const metaDesc =
-      document.querySelector('meta[name="description"]')?.getAttribute('content') || '';
-
-    // Get headings
-    const h1 = getAllText('h1');
-    const h2 = getAllText('h2');
-
-    // Get hero text (first section or main content area)
-    const heroSelectors = [
-      'header + section',
-      'main > section:first-child',
-      '[class*="hero"]',
-      '[class*="banner"]',
-      '.hero',
-      '#hero',
-    ];
-    let heroText = '';
-    for (const selector of heroSelectors) {
-      const el = document.querySelector(selector);
-      if (el) {
-        heroText = el.textContent?.slice(0, 1000).trim() || '';
-        break;
-      }
-    }
-    if (!heroText && h1.length > 0) {
-      heroText = h1[0];
+  if (analysisType === 'full') {
+    if (brandRouting.useBrandBaselines || useSitemap) {
+      // Already have URLs from brand routing or sitemap
+      subPageUrls = urlsToScrape.slice(1);
+    } else {
+      // Fall back to nav-based discovery
+      subPageUrls = getSubPageUrls(mainPageData.navLinks, normalizedUrl);
     }
 
-    // Get CTAs (buttons and links with action words)
-    const ctaSelectors = [
-      'a[class*="cta"]',
-      'button[class*="cta"]',
-      'a[class*="btn"]',
-      'button[class*="btn"]',
-      'a[class*="button"]',
-      'button',
-      '[role="button"]',
-    ];
-    const ctas: string[] = [];
-    for (const selector of ctaSelectors) {
-      document.querySelectorAll(selector).forEach((el) => {
-        const text = el.textContent?.trim();
-        if (text && text.length < 50 && !ctas.includes(text)) {
-          ctas.push(text);
-        }
-      });
+    subPages = await scrapeSubPages(subPageUrls);
+  }
+
+  // Step 5: Extract sitemap metadata (if available, for SEO analysis)
+  let sitemapMetadata = undefined;
+  if (useSitemap) {
+    const sitemap = await fetchSitemap(normalizedUrl);
+    if (sitemap.length > 0) {
+      sitemapMetadata = extractSitemapMetadata(sitemap);
     }
+  }
 
-    // Get nav links
-    const navLinks: string[] = [];
-    document.querySelectorAll('nav a, header a').forEach((el) => {
-      const href = el.getAttribute('href');
-      const text = el.textContent?.trim();
-      if (href && text && !href.startsWith('#') && !href.startsWith('mailto:')) {
-        navLinks.push(href);
-      }
-    });
-
-    // Get testimonials
-    const testimonialSelectors = [
-      '[class*="testimonial"]',
-      '[class*="review"]',
-      '[class*="quote"]',
-      'blockquote',
-    ];
-    const testimonials: string[] = [];
-    for (const selector of testimonialSelectors) {
-      document.querySelectorAll(selector).forEach((el) => {
-        const text = el.textContent?.slice(0, 500).trim();
-        if (text && text.length > 20) {
-          testimonials.push(text);
-        }
-      });
-    }
-
-    // Get trust signals
-    const trustSignals: string[] = [];
-    const trustSelectors = [
-      '[class*="trust"]',
-      '[class*="partner"]',
-      '[class*="client"]',
-      '[class*="logo"]',
-      '[class*="badge"]',
-      '[class*="certification"]',
-    ];
-    for (const selector of trustSelectors) {
-      document.querySelectorAll(selector).forEach((el) => {
-        const alt = el.getAttribute('alt');
-        const title = el.getAttribute('title');
-        if (alt) trustSignals.push(alt);
-        if (title) trustSignals.push(title);
-      });
-    }
-
-    // Get pricing info
-    let pricingInfo: string | null = null;
-    const pricingSelectors = [
-      '[class*="pricing"]',
-      '[class*="price"]',
-      '[id*="pricing"]',
-      '[id*="price"]',
-    ];
-    for (const selector of pricingSelectors) {
-      const el = document.querySelector(selector);
-      if (el) {
-        pricingInfo = el.textContent?.slice(0, 1000).trim() || null;
-        break;
-      }
-    }
-
-    // Get social proof
-    const socialProof: string[] = [];
-    const socialSelectors = [
-      '[class*="social-proof"]',
-      '[class*="stats"]',
-      '[class*="numbers"]',
-      '[class*="metric"]',
-    ];
-    for (const selector of socialSelectors) {
-      document.querySelectorAll(selector).forEach((el) => {
-        const text = el.textContent?.trim();
-        if (text && text.length < 200) {
-          socialProof.push(text);
-        }
-      });
-    }
-
-    return {
-      title,
-      metaDescription: metaDesc,
-      h1,
-      h2,
-      heroText,
-      ctas: ctas.slice(0, 10),
-      navLinks: [...new Set(navLinks)].slice(0, 20),
-      testimonials: testimonials.slice(0, 5),
-      trustSignals: [...new Set(trustSignals)].slice(0, 10),
-      pricingInfo,
-      socialProof: socialProof.slice(0, 5),
-    };
-  });
-
-  // Get raw HTML for technical analysis
-  const html = await page.content();
+  const pagesAnalyzed = 1 + subPages.length; // Main page + subpages
 
   return {
-    url,
-    ...data,
-    html,
+    url: mainPageData.url,
+    title: mainPageData.title,
+    metaDescription: mainPageData.metaDescription,
+    h1: mainPageData.h1,
+    h2: mainPageData.h2,
+    heroText: mainPageData.heroText,
+    ctas: mainPageData.ctas,
+    navLinks: mainPageData.navLinks,
+    testimonials: mainPageData.testimonials,
+    trustSignals: mainPageData.trustSignals,
+    pricingInfo: mainPageData.pricingInfo,
+    socialProof: mainPageData.socialProof,
+    html: mainPageData.html,
+    subPages,
+    technicalData,
+    sitemapMetadata,
+    brandConfig: brandRouting.useBrandBaselines ? brandRouting : undefined,
+    pagesAnalyzed,
   };
 }
 
 /**
- * Scrape technical data from the page
+ * Scrape technical data from HTML
  */
-async function scrapeTechnicalData(page: Page, url: string): Promise<TechnicalData> {
+async function scrapeTechnicalData(url: string, html: string): Promise<TechnicalData> {
   const startTime = Date.now();
 
-  const technicalData = await page.evaluate(() => {
-    // Check for Open Graph tags
-    const hasOpenGraph = !!(
-      document.querySelector('meta[property="og:title"]') ||
-      document.querySelector('meta[property="og:description"]') ||
-      document.querySelector('meta[property="og:image"]')
-    );
+  // Parse HTML using DOMParser (available in Node.js via linkedom or similar)
+  // For now, we'll use regex-based parsing for meta tags
 
-    // Check for Twitter Cards
-    const hasTwitterCards = !!(
-      document.querySelector('meta[name="twitter:card"]') ||
-      document.querySelector('meta[name="twitter:title"]')
-    );
+  // Check for Open Graph tags
+  const hasOpenGraph = !!(
+    html.match(/<meta\s+property="og:title"/i) ||
+    html.match(/<meta\s+property="og:description"/i) ||
+    html.match(/<meta\s+property="og:image"/i)
+  );
 
-    // Check for structured data (JSON-LD)
-    const structuredDataScripts = document.querySelectorAll('script[type="application/ld+json"]');
-    const structuredDataTypes: string[] = [];
-    let hasFAQSchema = false;
-    structuredDataScripts.forEach((script) => {
+  // Check for Twitter Cards
+  const hasTwitterCards = !!(
+    html.match(/<meta\s+name="twitter:card"/i) ||
+    html.match(/<meta\s+name="twitter:title"/i)
+  );
+
+  // Check for structured data (JSON-LD)
+  const structuredDataMatches = html.match(/<script\s+type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi);
+  const structuredDataTypes: string[] = [];
+  let hasFAQSchema = false;
+
+  if (structuredDataMatches) {
+    for (const match of structuredDataMatches) {
       try {
-        const data = JSON.parse(script.textContent || '');
+        const jsonContent = match.replace(/<script[^>]*>|<\/script>/gi, '').trim();
+        const data = JSON.parse(jsonContent);
         if (data['@type']) {
           structuredDataTypes.push(data['@type']);
           if (data['@type'] === 'FAQPage') {
@@ -369,99 +350,81 @@ async function scrapeTechnicalData(page: Page, url: string): Promise<TechnicalDa
       } catch {
         // Invalid JSON, skip
       }
-    });
-
-    // Check for favicon
-    const hasFavicon = !!(
-      document.querySelector('link[rel="icon"]') ||
-      document.querySelector('link[rel="shortcut icon"]') ||
-      document.querySelector('link[rel="apple-touch-icon"]')
-    );
-
-    // Check for canonical tag
-    const hasCanonicalTag = !!document.querySelector('link[rel="canonical"]');
-
-    // Check for viewport meta
-    const hasViewportMeta = !!document.querySelector('meta[name="viewport"]');
-
-    // Check for charset meta
-    const hasCharsetMeta = !!(
-      document.querySelector('meta[charset]') ||
-      document.querySelector('meta[http-equiv="Content-Type"]')
-    );
-
-    // Count images with and without alt text
-    const images = document.querySelectorAll('img');
-    let imagesWithAlt = 0;
-    let imagesWithoutAlt = 0;
-    images.forEach((img) => {
-      if (img.getAttribute('alt') && img.getAttribute('alt')!.trim() !== '') {
-        imagesWithAlt++;
-      } else {
-        imagesWithoutAlt++;
-      }
-    });
-
-    // Count forms
-    const formCount = document.querySelectorAll('form').length;
-
-    // Count videos
-    const videoCount =
-      document.querySelectorAll('video').length +
-      document.querySelectorAll('iframe[src*="youtube"]').length +
-      document.querySelectorAll('iframe[src*="vimeo"]').length;
-
-    // Count links
-    const links = document.querySelectorAll('a[href]');
-    let externalLinkCount = 0;
-    let internalLinkCount = 0;
-    const currentHost = window.location.hostname;
-    links.forEach((link) => {
-      const href = link.getAttribute('href');
-      if (href) {
-        try {
-          const linkUrl = new URL(href, window.location.href);
-          if (linkUrl.hostname === currentHost) {
-            internalLinkCount++;
-          } else if (linkUrl.protocol.startsWith('http')) {
-            externalLinkCount++;
-          }
-        } catch {
-          // Invalid URL, skip
-        }
-      }
-    });
-
-    // Estimate page size based on DOM
-    const htmlSize = document.documentElement.outerHTML.length;
-    let pageSize = '';
-    if (htmlSize < 100000) {
-      pageSize = 'Small (<100KB)';
-    } else if (htmlSize < 500000) {
-      pageSize = 'Medium (100-500KB)';
-    } else {
-      pageSize = 'Large (>500KB)';
     }
+  }
 
-    return {
-      hasOpenGraph,
-      hasTwitterCards,
-      hasStructuredData: structuredDataTypes.length > 0,
-      structuredDataTypes: [...new Set(structuredDataTypes)],
-      hasFavicon,
-      hasCanonicalTag,
-      hasViewportMeta,
-      hasCharsetMeta,
-      hasFAQSchema,
-      imagesWithAlt,
-      imagesWithoutAlt,
-      formCount,
-      videoCount,
-      externalLinkCount,
-      internalLinkCount,
-      pageSize,
-    };
+  // Check for favicon
+  const hasFavicon = !!(
+    html.match(/<link\s+rel="icon"/i) ||
+    html.match(/<link\s+rel="shortcut icon"/i) ||
+    html.match(/<link\s+rel="apple-touch-icon"/i)
+  );
+
+  // Check for canonical tag
+  const hasCanonicalTag = !!html.match(/<link\s+rel="canonical"/i);
+
+  // Check for viewport meta
+  const hasViewportMeta = !!html.match(/<meta\s+name="viewport"/i);
+
+  // Check for charset meta
+  const hasCharsetMeta = !!(
+    html.match(/<meta\s+charset/i) ||
+    html.match(/<meta\s+http-equiv="Content-Type"/i)
+  );
+
+  // Count images with and without alt text
+  const imgMatches = html.match(/<img[^>]*>/gi) || [];
+  let imagesWithAlt = 0;
+  let imagesWithoutAlt = 0;
+  imgMatches.forEach((img) => {
+    if (img.match(/alt\s*=\s*["'][^"']+["']/i)) {
+      imagesWithAlt++;
+    } else {
+      imagesWithoutAlt++;
+    }
   });
+
+  // Count forms
+  const formCount = (html.match(/<form[^>]*>/gi) || []).length;
+
+  // Count videos
+  const videoCount =
+    (html.match(/<video[^>]*>/gi) || []).length +
+    (html.match(/<iframe[^>]*src=["'][^"']*youtube[^"']*["']/gi) || []).length +
+    (html.match(/<iframe[^>]*src=["'][^"']*vimeo[^"']*["']/gi) || []).length;
+
+  // Count links
+  const linkMatches = html.match(/<a\s+[^>]*href=["']([^"']*)["'][^>]*>/gi) || [];
+  let externalLinkCount = 0;
+  let internalLinkCount = 0;
+  const currentHost = new URL(url).hostname;
+
+  linkMatches.forEach((link) => {
+    const hrefMatch = link.match(/href=["']([^"']*)["']/i);
+    if (hrefMatch && hrefMatch[1]) {
+      try {
+        const linkUrl = new URL(hrefMatch[1], url);
+        if (linkUrl.hostname === currentHost) {
+          internalLinkCount++;
+        } else if (linkUrl.protocol.startsWith('http')) {
+          externalLinkCount++;
+        }
+      } catch {
+        // Invalid URL, skip
+      }
+    }
+  });
+
+  // Estimate page size
+  const htmlSize = html.length;
+  let pageSize = '';
+  if (htmlSize < 100000) {
+    pageSize = 'Small (<100KB)';
+  } else if (htmlSize < 500000) {
+    pageSize = 'Medium (100-500KB)';
+  } else {
+    pageSize = 'Large (>500KB)';
+  }
 
   const loadTime = Date.now() - startTime;
 
@@ -492,25 +455,25 @@ async function scrapeTechnicalData(page: Page, url: string): Promise<TechnicalDa
 
   return {
     hasSSL,
-    hasFavicon: technicalData.hasFavicon,
-    hasOpenGraph: technicalData.hasOpenGraph,
-    hasTwitterCards: technicalData.hasTwitterCards,
-    hasStructuredData: technicalData.hasStructuredData,
-    structuredDataTypes: technicalData.structuredDataTypes,
-    hasCanonicalTag: technicalData.hasCanonicalTag,
+    hasFavicon,
+    hasOpenGraph,
+    hasTwitterCards,
+    hasStructuredData: structuredDataTypes.length > 0,
+    structuredDataTypes: [...new Set(structuredDataTypes)],
+    hasCanonicalTag,
     hasRobotsTxt,
     hasSitemap,
-    imagesWithAlt: technicalData.imagesWithAlt,
-    imagesWithoutAlt: technicalData.imagesWithoutAlt,
-    formCount: technicalData.formCount,
-    videoCount: technicalData.videoCount,
-    externalLinkCount: technicalData.externalLinkCount,
-    internalLinkCount: technicalData.internalLinkCount,
-    hasViewportMeta: technicalData.hasViewportMeta,
-    hasCharsetMeta: technicalData.hasCharsetMeta,
-    hasFAQSchema: technicalData.hasFAQSchema,
+    imagesWithAlt,
+    imagesWithoutAlt,
+    formCount,
+    videoCount,
+    externalLinkCount,
+    internalLinkCount,
+    hasViewportMeta,
+    hasCharsetMeta,
+    hasFAQSchema,
     loadTimeEstimate,
-    pageSize: technicalData.pageSize,
+    pageSize,
   };
 }
 
@@ -573,50 +536,22 @@ function getSubPageUrls(navLinks: string[], baseUrl: string): string[] {
 }
 
 /**
- * Scrape subpages
+ * Scrape subpages using Playwright service
  */
-async function scrapeSubPages(page: Page, urls: string[]): Promise<SubPageData[]> {
+async function scrapeSubPages(urls: string[]): Promise<SubPageData[]> {
   const subPages: SubPageData[] = [];
 
   for (const url of urls) {
     try {
-      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: TIMEOUT });
-      await page.waitForTimeout(1000);
-
-      const data = await page.evaluate(() => {
-        const getText = (selector: string): string => {
-          const el = document.querySelector(selector);
-          return el?.textContent?.trim() || '';
-        };
-
-        const getAllText = (selector: string): string[] => {
-          return Array.from(document.querySelectorAll(selector))
-            .map((el) => el.textContent?.trim() || '')
-            .filter(Boolean);
-        };
-
-        // Get main content
-        let mainContent = '';
-        const mainSelectors = ['main', 'article', '[role="main"]', '.content', '#content'];
-        for (const selector of mainSelectors) {
-          const el = document.querySelector(selector);
-          if (el) {
-            mainContent = el.textContent?.slice(0, 2000).trim() || '';
-            break;
-          }
-        }
-
-        return {
-          title: document.title || '',
-          h1: getAllText('h1'),
-          h2: getAllText('h2'),
-          mainContent,
-        };
-      });
+      const rawData = await scrapeWithService(url);
+      const parsedData = await parseHTML(rawData.url, rawData.html);
 
       subPages.push({
-        url,
-        ...data,
+        url: rawData.url,
+        title: rawData.title,
+        h1: parsedData.h1,
+        h2: parsedData.h2,
+        mainContent: parsedData.heroText || (parsedData.h1.length > 0 ? parsedData.h1[0] : ''),
       });
     } catch (error) {
       console.error(`Failed to scrape subpage ${url}:`, error);
@@ -718,49 +653,38 @@ export function formatScrapedDataForPrompt(data: ScrapedData): string {
 }
 
 /**
- * Capture a screenshot of a website
+ * Capture a screenshot of a website using Playwright service
  * Returns a base64 encoded data URL
  */
 export async function captureScreenshot(url: string): Promise<string | null> {
-  let browser: Browser | null = null;
-
   try {
-    // Launch browser (conditional based on environment)
-    browser = await launchBrowser();
-
-    const context = await browser.newContext({
-      viewport: { width: 1280, height: 1024 },
+    const response = await fetch(`${PLAYWRIGHT_SERVICE_URL}/screenshot`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        url,
+        options: {
+          waitUntil: 'networkidle',
+          timeout: TIMEOUT,
+          fullPage: true,
+          type: 'jpeg',
+          quality: 80,
+        },
+      }),
     });
 
-    const page = await context.newPage();
+    if (!response.ok) {
+      throw new Error(`Screenshot service error: ${response.statusText}`);
+    }
 
-    await page.goto(url, {
-      waitUntil: 'networkidle',
-      timeout: TIMEOUT
-    });
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.error || 'Screenshot failed');
+    }
 
-    // Wait for page to settle
-    await page.waitForTimeout(2000);
-
-    // Capture screenshot as buffer
-    const screenshotBuffer = await page.screenshot({
-      fullPage: true,
-      type: 'jpeg',
-      quality: 80
-    });
-
-    await context.close();
-
-    // Convert to base64 data URL
-    const base64 = screenshotBuffer.toString('base64');
-    return `data:image/jpeg;base64,${base64}`;
-
+    return result.screenshot;
   } catch (error) {
     console.error('[Screenshot] Capture failed:', error);
     return null;
-  } finally {
-    if (browser) {
-      await browser.close();
-    }
   }
 }

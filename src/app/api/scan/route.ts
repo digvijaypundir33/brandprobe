@@ -286,9 +286,11 @@ export async function processReport(
     // Optimization: Free users get quick mode (1-2 pages) to stay within 60s timeout
     const effectiveAnalysisType = isPaidUser ? analysisType : 'quick';
 
-    // Step 1: Scrape website
+    // Step 1: Scrape website using Fly.io Playwright service (all users)
     console.log(`[${reportId}] Starting scrape for ${url} (${effectiveAnalysisType} mode, paid: ${isPaidUser})`);
-    const scrapedData = await scrapeWebsite(url, { analysisType: effectiveAnalysisType });
+    const scrapedData = await scrapeWebsite(url, {
+      analysisType: effectiveAnalysisType,
+    });
 
     // Update report with scraped data
     await updateReport(reportId, {
