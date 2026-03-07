@@ -184,6 +184,92 @@ export default function FAQPage() {
               </div>
             </div>
 
+            {/* Showcase */}
+            <h2 className="text-2xl font-bold text-gray-900 mt-12 mb-6">Showcase</h2>
+
+            <div className="space-y-6 mb-12">
+              <div className="border-b border-gray-200 pb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  What is the Showcase feature?
+                </h3>
+                <p className="text-gray-700">
+                  The Showcase is a community platform where founders can display their startups alongside their BrandProbe analysis scores. It's a place to get discovered, share your work, and learn from other builders. Visitors can browse startups, see how they score, and get inspired by real examples.
+                </p>
+              </div>
+
+              <div className="border-b border-gray-200 pb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Is the Showcase free to use?
+                </h3>
+                <p className="text-gray-700">
+                  Yes! During our launch period, the Showcase feature is <strong>completely free for all users</strong> - whether you're on the free plan, Starter, or Pro. You can showcase your startup and get visibility at no extra cost.
+                </p>
+              </div>
+
+              <div className="border-b border-gray-200 pb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  How do I add my startup to the Showcase?
+                </h3>
+                <p className="text-gray-700">
+                  After running a BrandProbe analysis on your website, go to your dashboard and click "Manage Showcase." You can customize your display name, tagline, description, icon, and category. Once you enable showcase mode, your startup will appear in the public gallery for others to discover.
+                </p>
+              </div>
+
+              <div className="border-b border-gray-200 pb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  What information is shown publicly in the Showcase?
+                </h3>
+                <p className="text-gray-700">
+                  Your showcase listing displays your startup name, tagline, description, icon, category, overall BrandProbe score, and website URL. Your full report analysis remains private unless you choose to share it. You have full control over what information to display.
+                </p>
+              </div>
+
+              <div className="border-b border-gray-200 pb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Can I edit my Showcase profile after publishing?
+                </h3>
+                <p className="text-gray-700">
+                  Yes! You can edit your showcase profile anytime from your dashboard. Update your tagline, description, icon, category, or even remove your listing from the showcase whenever you want. Changes appear instantly.
+                </p>
+              </div>
+
+              <div className="border-b border-gray-200 pb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  How are upvotes and views tracked?
+                </h3>
+                <p className="text-gray-700">
+                  Views are automatically tracked when someone visits your showcase listing. Upvotes allow the community to show appreciation for great startups. You can see your engagement stats (views, upvotes, comments, and engagement rate) in your showcase dashboard.
+                </p>
+              </div>
+
+              <div className="border-b border-gray-200 pb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Can visitors comment on my showcase listing?
+                </h3>
+                <p className="text-gray-700">
+                  Yes! The Showcase includes a comments section where visitors can leave feedback, ask questions, or share insights about your startup. This creates an opportunity for community engagement and valuable feedback from other founders.
+                </p>
+              </div>
+
+              <div className="border-b border-gray-200 pb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  What is Priority Showcase?
+                </h3>
+                <p className="text-gray-700">
+                  Priority Showcase is a premium feature for Starter and Pro users. Your showcase listing gets a "Featured" badge and appears higher in the gallery, giving your startup more visibility and clicks. It's perfect for founders who want maximum exposure for their product.
+                </p>
+              </div>
+
+              <div className="border-b border-gray-200 pb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Will the Showcase always be free?
+                </h3>
+                <p className="text-gray-700">
+                  During our launch period, the Showcase is free for all users. We'll announce any future changes well in advance. Our goal is to build a thriving community of founders showcasing their work and learning from each other.
+                </p>
+              </div>
+            </div>
+
             {/* Technical & Support */}
             <h2 className="text-2xl font-bold text-gray-900 mt-12 mb-6">Technical & Support</h2>
 

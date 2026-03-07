@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import URLInput from '@/components/URLInput';
+import ShowcaseFeatured from '@/components/ShowcaseFeatured';
 import Link from 'next/link';
 
 export default function Home() {
@@ -44,6 +45,12 @@ export default function Home() {
             <span className="text-xl font-bold text-gray-900">BrandProbe</span>
           </div>
           <div className="flex items-center gap-4">
+            <Link
+              href="/showcase"
+              className="text-sm font-medium text-gray-600 hover:text-gray-900"
+            >
+              Showcase
+            </Link>
             {isAuthenticated ? (
               <Link
                 href="/dashboard"
@@ -59,12 +66,12 @@ export default function Home() {
                 View My Reports
               </Link>
             )}
-            <a
-              href="#pricing"
+            <Link
+              href="/plans"
               className="text-sm font-medium text-gray-600 hover:text-gray-900"
             >
               Pricing
-            </a>
+            </Link>
           </div>
         </div>
       </header>
@@ -157,6 +164,9 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Featured Showcase */}
+      <ShowcaseFeatured />
+
       {/* What You Get */}
       <section className="py-20 px-4">
         <div className="max-w-6xl mx-auto">
@@ -239,235 +249,6 @@ export default function Home() {
                 <p className="text-gray-600 text-sm">{item.desc}</p>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing */}
-      <section id="pricing" className="py-20 px-4 bg-gray-50">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
-            Simple Pricing
-          </h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            {/* Free Tier */}
-            <div className="bg-white rounded-2xl border border-gray-200 p-8">
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Free</h3>
-              <p className="text-4xl font-bold text-gray-900 mb-4">
-                $0<span className="text-lg font-normal text-gray-500">/forever</span>
-              </p>
-              <ul className="space-y-3 mb-8">
-                <li className="flex items-center gap-2 text-gray-600">
-                  <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  1 report per email
-                </li>
-                <li className="flex items-center gap-2 text-gray-600">
-                  <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  4 sections visible
-                </li>
-                <li className="flex items-center gap-2 text-gray-600">
-                  <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  All 10 scores shown
-                </li>
-                <li className="flex items-center gap-2 text-gray-600">
-                  <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  Preview of locked sections
-                </li>
-              </ul>
-              <button
-                onClick={() => document.getElementById('url-input')?.scrollIntoView({ behavior: 'smooth' })}
-                className="w-full py-3 px-4 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors"
-              >
-                Get Started
-              </button>
-            </div>
-
-            {/* Starter Tier ($9) */}
-            <div className="bg-white rounded-2xl border-2 p-8 relative" style={{borderColor: 'var(--brand-primary)'}}>
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-medium text-white" style={{backgroundColor: 'var(--brand-primary)'}}>
-                Best Value
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Starter</h3>
-              <p className="text-4xl font-bold text-gray-900 mb-4">
-                $9<span className="text-lg font-normal text-gray-500">/one-time</span>
-              </p>
-              <ul className="space-y-3 mb-8">
-                <li className="flex items-center gap-2 text-gray-600">
-                  <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  1 full report
-                </li>
-                <li className="flex items-center gap-2 text-gray-600">
-                  <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  All 10 sections unlocked
-                </li>
-                <li className="flex items-center gap-2 text-gray-600">
-                  <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  Complete analysis
-                </li>
-                <li className="flex items-center gap-2 text-gray-600">
-                  <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  No subscription
-                </li>
-              </ul>
-              <button
-                onClick={() => document.getElementById('url-input')?.scrollIntoView({ behavior: 'smooth' })}
-                className="w-full py-3 px-4 font-semibold text-white rounded-xl transition-colors hover:opacity-90"
-                style={{backgroundColor: 'var(--brand-primary)'}}
-              >
-                Unlock Report
-              </button>
-            </div>
-
-            {/* Pro Tier ($29/month) */}
-            <div className="rounded-2xl p-8 text-white relative overflow-hidden" style={{backgroundColor: 'var(--brand-primary)'}}>
-              <div className="absolute top-4 right-4 bg-white/20 px-3 py-1 rounded-full text-sm font-medium">
-                Popular
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Pro</h3>
-              <p className="text-4xl font-bold mb-4">
-                $29<span className="text-lg font-normal opacity-80">/month</span>
-              </p>
-              <ul className="space-y-3 mb-8">
-                <li className="flex items-center gap-2">
-                  <svg className="w-5 h-5 opacity-80" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  10 reports per month
-                </li>
-                <li className="flex items-center gap-2">
-                  <svg className="w-5 h-5 opacity-80" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  All 10 sections unlocked
-                </li>
-                <li className="flex items-center gap-2">
-                  <svg className="w-5 h-5 opacity-80" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  Monthly auto re-scan
-                </li>
-                <li className="flex items-center gap-2">
-                  <svg className="w-5 h-5 opacity-80" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  Progress tracking
-                </li>
-              </ul>
-              <button
-                onClick={() => document.getElementById('url-input')?.scrollIntoView({ behavior: 'smooth' })}
-                className="w-full py-3 px-4 bg-white font-semibold rounded-xl transition-colors hover:bg-gray-100"
-                style={{color: 'var(--brand-primary)'}}
-              >
-                Get Pro
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ */}
-      <section className="py-20 px-4 bg-white">
-        <div className="max-w-3xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
-            Frequently Asked Questions
-          </h2>
-          <div className="space-y-6">
-            {[
-              {
-                q: 'How does BrandProbe work?',
-                a: 'We use AI to analyze your website across 10 key areas: messaging, SEO, content strategy, ad angles, conversion optimization, distribution, AI search visibility, technical performance, brand health, and design authenticity. You get specific, actionable recommendations for each area.',
-              },
-              {
-                q: 'How long does the analysis take?',
-                a: 'About 60-90 seconds. We scrape your homepage and key subpages, then run them through our AI analysis.',
-              },
-              {
-                q: 'What makes this different from other website audit tools?',
-                a: 'Most tools focus on technical SEO or performance metrics. BrandProbe focuses on marketing strategy and growth - your positioning, messaging, content opportunities, and conversion leaks. We tell you WHY you\'re not growing, not just what\'s technically broken. Plus, you get real, honest feedback, not sugar-coated fluff.',
-              },
-              {
-                q: 'Can I cancel anytime?',
-                a: 'Yes, you can cancel your Pro subscription at any time. No questions asked.',
-              },
-            ].map((item, i) => (
-              <div key={i} className="border-b border-gray-200 pb-6">
-                <h3 className="font-semibold text-gray-900 mb-2">{item.q}</h3>
-                <p className="text-gray-600">{item.a}</p>
-              </div>
-            ))}
-          </div>
-          <div className="text-center mt-8">
-            <a
-              href="/faq"
-              className="text-sm font-medium hover:underline"
-              style={{ color: 'var(--brand-primary)' }}
-            >
-              View all questions →
-            </a>
           </div>
         </div>
       </section>

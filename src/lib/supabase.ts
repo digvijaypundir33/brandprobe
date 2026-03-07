@@ -399,6 +399,11 @@ function transformReport(row: Record<string, unknown>): Report {
     isAutoRescan: row.is_auto_rescan as boolean,
     isPublic: row.is_public !== false, // Default to true (public) if not set
     createdAt: row.created_at as string,
+    // Showcase fields
+    showcaseEnabled: row.showcase_enabled as boolean || false,
+    showcaseRank: row.showcase_rank as number || 0,
+    showcaseViews: row.showcase_views as number || 0,
+    showcaseClicks: row.showcase_clicks as number || 0,
   };
 }
 
@@ -486,4 +491,635 @@ function generateSecureToken(): string {
   const array = new Uint8Array(32);
   crypto.getRandomValues(array);
   return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+// ============================================
+// Showcase Operations
+// ============================================
+
+import type { ShowcaseProfile, ShowcaseEntry, ShowcaseFilters, ShowcaseCategory } from '@/types/report';
+
+function transformShowcaseProfile(row: Record<string, unknown>): ShowcaseProfile {
+  return {
+    id: row.id as string,
+    reportId: row.report_id as string,
+    userId: row.user_id as string,
+    displayName: row.display_name as string | null,
+    tagline: row.tagline as string | null,
+    description: row.description as string | null,
+    iconUrl: row.icon_url as string | null,
+    screenshotUrl: row.screenshot_url as string | null,
+    category: row.category as ShowcaseCategory | null,
+    defaultName: row.default_name as string | null,
+    defaultTagline: row.default_tagline as string | null,
+    defaultIconUrl: row.default_icon_url as string | null,
+    websiteUrl: row.website_url as string,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  };
+}
+
+// Get showcase profile by report ID
+export async function getShowcaseProfileByReportId(reportId: string): Promise<ShowcaseProfile | null> {
+  const { data, error } = await supabaseAdmin
+    .from('showcase_profiles')
+    .select('*')
+    .eq('report_id', reportId)
+    .single();
+
+  if (error) return null;
+  return transformShowcaseProfile(data);
+}
+
+// Create showcase profile
+export async function createShowcaseProfile(
+  reportId: string,
+  userId: string,
+  websiteUrl: string,
+  defaults: {
+    defaultName: string;
+    defaultTagline: string;
+    defaultIconUrl?: string;
+  },
+  overrides?: {
+    displayName?: string;
+    tagline?: string;
+    description?: string;
+    iconUrl?: string;
+    screenshotUrl?: string;
+    category?: ShowcaseCategory;
+  }
+): Promise<ShowcaseProfile> {
+  const { data, error } = await supabaseAdmin
+    .from('showcase_profiles')
+    .insert({
+      report_id: reportId,
+      user_id: userId,
+      website_url: websiteUrl,
+      default_name: defaults.defaultName,
+      default_tagline: defaults.defaultTagline,
+      default_icon_url: defaults.defaultIconUrl || null,
+      display_name: overrides?.displayName || null,
+      tagline: overrides?.tagline || null,
+      description: overrides?.description || null,
+      icon_url: overrides?.iconUrl || null,
+      screenshot_url: overrides?.screenshotUrl || null,
+      category: overrides?.category || null,
+    })
+    .select()
+    .single();
+
+  if (error) throw new Error(`Failed to create showcase profile: ${error.message}`);
+  return transformShowcaseProfile(data);
+}
+
+// Update showcase profile
+export async function updateShowcaseProfile(
+  reportId: string,
+  updates: {
+    displayName?: string | null;
+    tagline?: string | null;
+    description?: string | null;
+    iconUrl?: string | null;
+    screenshotUrl?: string | null;
+    category?: ShowcaseCategory | null;
+    isPriority?: boolean;
+  }
+): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('showcase_profiles')
+    .update({
+      display_name: updates.displayName,
+      tagline: updates.tagline,
+      description: updates.description,
+      icon_url: updates.iconUrl,
+      screenshot_url: updates.screenshotUrl,
+      category: updates.category,
+      is_priority: updates.isPriority,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('report_id', reportId);
+
+  if (error) throw new Error(`Failed to update showcase profile: ${error.message}`);
+}
+
+// Delete showcase profile
+export async function deleteShowcaseProfile(reportId: string): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('showcase_profiles')
+    .delete()
+    .eq('report_id', reportId);
+
+  if (error) throw new Error(`Failed to delete showcase profile: ${error.message}`);
+}
+
+// Enable/disable showcase for a report
+export async function setShowcaseEnabled(reportId: string, enabled: boolean): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('reports')
+    .update({ showcase_enabled: enabled })
+    .eq('id', reportId);
+
+  if (error) throw new Error(`Failed to update showcase status: ${error.message}`);
+}
+
+// Update showcase rank for a report
+export async function updateShowcaseRank(reportId: string, rank: number): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('reports')
+    .update({ showcase_rank: rank })
+    .eq('id', reportId);
+
+  if (error) throw new Error(`Failed to update showcase rank: ${error.message}`);
+}
+
+// Increment showcase views
+export async function incrementShowcaseViews(reportId: string): Promise<void> {
+  const { error } = await supabaseAdmin.rpc('increment_showcase_views', { report_id: reportId });
+
+  // Fallback if RPC doesn't exist
+  if (error) {
+    await supabaseAdmin
+      .from('reports')
+      .update({ showcase_views: supabaseAdmin.rpc('increment', { row_id: reportId, column_name: 'showcase_views' }) })
+      .eq('id', reportId);
+  }
+}
+
+// Increment showcase clicks
+export async function incrementShowcaseClicks(reportId: string): Promise<void> {
+  const { error } = await supabaseAdmin.rpc('increment_showcase_clicks', { report_id: reportId });
+
+  // Fallback if RPC doesn't exist
+  if (error) {
+    await supabaseAdmin
+      .from('reports')
+      .update({ showcase_clicks: supabaseAdmin.rpc('increment', { row_id: reportId, column_name: 'showcase_clicks' }) })
+      .eq('id', reportId);
+  }
+}
+
+// Get showcased reports with profiles (for gallery)
+export async function getShowcaseEntries(filters: ShowcaseFilters = {}): Promise<ShowcaseEntry[]> {
+  const {
+    category,
+    minScore,
+    maxScore,
+    search,
+    sortBy = 'rank',
+    limit = 20,
+    offset = 0,
+  } = filters;
+
+  // Build query for reports with showcase enabled
+  let query = supabaseAdmin
+    .from('reports')
+    .select(`
+      id,
+      url,
+      overall_score,
+      showcase_views,
+      showcase_clicks,
+      showcase_upvotes,
+      showcase_rank,
+      created_at,
+      showcase_profiles!inner (
+        display_name,
+        tagline,
+        description,
+        icon_url,
+        screenshot_url,
+        category,
+        website_url,
+        default_name,
+        default_tagline,
+        default_icon_url,
+        is_priority
+      )
+    `)
+    .eq('showcase_enabled', true)
+    .eq('is_public', true)
+    .eq('status', 'ready');
+
+  // Apply filters
+  if (category) {
+    query = query.eq('showcase_profiles.category', category);
+  }
+  if (minScore !== undefined) {
+    query = query.gte('overall_score', minScore);
+  }
+  if (maxScore !== undefined) {
+    query = query.lte('overall_score', maxScore);
+  }
+
+  // Apply sorting (we'll handle priority sorting after fetch)
+  switch (sortBy) {
+    case 'score':
+      query = query.order('overall_score', { ascending: false });
+      break;
+    case 'newest':
+      query = query.order('created_at', { ascending: false });
+      break;
+    case 'views':
+      query = query.order('showcase_views', { ascending: false });
+      break;
+    case 'upvotes':
+      query = query.order('showcase_upvotes', { ascending: false });
+      break;
+    case 'rank':
+    default:
+      query = query.order('showcase_rank', { ascending: false });
+      break;
+  }
+
+  // Pagination
+  query = query.range(offset, offset + limit - 1);
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Failed to get showcase entries:', error);
+    return [];
+  }
+
+  // Transform results into ShowcaseEntry format
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const entries = (data || []).map((row: any) => {
+    const profile = row.showcase_profiles;
+    console.log('[SUPABASE] Raw profile data:', {
+      display_name: profile.display_name,
+      is_priority: profile.is_priority
+    });
+    return {
+      reportId: row.id,
+      url: row.url,
+      overallScore: row.overall_score,
+      showcaseViews: row.showcase_views || 0,
+      showcaseClicks: row.showcase_clicks || 0,
+      showcaseUpvotes: row.showcase_upvotes || 0,
+      showcaseRank: row.showcase_rank || 0,
+      createdAt: row.created_at,
+      // Apply fallbacks for display values
+      displayName: profile.display_name || profile.default_name || extractDomainFromUrl(row.url),
+      tagline: profile.tagline || profile.default_tagline || 'Analyzed by BrandProbe',
+      description: profile.description || null,
+      iconUrl: profile.icon_url || profile.default_icon_url || null,
+      screenshotUrl: profile.screenshot_url || null,
+      category: profile.category,
+      websiteUrl: profile.website_url,
+      isPriority: profile.is_priority || false,
+    };
+  }).filter((entry: ShowcaseEntry) => {
+    // Apply search filter client-side (for simplicity)
+    if (search) {
+      const searchLower = search.toLowerCase();
+      return (
+        entry.displayName.toLowerCase().includes(searchLower) ||
+        entry.tagline.toLowerCase().includes(searchLower) ||
+        entry.websiteUrl.toLowerCase().includes(searchLower)
+      );
+    }
+    return true;
+  });
+
+  // Sort with priority showcases first, then by the selected sort order
+  return entries.sort((a, b) => {
+    // Priority showcases always come first
+    if (a.isPriority && !b.isPriority) return -1;
+    if (!a.isPriority && b.isPriority) return 1;
+    // If both have same priority status, maintain the original sort order from query
+    return 0;
+  });
+}
+
+// Get featured showcase entries (top ranked for homepage)
+export async function getFeaturedShowcaseEntries(limit: number = 4): Promise<ShowcaseEntry[]> {
+  return getShowcaseEntries({ sortBy: 'rank', limit });
+}
+
+// Calculate showcase rank based on various factors
+export function calculateShowcaseRank(
+  overallScore: number | null,
+  createdAt: string,
+  showcaseViews: number,
+  showcaseClicks: number,
+  hasCustomProfile: boolean
+): number {
+  let rank = 0;
+
+  // Base score (0-100 points)
+  rank += overallScore || 0;
+
+  // Profile completeness bonus (+20 points)
+  if (hasCustomProfile) {
+    rank += 20;
+  }
+
+  // Engagement bonus (+20 points max)
+  rank += Math.min(showcaseViews / 100, 10);
+  rank += Math.min(showcaseClicks / 50, 10);
+
+  // Recency bonus (+20 points, decays over 30 days)
+  const daysSinceCreated = Math.floor(
+    (Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24)
+  );
+  rank += Math.max(0, 20 - daysSinceCreated * 0.67);
+
+  return Math.round(rank);
+}
+
+// Helper to extract domain from URL
+function extractDomainFromUrl(url: string): string {
+  try {
+    const hostname = new URL(url).hostname;
+    return hostname.replace(/^www\./, '');
+  } catch {
+    return url;
+  }
+}
+
+// ============================================
+// Showcase Upvotes
+// ============================================
+
+// Check if user has upvoted a showcase entry
+export async function hasUserUpvoted(reportId: string, email: string): Promise<boolean> {
+  const { data, error } = await supabaseAdmin
+    .from('showcase_upvotes')
+    .select('id')
+    .eq('report_id', reportId)
+    .eq('email', email)
+    .single();
+
+  if (error && error.code !== 'PGRST116') {
+    console.error('Failed to check upvote status:', error);
+  }
+
+  return !!data;
+}
+
+// Add upvote to showcase entry
+export async function addShowcaseUpvote(
+  reportId: string,
+  email: string,
+  userId?: string
+): Promise<{ success: boolean; error?: string }> {
+  // Check if already upvoted
+  const alreadyUpvoted = await hasUserUpvoted(reportId, email);
+  if (alreadyUpvoted) {
+    return { success: false, error: 'Already upvoted' };
+  }
+
+  const { error } = await supabaseAdmin
+    .from('showcase_upvotes')
+    .insert({
+      report_id: reportId,
+      email: email,
+      user_id: userId || null,
+    });
+
+  if (error) {
+    console.error('Failed to add upvote:', error);
+    return { success: false, error: 'Failed to add upvote' };
+  }
+
+  return { success: true };
+}
+
+// Remove upvote from showcase entry
+export async function removeShowcaseUpvote(
+  reportId: string,
+  email: string
+): Promise<{ success: boolean; error?: string }> {
+  const { error } = await supabaseAdmin
+    .from('showcase_upvotes')
+    .delete()
+    .eq('report_id', reportId)
+    .eq('email', email);
+
+  if (error) {
+    console.error('Failed to remove upvote:', error);
+    return { success: false, error: 'Failed to remove upvote' };
+  }
+
+  return { success: true };
+}
+
+// Get upvote count for a report
+export async function getShowcaseUpvoteCount(reportId: string): Promise<number> {
+  const { count, error } = await supabaseAdmin
+    .from('showcase_upvotes')
+    .select('*', { count: 'exact', head: true })
+    .eq('report_id', reportId);
+
+  if (error) {
+    console.error('Failed to get upvote count:', error);
+    return 0;
+  }
+
+  return count || 0;
+}
+
+// ============================================
+// Showcase Comments
+// ============================================
+
+import type { ShowcaseComment, ShowcaseCommentInput, ShowcaseDetail } from '@/types/report';
+
+// Get comments for a showcase entry
+export async function getShowcaseComments(
+  reportId: string,
+  sortBy: 'newest' | 'oldest' = 'newest'
+): Promise<ShowcaseComment[]> {
+  const { data, error } = await supabaseAdmin
+    .from('showcase_comments')
+    .select('*')
+    .eq('report_id', reportId)
+    .eq('is_approved', true)
+    .eq('is_hidden', false)
+    .order('created_at', { ascending: sortBy === 'oldest' });
+
+  if (error) {
+    console.error('Failed to get comments:', error);
+    return [];
+  }
+
+  return (data || []).map((row) => ({
+    id: row.id,
+    reportId: row.report_id,
+    userId: row.user_id,
+    authorName: row.author_name,
+    authorEmail: row.author_email,
+    authorAvatarUrl: row.author_avatar_url,
+    content: row.content,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }));
+}
+
+// Add a comment to a showcase entry
+export async function addShowcaseComment(
+  input: ShowcaseCommentInput,
+  userId?: string
+): Promise<{ success: boolean; comment?: ShowcaseComment; error?: string }> {
+  const { data, error } = await supabaseAdmin
+    .from('showcase_comments')
+    .insert({
+      report_id: input.reportId,
+      user_id: userId || null,
+      author_name: input.authorName,
+      author_email: input.authorEmail,
+      content: input.content,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Failed to add comment:', error);
+    return { success: false, error: 'Failed to add comment' };
+  }
+
+  return {
+    success: true,
+    comment: {
+      id: data.id,
+      reportId: data.report_id,
+      userId: data.user_id,
+      authorName: data.author_name,
+      authorEmail: data.author_email,
+      authorAvatarUrl: data.author_avatar_url,
+      content: data.content,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+    },
+  };
+}
+
+// Delete a comment
+export async function deleteShowcaseComment(
+  commentId: string,
+  userId: string
+): Promise<{ success: boolean; error?: string }> {
+  const { error } = await supabaseAdmin
+    .from('showcase_comments')
+    .delete()
+    .eq('id', commentId)
+    .eq('user_id', userId);
+
+  if (error) {
+    console.error('Failed to delete comment:', error);
+    return { success: false, error: 'Failed to delete comment' };
+  }
+
+  return { success: true };
+}
+
+// Get comment count for a report
+export async function getShowcaseCommentCount(reportId: string): Promise<number> {
+  const { count, error } = await supabaseAdmin
+    .from('showcase_comments')
+    .select('*', { count: 'exact', head: true })
+    .eq('report_id', reportId)
+    .eq('is_approved', true)
+    .eq('is_hidden', false);
+
+  if (error) {
+    console.error('Failed to get comment count:', error);
+    return 0;
+  }
+
+  return count || 0;
+}
+
+// ============================================
+// Showcase Detail (combined data)
+// ============================================
+
+// Get full showcase detail for a single entry
+export async function getShowcaseDetail(
+  reportId: string,
+  userEmail?: string
+): Promise<ShowcaseDetail | null> {
+  // Get the showcase entry
+  const { data, error } = await supabaseAdmin
+    .from('reports')
+    .select(`
+      id,
+      url,
+      overall_score,
+      showcase_views,
+      showcase_clicks,
+      showcase_upvotes,
+      showcase_rank,
+      created_at,
+      user_id,
+      users!inner (
+        email
+      ),
+      showcase_profiles!inner (
+        display_name,
+        tagline,
+        description,
+        icon_url,
+        screenshot_url,
+        category,
+        website_url,
+        default_name,
+        default_tagline,
+        default_icon_url,
+        is_priority
+      )
+    `)
+    .eq('id', reportId)
+    .eq('showcase_enabled', true)
+    .eq('is_public', true)
+    .eq('status', 'ready')
+    .single();
+
+  if (error || !data) {
+    console.error('Failed to get showcase detail:', error);
+    return null;
+  }
+
+  // Get comments
+  const comments = await getShowcaseComments(reportId);
+  const commentCount = comments.length;
+
+  // Check if user has upvoted
+  let hasUpvoted = false;
+  if (userEmail) {
+    hasUpvoted = await hasUserUpvoted(reportId, userEmail);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const profile = (data as any).showcase_profiles;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const user = (data as any).users;
+
+  // Extract owner name from email
+  const ownerEmail = user?.email || '';
+  const ownerName = ownerEmail.split('@')[0] || 'Anonymous';
+
+  return {
+    reportId: data.id,
+    url: data.url,
+    overallScore: data.overall_score,
+    showcaseViews: data.showcase_views || 0,
+    showcaseClicks: data.showcase_clicks || 0,
+    showcaseUpvotes: data.showcase_upvotes || 0,
+    showcaseRank: data.showcase_rank || 0,
+    createdAt: data.created_at,
+    displayName: profile.display_name || profile.default_name || extractDomainFromUrl(data.url),
+    tagline: profile.tagline || profile.default_tagline || 'Analyzed by BrandProbe',
+    description: profile.description || null,
+    iconUrl: profile.icon_url || profile.default_icon_url || null,
+    screenshotUrl: profile.screenshot_url || null,
+    category: profile.category,
+    websiteUrl: profile.website_url,
+    ownerEmail: ownerEmail,
+    ownerName: ownerName,
+    comments,
+    commentCount,
+    hasUpvoted,
+  };
 }

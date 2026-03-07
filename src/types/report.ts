@@ -198,6 +198,13 @@ export interface Report {
   isAutoRescan: boolean;
   isPublic: boolean;
   createdAt: string;
+
+  // Showcase fields
+  showcaseEnabled: boolean;
+  showcaseRank: number;
+  showcaseViews: number;
+  showcaseClicks: number;
+  showcaseUpvotes: number;
 }
 
 export interface SitemapMetadata {
@@ -288,4 +295,131 @@ export interface Site {
   lastScannedAt: string | null;
   totalScans: number;
   createdAt: string;
+}
+
+// ============================================
+// Showcase Types
+// ============================================
+
+export const SHOWCASE_CATEGORIES = [
+  'SaaS',
+  'E-commerce',
+  'Agency',
+  'Portfolio',
+  'Startup',
+  'Blog/Media',
+  'Non-profit',
+  'Local Business',
+  'Other',
+] as const;
+
+export type ShowcaseCategory = typeof SHOWCASE_CATEGORIES[number];
+
+export interface ShowcaseProfile {
+  id: string;
+  reportId: string;
+  userId: string;
+
+  // User-editable display info
+  displayName: string | null;
+  tagline: string | null;
+  description: string | null;
+  iconUrl: string | null;
+  screenshotUrl: string | null;
+  category: ShowcaseCategory | null;
+
+  // Auto-extracted defaults from scraped data
+  defaultName: string | null;
+  defaultTagline: string | null;
+  defaultIconUrl: string | null;
+
+  // The analyzed website URL
+  websiteUrl: string;
+
+  // Priority/Featured status (for Starter/Pro users)
+  isPriority: boolean;
+
+  // Timestamps
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Combined showcase entry for display (report + profile)
+export interface ShowcaseEntry {
+  // Report data
+  reportId: string;
+  url: string;
+  overallScore: number | null;
+  showcaseViews: number;
+  showcaseClicks: number;
+  showcaseUpvotes: number;
+  showcaseRank: number;
+  createdAt: string;
+
+  // Profile data (display values with fallbacks applied)
+  displayName: string;
+  tagline: string;
+  description: string | null;
+  iconUrl: string | null;
+  screenshotUrl: string | null;
+  category: ShowcaseCategory | null;
+  websiteUrl: string;
+  isPriority: boolean;
+
+  // Owner info
+  ownerEmail?: string;
+  ownerName?: string;
+}
+
+// Input for creating/updating showcase profile
+export interface ShowcaseProfileInput {
+  reportId: string;
+  displayName?: string;
+  tagline?: string;
+  description?: string;
+  iconUrl?: string;
+  screenshotUrl?: string;
+  category?: ShowcaseCategory;
+}
+
+// Filters for showcase listing
+export interface ShowcaseFilters {
+  category?: ShowcaseCategory;
+  minScore?: number;
+  maxScore?: number;
+  search?: string;
+  sortBy?: 'rank' | 'score' | 'newest' | 'views' | 'upvotes';
+  limit?: number;
+  offset?: number;
+}
+
+// Showcase comment
+export interface ShowcaseComment {
+  id: string;
+  reportId: string;
+  userId: string | null;
+  authorName: string;
+  authorEmail: string;
+  authorAvatarUrl: string | null;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Input for creating a comment
+export interface ShowcaseCommentInput {
+  reportId: string;
+  authorName: string;
+  authorEmail: string;
+  content: string;
+}
+
+// Showcase detail (full entry with additional data)
+export interface ShowcaseDetail extends ShowcaseEntry {
+  // Comments
+  comments: ShowcaseComment[];
+  commentCount: number;
+
+  // User-specific
+  hasUpvoted?: boolean;
 }
