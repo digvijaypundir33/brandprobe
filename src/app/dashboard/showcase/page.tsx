@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import AuthenticatedHeader from '@/components/AuthenticatedHeader';
@@ -16,7 +16,7 @@ interface ShowcaseProfile {
   isPriority?: boolean;
 }
 
-export default function ShowcaseDashboardPage() {
+function ShowcaseDashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const reportId = searchParams.get('reportId');
@@ -1101,6 +1101,15 @@ export default function ShowcaseDashboardPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+// Wrap with Suspense to handle useSearchParams
+export default function ShowcaseDashboardPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <ShowcaseDashboardContent />
+    </Suspense>
   );
 }
 
