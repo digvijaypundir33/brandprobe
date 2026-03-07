@@ -404,6 +404,8 @@ function transformReport(row: Record<string, unknown>): Report {
     showcaseRank: row.showcase_rank as number || 0,
     showcaseViews: row.showcase_views as number || 0,
     showcaseClicks: row.showcase_clicks as number || 0,
+    showcaseUpvotes: row.showcase_upvotes as number || 0,
+    isPriority: row.is_priority as boolean || false,
   };
 }
 
@@ -514,6 +516,7 @@ function transformShowcaseProfile(row: Record<string, unknown>): ShowcaseProfile
     defaultTagline: row.default_tagline as string | null,
     defaultIconUrl: row.default_icon_url as string | null,
     websiteUrl: row.website_url as string,
+    isPriority: row.is_priority as boolean || false,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   };
@@ -1116,6 +1119,7 @@ export async function getShowcaseDetail(
     screenshotUrl: profile.screenshot_url || null,
     category: profile.category,
     websiteUrl: profile.website_url,
+    isPriority: profile.is_priority || false,
     ownerEmail: ownerEmail,
     ownerName: ownerName,
     comments,

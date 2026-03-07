@@ -205,6 +205,7 @@ export interface Report {
   showcaseViews: number;
   showcaseClicks: number;
   showcaseUpvotes: number;
+  isPriority?: boolean;
 }
 
 export interface SitemapMetadata {

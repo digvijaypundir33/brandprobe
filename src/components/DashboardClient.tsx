@@ -618,7 +618,7 @@ export default function DashboardClient({ user, reports, session }: DashboardCli
                         )}
                       </td>
                       <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
-                        {(report.status === 'ready' || report.status === 'failed' || report.status === 'error') && (
+                        {(report.status === 'ready' || report.status === 'failed') && (
                           <div className="relative">
                             <button
                               ref={openMenuId === report.id ? menuButtonRef : null}
