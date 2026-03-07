@@ -585,8 +585,22 @@ function ShowcaseDashboardContent() {
 
                             const data = await res.json();
                             if (data.success) {
+                              // Update local state
                               setProfile({ ...profile, iconUrl: data.url });
-                              setSuccess('Icon uploaded successfully!');
+
+                              // Save to database immediately
+                              const patchRes = await fetch(`/api/showcase/${reportId}`, {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ iconUrl: data.url }),
+                              });
+
+                              const patchData = await patchRes.json();
+                              if (patchData.success) {
+                                setSuccess('Icon uploaded successfully!');
+                              } else {
+                                setError(patchData.error || 'Failed to save icon');
+                              }
                             } else {
                               setError(data.error || 'Failed to upload icon');
                             }
@@ -730,8 +744,22 @@ function ShowcaseDashboardContent() {
 
                           const data = await res.json();
                           if (data.success) {
+                            // Update local state
                             setProfile({ ...profile, screenshotUrl: data.url });
-                            setSuccess('Screenshot uploaded successfully!');
+
+                            // Save to database immediately
+                            const patchRes = await fetch(`/api/showcase/${reportId}`, {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ screenshotUrl: data.url }),
+                            });
+
+                            const patchData = await patchRes.json();
+                            if (patchData.success) {
+                              setSuccess('Screenshot uploaded successfully!');
+                            } else {
+                              setError(patchData.error || 'Failed to save screenshot');
+                            }
                           } else {
                             setError(data.error || 'Failed to upload screenshot');
                           }
