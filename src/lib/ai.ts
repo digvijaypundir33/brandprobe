@@ -193,6 +193,8 @@ async function callAnthropic<T>(prompt: string, websiteContent: string): Promise
  */
 async function callOpenAI<T>(prompt: string, websiteContent: string): Promise<T> {
   const client = getOpenAIClient();
+  const startTime = Date.now();
+
   const response = await client.chat.completions.create({
     model: MODELS.openai,
     max_tokens: 4096,
@@ -213,6 +215,9 @@ async function callOpenAI<T>(prompt: string, websiteContent: string): Promise<T>
   if (!content) {
     throw new Error('No content in OpenAI response');
   }
+
+  const elapsed = Date.now() - startTime;
+  console.log(`[AI:OpenAI] Response received in ${elapsed}ms`);
 
   return parseAIResponse<T>(content);
 }
@@ -404,6 +409,7 @@ export async function analyzeWebsite(
         console.log('[AI] Starting: Technical & Distribution Analysis...');
         const result = await callAI<TechnicalDistributionResponse>(TECHNICAL_DISTRIBUTION_PROMPT, websiteContent);
         console.log('[AI] Completed: Technical & Distribution Analysis');
+
         return result;
       })(),
     ]);

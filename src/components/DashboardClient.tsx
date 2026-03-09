@@ -152,12 +152,14 @@ export default function DashboardClient({ user, reports, session }: DashboardCli
   // Calculate report usage for Pro users
   const isPro = user.subscriptionStatus === 'active';
   const isStarter = user.subscriptionStatus === 'starter';
-  const reportsUsed = user.reportsUsedThisMonth || 0;
-  const reportsLimit = user.reportsLimit || 10;
 
   // Filter reports by status
   const readyReports = reports.filter(r => r.status === 'ready');
   const scanningReports = reports.filter(r => r.status === 'scanning');
+
+  // Count only completed reports (status='ready') - failed reports don't count
+  const reportsUsed = readyReports.length;
+  const reportsLimit = user.reportsLimit || 10;
 
   // For showcase: determine the state of each report's showcase option
   // Returns: 'enabled' (this report is showcased), 'available' (can be showcased), 'disabled' (another scan is showcased)

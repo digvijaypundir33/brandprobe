@@ -10,6 +10,10 @@ const spaceGrotesk = Space_Grotesk({
 export const metadata: Metadata = {
   title: "BrandProbe - Know why you're not growing in 60 seconds",
   description: "AI-powered marketing intelligence that analyzes your website and tells you exactly what to fix this week.",
+  metadataBase: new URL('https://brandprobe.io'),
+  alternates: {
+    canonical: '/',
+  },
   openGraph: {
     title: "BrandProbe - Know why you're not growing in 60 seconds",
     description: "AI-powered marketing intelligence that analyzes your website and tells you exactly what to fix this week.",

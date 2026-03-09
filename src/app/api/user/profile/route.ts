@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
-import { getUserByEmail, updateUserProfile } from '@/lib/supabase';
+import { getUserByEmail, updateUserProfile, getCompletedReportsCountThisMonth } from '@/lib/supabase';
 
 // GET - Fetch current user profile
 export async function GET() {
@@ -23,6 +23,9 @@ export async function GET() {
       );
     }
 
+    // Get actual completed reports count (more reliable than counter)
+    const completedReportsCount = await getCompletedReportsCountThisMonth(user.id);
+
     return NextResponse.json({
       success: true,
       profile: {
@@ -35,7 +38,7 @@ export async function GET() {
         twitterHandle: user.twitterHandle,
         linkedinUrl: user.linkedinUrl,
         subscriptionStatus: user.subscriptionStatus,
-        reportsUsedThisMonth: user.reportsUsedThisMonth,
+        reportsUsedThisMonth: completedReportsCount, // Use actual count instead of counter
         reportsLimit: user.reportsLimit,
       },
     });

@@ -241,6 +241,27 @@ export async function getReportsByUserId(userId: string): Promise<Report[]> {
   return data.map(transformReport);
 }
 
+// Count completed reports (status = 'ready') for a user this month
+export async function getCompletedReportsCountThisMonth(userId: string): Promise<number> {
+  // Get the start of the current month
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const { count, error } = await supabaseAdmin
+    .from('reports')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('status', 'ready')
+    .gte('created_at', monthStart.toISOString());
+
+  if (error) {
+    console.error('Failed to count completed reports:', error);
+    return 0;
+  }
+
+  return count || 0;
+}
+
 export async function updateReport(
   reportId: string,
   updates: Partial<{

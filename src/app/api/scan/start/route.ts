@@ -86,10 +86,8 @@ export async function POST(request: NextRequest) {
     // For now, just return success and the report will be processed
     // The actual processing happens in the scan route
 
-    // Increment reports used
-    await updateUser(user.id, {
-      reportsUsedThisMonth: user.reportsUsedThisMonth + 1,
-    });
+    // Note: Report count is now incremented inside processReport only on success
+    // This prevents failed reports from counting against the user's quota
 
     return NextResponse.json({
       success: true,

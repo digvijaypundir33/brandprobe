@@ -2,6 +2,12 @@ export const AI_SEARCH_PROMPT = `
 Analyze this website for AI Search Visibility and Answer Engine Optimization (AEO).
 This measures how well the brand will appear in AI-powered search engines like ChatGPT, Perplexity, Google AI Overviews, and Microsoft Copilot.
 
+IMPORTANT: Check the "Technical Data" section in the input for actual schema markup detection:
+- If "Structured Data: Yes" - the site HAS JSON-LD schema markup (award 15-20 points for this)
+- If "Schema Types: Organization, FAQPage, etc." - these are the detected schemas (recognize this achievement)
+- If "FAQ Schema: Yes" - the site has FAQ structured data (award 10-15 points for this)
+- DO NOT suggest adding schema markup if it's already present according to Technical Data
+
 Focus on:
 
 1. ENTITY CLARITY
@@ -24,18 +30,28 @@ Focus on:
    - Are there FAQ sections that could be cited?
    - Is content comprehensive and well-organized?
 
-5. SCHEMA MARKUP ANALYSIS
-   - What schema types are present?
-   - Are they using FAQ, HowTo, or Article schemas?
-   - What schema types are missing that could help?
+5. SCHEMA MARKUP ANALYSIS (Use Technical Data section)
+   - Check "Structured Data" and "Schema Types" from Technical Data section
+   - If schemas are present, acknowledge them positively
+   - Only suggest additional schemas if there are clear gaps
+   - DO NOT suggest adding schemas that already exist
 
 6. FAQ OPPORTUNITIES
    - What questions should they answer on their site?
    - What FAQ content would help them get cited by AI?
 
+SCORING GUIDELINES:
+- Base score starts at 30 for any functional website
+- +15-20 points if "Structured Data: Yes" in Technical Data
+- +10-15 points if "FAQ Schema: Yes" in Technical Data
+- +10-15 points for clear entity/brand identity
+- +10-15 points for citable, well-structured content
+- +5-10 points for comprehensive FAQ content on page
+- Deduct points only for genuine missing elements, not for things already present
+
 Return JSON in this exact format:
 {
-  "score": <0-100>,
+  "score": <0-100 - calculate based on scoring guidelines above>,
   "summary": "<2-3 sentence summary of AI search visibility status>",
   "keyIssues": [
     {
@@ -61,7 +77,7 @@ Return JSON in this exact format:
       "<query type they could appear for 3>"
     ],
     "contentStructureForAI": "<analysis of content structure for AI consumption>",
-    "schemaMarkupAnalysis": "<analysis of current schema and what's missing>",
+    "schemaMarkupAnalysis": "<MUST reference Technical Data section - state which schemas ARE present before suggesting additions>",
     "faqOpportunities": [
       "<FAQ question they should answer 1>",
       "<FAQ question they should answer 2>",
@@ -76,4 +92,7 @@ Return JSON in this exact format:
 }
 
 Provide 3-5 key issues with solutions, prioritized by impact. Provide 3-5 quick wins that are easy to implement.
+
+CRITICAL: Do NOT list "add schema markup" as an issue or quick win if Technical Data shows "Structured Data: Yes".
+Instead, focus on content improvements, additional schema types, or optimization of existing markup.
 `;

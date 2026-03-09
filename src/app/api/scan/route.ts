@@ -189,7 +189,11 @@ export async function POST(request: NextRequest) {
 
     // User is authenticated or verification skipped - proceed with scan
     // Check report limits based on subscription tier
-    if (user.subscriptionStatus === 'free' && user.reportsUsedThisMonth >= user.reportsLimit) {
+    // Count actual completed reports instead of using counter (more reliable)
+    const { getCompletedReportsCountThisMonth } = await import('@/lib/supabase');
+    const completedReportsCount = await getCompletedReportsCountThisMonth(user.id);
+
+    if (user.subscriptionStatus === 'free' && completedReportsCount >= user.reportsLimit) {
       return NextResponse.json(
         {
           success: false,
@@ -205,7 +209,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (user.subscriptionStatus === 'starter' && user.reportsUsedThisMonth >= user.reportsLimit) {
+    if (user.subscriptionStatus === 'starter' && completedReportsCount >= user.reportsLimit) {
       return NextResponse.json(
         {
           success: false,
@@ -230,12 +234,8 @@ export async function POST(request: NextRequest) {
     const report = await createReport(user.id, site.id, normalizedUrl);
 
     // Start async processing (pass full previousReport for improvement tracking)
-    processReport(report.id, normalizedUrl, previousReport, startTime, analysisType, email).catch(console.error);
-
-    // Increment reports used
-    await updateUser(user.id, {
-      reportsUsedThisMonth: user.reportsUsedThisMonth + 1,
-    });
+    // Note: Report count is incremented inside processReport only on success
+    processReport(report.id, normalizedUrl, previousReport, startTime, analysisType, email, user.id).catch(console.error);
 
     return NextResponse.json({
       success: true,
@@ -277,7 +277,8 @@ export async function processReport(
   previousReport: Report | null,
   startTime: number,
   analysisType: 'quick' | 'full' = 'full',
-  userEmail?: string
+  userEmail?: string,
+  userId?: string
 ): Promise<void> {
   // Extract previous scores for tracking
   const previousOverallScore = previousReport?.overallScore ?? null;
@@ -479,6 +480,9 @@ export async function processReport(
     });
 
     console.log(`[${reportId}] Report complete. Score: ${overallScore}. Time: ${scanTimeMs}ms`);
+
+    // Note: Report count is now dynamically calculated from completed reports (status='ready')
+    // No need to increment a counter - the count is self-correcting
 
     // Send report ready email if email provided
     if (userEmail) {
