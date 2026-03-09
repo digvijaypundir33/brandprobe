@@ -239,17 +239,16 @@ export async function GET(request: NextRequest) {
 
       // Only trigger if report is still in pending/scanning state
       if (report && report.status === 'scanning') {
-        // Get previous score for progress tracking
+        // Get previous report for improvement tracking
         const previousReport = report.siteId
           ? await getLatestReportForSite(report.siteId)
           : null;
-        const previousOverallScore = previousReport?.overallScore ?? null;
 
         // Trigger scan processing directly (don't await - let it run async)
         processReport(
           targetReportId,
           report.url,
-          previousOverallScore,
+          previousReport,
           Date.now(),
           'full',
           user.email

@@ -80,6 +80,36 @@ export async function updateUser(
   if (error) throw new Error(`Failed to update user: ${error.message}`);
 }
 
+// Update user profile
+export async function updateUserProfile(
+  userId: string,
+  profile: Partial<{
+    displayName: string | null;
+    company: string | null;
+    avatarUrl: string | null;
+    bio: string | null;
+    websiteUrl: string | null;
+    twitterHandle: string | null;
+    linkedinUrl: string | null;
+  }>
+): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('users')
+    .update({
+      display_name: profile.displayName,
+      company: profile.company,
+      avatar_url: profile.avatarUrl,
+      bio: profile.bio,
+      website_url: profile.websiteUrl,
+      twitter_handle: profile.twitterHandle,
+      linkedin_url: profile.linkedinUrl,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', userId);
+
+  if (error) throw new Error(`Failed to update user profile: ${error.message}`);
+}
+
 // Site operations
 export async function getSiteByUrl(userId: string, url: string): Promise<Site | null> {
   const { data, error } = await supabaseAdmin
@@ -239,6 +269,10 @@ export async function updateReport(
     designAuthenticityScore: number;
     previousOverallScore: number | null;
     scoreChange: number | null;
+    // Improvement tracking fields
+    previousSectionScores: Record<string, number> | null;
+    sectionScoreChanges: Record<string, number> | null;
+    issueComparison: unknown | null;
     scanTimeMs: number;
     analysisType: 'quick' | 'full';
     pagesAnalyzed: number;
@@ -272,6 +306,10 @@ export async function updateReport(
       design_authenticity_score: updates.designAuthenticityScore,
       previous_overall_score: updates.previousOverallScore,
       score_change: updates.scoreChange,
+      // Improvement tracking fields
+      previous_section_scores: updates.previousSectionScores,
+      section_score_changes: updates.sectionScoreChanges,
+      issue_comparison: updates.issueComparison,
       scan_time_ms: updates.scanTimeMs,
       analysis_type: updates.analysisType,
       pages_analyzed: updates.pagesAnalyzed,
@@ -307,6 +345,44 @@ export async function getCachedReport(url: string): Promise<Report | null> {
 
   if (error) return null;
   return transformReport(data);
+}
+
+// Get all reports for a site (for history feature)
+export async function getReportsBySiteId(siteId: string): Promise<Report[]> {
+  const { data, error } = await supabaseAdmin
+    .from('reports')
+    .select('*')
+    .eq('site_id', siteId)
+    .eq('status', 'ready')
+    .order('scan_number', { ascending: false });
+
+  if (error) return [];
+  return data.map(transformReport);
+}
+
+// Get report history summary for a site (lightweight version for timeline)
+export async function getReportHistorySummary(siteId: string): Promise<Array<{
+  id: string;
+  scanNumber: number;
+  overallScore: number | null;
+  scoreChange: number | null;
+  createdAt: string;
+}>> {
+  const { data, error } = await supabaseAdmin
+    .from('reports')
+    .select('id, scan_number, overall_score, score_change, created_at')
+    .eq('site_id', siteId)
+    .eq('status', 'ready')
+    .order('scan_number', { ascending: false });
+
+  if (error) return [];
+  return data.map(row => ({
+    id: row.id,
+    scanNumber: row.scan_number || 1,
+    overallScore: row.overall_score,
+    scoreChange: row.score_change,
+    createdAt: row.created_at,
+  }));
 }
 
 // Get users with active subscriptions for re-scanning
@@ -347,6 +423,14 @@ function transformUser(row: Record<string, unknown>): User {
     currentPeriodStart: row.current_period_start as string | null,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
+    // Profile fields
+    displayName: row.display_name as string | null,
+    company: row.company as string | null,
+    avatarUrl: row.avatar_url as string | null,
+    bio: row.bio as string | null,
+    websiteUrl: row.website_url as string | null,
+    twitterHandle: row.twitter_handle as string | null,
+    linkedinUrl: row.linkedin_url as string | null,
   };
 }
 
@@ -395,6 +479,11 @@ function transformReport(row: Record<string, unknown>): Report {
     designAuthenticityScore: row.design_authenticity_score as number | null,
     previousOverallScore: row.previous_overall_score as number | null,
     scoreChange: row.score_change as number | null,
+    // Improvement tracking fields
+    previousSectionScores: row.previous_section_scores as Report['previousSectionScores'],
+    sectionScoreChanges: row.section_score_changes as Report['sectionScoreChanges'],
+    issueComparison: row.issue_comparison as Report['issueComparison'],
+    scanNumber: (row.scan_number as number) || 1,
     scanTimeMs: row.scan_time_ms as number | null,
     isAutoRescan: row.is_auto_rescan as boolean,
     isPublic: row.is_public !== false, // Default to true (public) if not set
@@ -1057,7 +1146,13 @@ export async function getShowcaseDetail(
       created_at,
       user_id,
       users!inner (
-        email
+        email,
+        display_name,
+        company,
+        bio,
+        website_url,
+        twitter_handle,
+        linkedin_url
       ),
       showcase_profiles!inner (
         display_name,
@@ -1099,9 +1194,17 @@ export async function getShowcaseDetail(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const user = (data as any).users;
 
-  // Extract owner name from email
+  // Extract owner name - prefer display_name, fall back to email username
   const ownerEmail = user?.email || '';
-  const ownerName = ownerEmail.split('@')[0] || 'Anonymous';
+  const ownerDisplayName = user?.display_name;
+  const ownerName = ownerDisplayName || ownerEmail.split('@')[0] || 'Anonymous';
+
+  // Owner profile info for display
+  const ownerCompany = user?.company || null;
+  const ownerBio = user?.bio || null;
+  const ownerWebsiteUrl = user?.website_url || null;
+  const ownerTwitterHandle = user?.twitter_handle || null;
+  const ownerLinkedinUrl = user?.linkedin_url || null;
 
   return {
     reportId: data.id,
@@ -1122,6 +1225,11 @@ export async function getShowcaseDetail(
     isPriority: profile.is_priority || false,
     ownerEmail: ownerEmail,
     ownerName: ownerName,
+    ownerCompany: ownerCompany,
+    ownerBio: ownerBio,
+    ownerWebsiteUrl: ownerWebsiteUrl,
+    ownerTwitterHandle: ownerTwitterHandle,
+    ownerLinkedinUrl: ownerLinkedinUrl,
     comments,
     commentCount,
     hasUpvoted,

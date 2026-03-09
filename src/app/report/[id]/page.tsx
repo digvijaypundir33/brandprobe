@@ -22,6 +22,8 @@ import TechnicalPerformanceCard from '@/components/TechnicalPerformanceCard';
 import BrandHealthCard from '@/components/BrandHealthCard';
 import DesignAuthenticityCard from '@/components/DesignAuthenticityCard';
 import AuthenticatedHeader from '@/components/AuthenticatedHeader';
+import ImprovementsSummary from '@/components/ImprovementsSummary';
+import AlertModal from '@/components/AlertModal';
 import type { Report } from '@/types/report';
 
 type TabType = 'overview' | 'messaging' | 'seo' | 'content' | 'ads' | 'conversion' | 'distribution' | 'aiSearch' | 'technical' | 'brandHealth' | 'designAuth';
@@ -43,6 +45,16 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
   const [emailInput, setEmailInput] = useState('');
   const [isPublic, setIsPublic] = useState(true);
   const [isTogglingPrivacy, setIsTogglingPrivacy] = useState(false);
+  const [alertModal, setAlertModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    variant: 'error' | 'warning' | 'info' | 'success';
+  }>({ isOpen: false, title: '', message: '', variant: 'info' });
+
+  const showAlert = (title: string, message: string, variant: 'error' | 'warning' | 'info' | 'success' = 'info') => {
+    setAlertModal({ isOpen: true, title, message, variant });
+  };
 
   useEffect(() => {
     // Check for payment cancelled query parameter
@@ -127,7 +139,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
 
   const handleEmailSubmit = async () => {
     if (!emailInput || !emailInput.includes('@')) {
-      alert('Please enter a valid email address');
+      showAlert('Invalid Email', 'Please enter a valid email address', 'warning');
       return;
     }
 
@@ -138,7 +150,11 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
 
       if (data.exists && (data.subscriptionStatus === 'active' || data.subscriptionStatus === 'starter')) {
         // User has active subscription
-        alert(`This email already has an ${data.subscriptionStatus === 'active' ? 'Pro' : 'Starter'} plan! Please log in to access your reports.`);
+        showAlert(
+          'Already Subscribed',
+          `This email already has an ${data.subscriptionStatus === 'active' ? 'Pro' : 'Starter'} plan! Please log in to access your reports.`,
+          'info'
+        );
         setShowEmailModal(false);
         setPendingTier(null);
         setEmailInput('');
@@ -162,7 +178,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
 
   const handleTogglePrivacy = async () => {
     if (!visitorEmail || visitorEmail !== userEmail) {
-      alert('Only the report owner can change privacy settings');
+      showAlert('Permission Denied', 'Only the report owner can change privacy settings', 'warning');
       return;
     }
 
@@ -181,10 +197,10 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
       if (data.success) {
         setIsPublic(newPrivacyState);
       } else {
-        alert(data.error || 'Failed to update privacy setting');
+        showAlert('Error', data.error || 'Failed to update privacy setting', 'error');
       }
     } catch (error) {
-      alert('Failed to update privacy setting');
+      showAlert('Error', 'Failed to update privacy setting', 'error');
     } finally {
       setIsTogglingPrivacy(false);
     }
@@ -550,6 +566,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
                 overallScore={report.overallScore || 0}
                 previousScore={report.previousOverallScore}
                 scoreChange={report.scoreChange}
+                sectionScoreChanges={report.sectionScoreChanges}
               />
             </div>
 
@@ -681,6 +698,14 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
         >
           {activeTab === 'overview' && (
             <div className="space-y-8">
+              {/* Improvement Tracking (Phase 2) - Show if issue comparison data exists */}
+              {report.issueComparison && (
+                <ImprovementsSummary
+                  issueComparison={report.issueComparison}
+                  scanNumber={report.scanNumber}
+                />
+              )}
+
               {/* Executive Summary */}
               <ExecutiveSummary report={report} hasFullAccess={hasFullAccess} />
 
@@ -715,7 +740,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
                       <p className="text-sm text-gray-500">Score comparison by category</p>
                     </div>
                   </div>
-                  <ScoreBarChart scores={scores} hasFullAccess={hasFullAccess} />
+                  <ScoreBarChart scores={scores} sectionScoreChanges={report.sectionScoreChanges} hasFullAccess={hasFullAccess} />
                 </div>
               </div>
 
@@ -889,6 +914,15 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
           </motion.div>
         </div>
       )}
+
+      {/* Alert Modal */}
+      <AlertModal
+        isOpen={alertModal.isOpen}
+        onClose={() => setAlertModal({ ...alertModal, isOpen: false })}
+        title={alertModal.title}
+        message={alertModal.message}
+        variant={alertModal.variant}
+      />
     </div>
   );
 }

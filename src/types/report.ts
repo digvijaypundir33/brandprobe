@@ -1,5 +1,57 @@
 // Report Types
 
+// ===========================================
+// Improvement Tracking Types (Rescan Feature)
+// ===========================================
+
+export interface SectionScores {
+  messaging: number;
+  seo: number;
+  content: number;
+  ads: number;
+  conversion: number;
+  distribution: number;
+  aiSearch: number;
+  technical: number;
+  brandHealth: number;
+  designAuth: number;
+}
+
+export interface ResolvedIssue {
+  category: string;
+  issue: string;
+  resolvedInScan: number;
+}
+
+export interface NewIssue {
+  category: string;
+  issue: string;
+  priority: 'high' | 'medium' | 'low';
+}
+
+export interface PersistingIssue {
+  category: string;
+  issue: string;
+  firstSeenScan: number;
+  scanCount: number;
+}
+
+export interface IssueComparison {
+  resolved: ResolvedIssue[];
+  new: NewIssue[];
+  persisting: PersistingIssue[];
+  summary: {
+    resolvedCount: number;
+    newCount: number;
+    persistingCount: number;
+    overallProgress: 'improving' | 'stable' | 'declining';
+  };
+}
+
+// ===========================================
+// Core Report Types
+// ===========================================
+
 export interface Issue {
   problem: string;
   solution: string;
@@ -193,6 +245,16 @@ export interface Report {
   previousOverallScore: number | null;
   scoreChange: number | null;
 
+  // Section-level improvement tracking (Phase 1)
+  previousSectionScores: SectionScores | null;
+  sectionScoreChanges: SectionScores | null;
+
+  // Issue comparison from AI (Phase 2)
+  issueComparison: IssueComparison | null;
+
+  // Scan history tracking (Phase 3)
+  scanNumber: number;
+
   // Meta
   scanTimeMs: number | null;
   isAutoRescan: boolean;
@@ -284,6 +346,14 @@ export interface User {
   currentPeriodStart: string | null;
   createdAt: string;
   updatedAt: string;
+  // Profile fields
+  displayName: string | null;
+  company: string | null;
+  avatarUrl: string | null;
+  bio: string | null;
+  websiteUrl: string | null;
+  twitterHandle: string | null;
+  linkedinUrl: string | null;
 }
 
 export interface Site {
@@ -370,6 +440,11 @@ export interface ShowcaseEntry {
   // Owner info
   ownerEmail?: string;
   ownerName?: string;
+  ownerCompany?: string | null;
+  ownerBio?: string | null;
+  ownerWebsiteUrl?: string | null;
+  ownerTwitterHandle?: string | null;
+  ownerLinkedinUrl?: string | null;
 }
 
 // Input for creating/updating showcase profile

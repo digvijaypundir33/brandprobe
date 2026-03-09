@@ -17,6 +17,11 @@ import {
 import { normalizeUrl, extractDomain, isValidEmail, calculateOverallScore } from '@/lib/utils';
 import { sendMagicLinkEmail } from '@/lib/email';
 import { getSessionFromRequest } from '@/lib/auth';
+import type { Report, SectionScores, IssueComparison } from '@/types/report';
+import { compareIssues } from '@/lib/issue-comparator';
+
+// Feature flag for improvement tracking
+const ENABLE_IMPROVEMENT_TRACKING = process.env.NEXT_PUBLIC_ENABLE_IMPROVEMENT_TRACKING === 'true';
 
 const scanRequestSchema = z.object({
   url: z.string().min(1, 'URL is required'),
@@ -220,13 +225,12 @@ export async function POST(request: NextRequest) {
 
     // Get previous report for progress tracking
     const previousReport = await getLatestReportForSite(site.id);
-    const previousOverallScore = previousReport?.overallScore ?? null;
 
     // Create report record
     const report = await createReport(user.id, site.id, normalizedUrl);
 
-    // Start async processing
-    processReport(report.id, normalizedUrl, previousOverallScore, startTime, analysisType, email).catch(console.error);
+    // Start async processing (pass full previousReport for improvement tracking)
+    processReport(report.id, normalizedUrl, previousReport, startTime, analysisType, email).catch(console.error);
 
     // Increment reports used
     await updateUser(user.id, {
@@ -270,11 +274,13 @@ export async function POST(request: NextRequest) {
 export async function processReport(
   reportId: string,
   url: string,
-  previousOverallScore: number | null,
+  previousReport: Report | null,
   startTime: number,
   analysisType: 'quick' | 'full' = 'full',
   userEmail?: string
 ): Promise<void> {
+  // Extract previous scores for tracking
+  const previousOverallScore = previousReport?.overallScore ?? null;
   try {
     // Check if user has paid subscription (for optimizations)
     let isPaidUser = false;
@@ -300,9 +306,9 @@ export async function processReport(
     // Step 2: Format for Claude
     const websiteContent = formatScrapedDataForPrompt(scrapedData);
 
-    // Step 3: Capture screenshot (skip for free users to save 5-10s)
-    console.log(`[${reportId}] ${isPaidUser ? 'Capturing screenshot' : 'Skipping screenshot (free user)'}`);
-    const screenshotPromise = isPaidUser ? captureScreenshot(url) : Promise.resolve(null);
+    // Step 3: Capture screenshot (for all users)
+    console.log(`[${reportId}] Capturing screenshot`);
+    const screenshotPromise = captureScreenshot(url);
 
     // Step 4a: Analyze technical performance (rules-based, instant)
     console.log(`[${reportId}] Analyzing technical performance (rules-based)`);
@@ -321,7 +327,7 @@ export async function processReport(
     }
 
     // Calculate scores (including new sections)
-    const overallScore = calculateOverallScore({
+    const currentSectionScores: SectionScores = {
       messaging: analysis.messaging.score,
       seo: analysis.seo.score,
       content: analysis.content.score,
@@ -332,11 +338,108 @@ export async function processReport(
       technical: analysis.technical.score,
       brandHealth: analysis.brandHealth.score,
       designAuth: analysis.designAuthenticity.score,
-    });
+    };
+
+    const overallScore = calculateOverallScore(currentSectionScores);
 
     const scoreChange = previousOverallScore !== null
       ? overallScore - previousOverallScore
       : null;
+
+    // Calculate section-level improvements (Phase 1)
+    let previousSectionScores: SectionScores | null = null;
+    let sectionScoreChanges: SectionScores | null = null;
+
+    if (ENABLE_IMPROVEMENT_TRACKING && previousReport) {
+      previousSectionScores = {
+        messaging: previousReport.messagingScore ?? 0,
+        seo: previousReport.seoScore ?? 0,
+        content: previousReport.contentScore ?? 0,
+        ads: previousReport.adsScore ?? 0,
+        conversion: previousReport.conversionScore ?? 0,
+        distribution: previousReport.distributionScore ?? 0,
+        aiSearch: previousReport.aiSearchScore ?? 0,
+        technical: previousReport.technicalScore ?? 0,
+        brandHealth: previousReport.brandHealthScore ?? 0,
+        designAuth: previousReport.designAuthenticityScore ?? 0,
+      };
+
+      sectionScoreChanges = {
+        messaging: currentSectionScores.messaging - previousSectionScores.messaging,
+        seo: currentSectionScores.seo - previousSectionScores.seo,
+        content: currentSectionScores.content - previousSectionScores.content,
+        ads: currentSectionScores.ads - previousSectionScores.ads,
+        conversion: currentSectionScores.conversion - previousSectionScores.conversion,
+        distribution: currentSectionScores.distribution - previousSectionScores.distribution,
+        aiSearch: currentSectionScores.aiSearch - previousSectionScores.aiSearch,
+        technical: currentSectionScores.technical - previousSectionScores.technical,
+        brandHealth: currentSectionScores.brandHealth - previousSectionScores.brandHealth,
+        designAuth: currentSectionScores.designAuth - previousSectionScores.designAuth,
+      };
+
+      console.log(`[${reportId}] Section score changes:`, sectionScoreChanges);
+    }
+
+    // Phase 2: Issue comparison via AI
+    let issueComparison: IssueComparison | null = null;
+
+    if (ENABLE_IMPROVEMENT_TRACKING && previousReport) {
+      console.log(`[${reportId}] Comparing issues with previous scan...`);
+
+      // Create a temporary current report object for comparison
+      const currentReportForComparison: Report = {
+        id: reportId,
+        userId: '',
+        siteId: '',
+        url,
+        status: 'ready',
+        createdAt: new Date().toISOString(),
+        scrapedData: null,
+        overallScore,
+        messagingScore: analysis.messaging.score,
+        seoScore: analysis.seo.score,
+        contentScore: analysis.content.score,
+        adsScore: analysis.adAngles.score,
+        conversionScore: analysis.conversion.score,
+        distributionScore: analysis.distribution.score,
+        aiSearchScore: analysis.aiSearch.score,
+        technicalScore: analysis.technical.score,
+        brandHealthScore: analysis.brandHealth.score,
+        designAuthenticityScore: analysis.designAuthenticity.score,
+        messagingAnalysis: analysis.messaging,
+        seoOpportunities: analysis.seo,
+        contentStrategy: analysis.content,
+        adAngles: analysis.adAngles,
+        conversionOptimization: analysis.conversion,
+        distributionStrategy: analysis.distribution,
+        aiSearchVisibility: analysis.aiSearch,
+        technicalPerformance: analysis.technical,
+        brandHealth: analysis.brandHealth,
+        designAuthenticity: analysis.designAuthenticity,
+        previousOverallScore: previousOverallScore,
+        scoreChange,
+        previousSectionScores,
+        sectionScoreChanges,
+        issueComparison: null,
+        scanNumber: (previousReport.scanNumber ?? 1) + 1,
+        scanTimeMs: null,
+        isAutoRescan: false,
+        isPublic: true,
+        showcaseEnabled: false,
+        showcaseRank: 0,
+        showcaseViews: 0,
+        showcaseClicks: 0,
+        showcaseUpvotes: 0,
+      };
+
+      try {
+        issueComparison = await compareIssues(previousReport, currentReportForComparison);
+        console.log(`[${reportId}] Issue comparison complete:`, issueComparison.summary);
+      } catch (err) {
+        console.error(`[${reportId}] Issue comparison failed:`, err);
+        // Continue without issue comparison
+      }
+    }
 
     const scanTimeMs = Date.now() - startTime;
 
@@ -366,6 +469,10 @@ export async function processReport(
       designAuthenticityScore: analysis.designAuthenticity.score,
       previousOverallScore,
       scoreChange,
+      // Improvement tracking (Phase 1 & 2)
+      previousSectionScores: previousSectionScores as Record<string, number> | null,
+      sectionScoreChanges: sectionScoreChanges as Record<string, number> | null,
+      issueComparison,
       scanTimeMs,
       analysisType,
       pagesAnalyzed: scrapedData.pagesAnalyzed,

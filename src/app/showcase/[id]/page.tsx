@@ -322,16 +322,63 @@ export default function ShowcaseDetailPage() {
               </div>
 
               {/* Maker Info */}
-              <div className="flex items-center gap-3 py-3 border-t border-gray-100">
-                <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium"
-                  style={{ backgroundColor: 'var(--brand-primary)' }}
-                >
-                  {detail.ownerName?.charAt(0).toUpperCase() || 'A'}
+              <div className="flex items-center justify-between py-3 border-t border-gray-100">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-medium"
+                    style={{ backgroundColor: 'var(--brand-primary)' }}
+                  >
+                    {detail.ownerName?.charAt(0).toUpperCase() || 'A'}
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-gray-900">{detail.ownerName || 'Anonymous'}</span>
+                    {detail.ownerCompany && (
+                      <p className="text-xs text-gray-500">{detail.ownerCompany}</p>
+                    )}
+                  </div>
                 </div>
-                <span className="text-sm text-gray-600">
-                  <span className="font-medium text-gray-900">{detail.ownerName || 'Anonymous'}</span>
-                </span>
+                {/* Social Links */}
+                <div className="flex items-center gap-2">
+                  {detail.ownerWebsiteUrl && (
+                    <a
+                      href={detail.ownerWebsiteUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                      title="Website"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                      </svg>
+                    </a>
+                  )}
+                  {detail.ownerTwitterHandle && (
+                    <a
+                      href={`https://x.com/${detail.ownerTwitterHandle}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                      title={`@${detail.ownerTwitterHandle}`}
+                    >
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                      </svg>
+                    </a>
+                  )}
+                  {detail.ownerLinkedinUrl && (
+                    <a
+                      href={detail.ownerLinkedinUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                      title="LinkedIn"
+                    >
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
+                      </svg>
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
 

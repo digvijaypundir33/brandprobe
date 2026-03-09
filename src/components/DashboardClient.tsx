@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AuthenticatedHeader from './AuthenticatedHeader';
 import ConfirmationModal from './ConfirmationModal';
+import AlertModal from './AlertModal';
 import ShowcaseToggle from './ShowcaseToggle';
 
 interface UpgradeOptions {
@@ -47,6 +48,8 @@ export default function DashboardClient({ user, reports, session }: DashboardCli
   const [isDeleting, setIsDeleting] = useState(false);
   const [showRescanWarning, setShowRescanWarning] = useState(false);
   const [urlToRescan, setUrlToRescan] = useState<string>('');
+  const [showErrorAlert, setShowErrorAlert] = useState(false);
+  const [errorAlertMessage, setErrorAlertMessage] = useState('');
 
   const handleCreateReport = async (e: React.FormEvent, forceRescan = false) => {
     e.preventDefault();
@@ -156,6 +159,27 @@ export default function DashboardClient({ user, reports, session }: DashboardCli
   const readyReports = reports.filter(r => r.status === 'ready');
   const scanningReports = reports.filter(r => r.status === 'scanning');
 
+  // For showcase: determine the state of each report's showcase option
+  // Returns: 'enabled' (this report is showcased), 'available' (can be showcased), 'disabled' (another scan is showcased)
+  const getShowcaseState = (report: Report): 'enabled' | 'available' | 'disabled' => {
+    if (!report.siteId) return 'available'; // If no siteId, allow showcase
+
+    // If this report is already showcased
+    if (report.showcaseEnabled) return 'enabled';
+
+    // Check if any other report for this site is already showcased
+    const siteReports = reports.filter(r => r.siteId === report.siteId && r.status === 'ready');
+    const showcasedReport = siteReports.find(r => r.showcaseEnabled);
+
+    if (showcasedReport) {
+      // Another report for this site is showcased
+      return 'disabled';
+    }
+
+    // No showcased report for this site - all can be showcased
+    return 'available';
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'ready':
@@ -202,11 +226,15 @@ export default function DashboardClient({ user, reports, session }: DashboardCli
         setReportToDelete(null);
         router.refresh();
       } else {
-        alert('Failed to delete report. Please try again.');
+        setShowDeleteModal(false);
+        setErrorAlertMessage('Failed to delete report. Please try again.');
+        setShowErrorAlert(true);
       }
     } catch (error) {
       console.error('Delete error:', error);
-      alert('Failed to delete report. Please try again.');
+      setShowDeleteModal(false);
+      setErrorAlertMessage('Failed to delete report. Please try again.');
+      setShowErrorAlert(true);
     } finally {
       setIsDeleting(false);
     }
@@ -604,13 +632,35 @@ export default function DashboardClient({ user, reports, session }: DashboardCli
                         </span>
                       </td>
                       <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
-                        {report.status === 'ready' && report.isPublic && (
-                          <ShowcaseToggle
-                            report={report}
-                            isOwner={true}
-                            onUpdate={() => router.refresh()}
-                          />
-                        )}
+                        {report.status === 'ready' && report.isPublic && (() => {
+                          const showcaseState = getShowcaseState(report);
+                          if (showcaseState === 'enabled' || showcaseState === 'available') {
+                            return (
+                              <ShowcaseToggle
+                                report={report}
+                                isOwner={true}
+                                onUpdate={() => router.refresh()}
+                              />
+                            );
+                          }
+                          // Another scan of this site is showcased - show disabled state with link
+                          return (
+                            <span
+                              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 text-gray-400 cursor-not-allowed"
+                              title="Another scan of this site is already showcased"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                                />
+                              </svg>
+                              Other Scan
+                            </span>
+                          );
+                        })()}
                         {report.status === 'ready' && !report.isPublic && (
                           <span className="text-xs text-gray-400" title="Make report public to showcase">
                             Private
@@ -689,6 +739,20 @@ export default function DashboardClient({ user, reports, session }: DashboardCli
                                         </svg>
                                         Download PDF
                                       </button>
+                                      {isPro && (
+                                        <button
+                                          onClick={() => {
+                                            setOpenMenuId(null);
+                                            router.push(`/report/${report.id}/history`);
+                                          }}
+                                          className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                        >
+                                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                          </svg>
+                                          View History
+                                        </button>
+                                      )}
                                     </>
                                   )}
                                   <button
@@ -901,6 +965,15 @@ export default function DashboardClient({ user, reports, session }: DashboardCli
           confirmText="Upgrade to Pro"
           cancelText="Cancel"
           variant="warning"
+        />
+
+        {/* Error Alert Modal */}
+        <AlertModal
+          isOpen={showErrorAlert}
+          onClose={() => setShowErrorAlert(false)}
+          title="Error"
+          message={errorAlertMessage}
+          variant="error"
         />
       </main>
     </div>

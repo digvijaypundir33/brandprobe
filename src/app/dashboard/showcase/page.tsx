@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import AuthenticatedHeader from '@/components/AuthenticatedHeader';
+import ConfirmationModal from '@/components/ConfirmationModal';
 import { SHOWCASE_CATEGORIES, type ShowcaseCategory, type Report } from '@/types/report';
 
 interface ShowcaseProfile {
@@ -28,6 +29,7 @@ function ShowcaseDashboardContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [showDisableConfirm, setShowDisableConfirm] = useState(false);
 
   // All user reports
   const [allReports, setAllReports] = useState<Report[]>([]);
@@ -265,10 +267,14 @@ function ShowcaseDashboardContent() {
     }
   };
 
-  // Handle disable showcase
-  const handleDisable = async () => {
-    if (!confirm('Remove this site from the showcase?')) return;
+  // Handle disable showcase - show confirmation modal
+  const handleDisable = () => {
+    setShowDisableConfirm(true);
+  };
 
+  // Confirm disable showcase
+  const confirmDisable = async () => {
+    setShowDisableConfirm(false);
     setIsSaving(true);
     setError(null);
 
@@ -443,34 +449,49 @@ function ShowcaseDashboardContent() {
           )}
 
           {/* Add New Showcase CTA */}
-          {allReports.length > showcasedReports.length && (
-            <div className="mt-8 bg-blue-50 rounded-xl border border-blue-200 p-6">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900 mb-2">
-                    You have {allReports.length - showcasedReports.length} more {allReports.length - showcasedReports.length === 1 ? 'report' : 'reports'} to showcase
-                  </h3>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Showcase more of your sites to increase visibility and get more feedback from the community
-                  </p>
-                  <Link
-                    href="/dashboard"
-                    className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
-                  >
-                    Go to Dashboard
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          {(() => {
+            // Count unique sites that can be showcased
+            // A site can be showcased if it has no showcased reports yet
+            const showcasedSiteIds = new Set(showcasedReports.map(r => r.siteId).filter(Boolean));
+            const readyReports = allReports.filter(r => r.status === 'ready');
+            const uniqueSitesNotShowcased = new Set(
+              readyReports
+                .filter(r => r.siteId && !showcasedSiteIds.has(r.siteId))
+                .map(r => r.siteId)
+            );
+            const sitesToShowcase = uniqueSitesNotShowcased.size;
+
+            if (sitesToShowcase === 0) return null;
+
+            return (
+              <div className="mt-8 bg-blue-50 rounded-xl border border-blue-200 p-6">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                    <svg className="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
                     </svg>
-                  </Link>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900 mb-2">
+                      You have {sitesToShowcase} more {sitesToShowcase === 1 ? 'site' : 'sites'} to showcase
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Showcase more of your sites to increase visibility and get more feedback from the community
+                    </p>
+                    <Link
+                      href="/dashboard"
+                      className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
+                    >
+                      Go to Dashboard
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </Link>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </main>
       </div>
     );
@@ -1137,6 +1158,18 @@ function ShowcaseDashboardContent() {
             </div>
           </div>
         </div>
+
+        {/* Disable Showcase Confirmation Modal */}
+        <ConfirmationModal
+          isOpen={showDisableConfirm}
+          onClose={() => setShowDisableConfirm(false)}
+          onConfirm={confirmDisable}
+          title="Remove from Showcase?"
+          message="This will remove your site from the public showcase directory. You can re-enable it anytime."
+          confirmText="Remove"
+          cancelText="Cancel"
+          variant="warning"
+        />
       </main>
     </div>
   );
