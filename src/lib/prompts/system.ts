@@ -26,6 +26,6 @@ SCORING GUIDELINES:
 - 71-85: STRONG — Above average, fine-tuning required
 - 86-100: EXCELLENT — Top tier marketing
 
-REALITY CHECK: Most SMB websites score 25-45. That's normal.
-Don't inflate scores to be nice — the score creates urgency, not demoralization.
+REALITY CHECK: Most SMB websites score 35-55. That's normal.
+Well-executed basics should reach 50-65. Don't inflate scores to be nice.
 `.trim();

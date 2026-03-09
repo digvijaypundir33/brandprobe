@@ -4,10 +4,12 @@ export const CORE_MARKETING_PROMPT = `
 Analyze this website and provide a comprehensive marketing analysis. Return a single JSON object with all sections.
 
 IMPORTANT SCORING GUIDANCE:
-- For well-known brands (Facebook, LinkedIn, Google, Apple, etc.), assume strong baseline competency
-- If content is limited (login walls, bot protection), give benefit of the doubt with 70+ scores
-- Focus analysis on what IS available rather than penalizing what's missing
-- Major brands should generally score 75-90 unless clear issues are present
+- Score HONESTLY based on what you actually see, not brand reputation
+- Most SMB websites realistically score 35-55. That's normal - don't inflate scores
+- 71-85 = genuinely STRONG marketing (above average), not just "decent"
+- 86-100 = EXCELLENT (top tier, rare) - reserve for truly exceptional execution
+- If content is limited (login walls, bot protection), score based on what's visible
+- Well-executed basics (clear messaging, good CTA, mobile-friendly) should reach 50-65
 
 ## SECTION 1: MESSAGING ANALYSIS
 Analyze the website's messaging:
@@ -114,10 +116,12 @@ Analyze this website's technical aspects and distribution potential. Return a si
 NOTE: Technical Performance is analyzed separately using rules-based checks. Focus on the sections below.
 
 IMPORTANT SCORING GUIDANCE:
-- For well-known brands, assume strong baseline competency (70+ scores)
-- If content is limited (login walls, bot protection), give benefit of the doubt
-- Focus on what IS available rather than penalizing missing data
-- Major established brands should score 75-90 unless clear issues found
+- Score HONESTLY based on what you actually see, not brand reputation
+- Most SMB websites realistically score 35-55. That's normal - don't inflate scores
+- 71-85 = genuinely STRONG marketing (above average), not just "decent"
+- 86-100 = EXCELLENT (top tier, rare) - reserve for truly exceptional execution
+- If content is limited (login walls, bot protection), score based on what's visible
+- Well-executed basics (clear messaging, good CTA, mobile-friendly) should reach 50-65
 
 ## SECTION 1: SEO OPPORTUNITIES
 Analyze SEO factors:
