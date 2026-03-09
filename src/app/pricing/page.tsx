@@ -13,8 +13,9 @@ function PricingContent() {
   const [userEmail, setUserEmail] = useState('');
   const [subscriptionStatus, setSubscriptionStatus] = useState<string>('free');
 
-  // Get reportId from query params if user is upgrading a specific report
+  // Get params from query
   const reportId = searchParams.get('reportId');
+  const returnTo = searchParams.get('returnTo') || '/dashboard';
 
   useEffect(() => {
     // Check if user is authenticated
@@ -33,14 +34,20 @@ function PricingContent() {
   }, []);
 
   const handleUpgrade = (tier: 'starter' | 'pro') => {
-    if (!reportId) {
-      // If no reportId, redirect to home to create a report first
-      router.push('/?showPricing=true');
-      return;
+    // Build checkout URL
+    // For Pro tier (subscription), reportId is optional - it's an account-level upgrade
+    // For Starter tier, we should have a reportId, but allow checkout without it
+    const params = new URLSearchParams({
+      tier,
+      email: userEmail,
+      returnTo,
+    });
+
+    if (reportId) {
+      params.set('reportId', reportId);
     }
 
-    // Redirect to checkout with tier, reportId, and email
-    const checkoutUrl = `/checkout?tier=${tier}&reportId=${reportId}&email=${encodeURIComponent(userEmail)}`;
+    const checkoutUrl = `/checkout?${params.toString()}`;
     router.push(checkoutUrl);
   };
 
@@ -200,10 +207,10 @@ function PricingContent() {
               ) : (
                 <button
                   onClick={() => handleUpgrade('starter')}
-                  disabled={!reportId}
+                  disabled={!isAuthenticated}
                   className="w-full py-3 px-4 bg-gray-900 text-white text-center rounded-lg font-medium hover:bg-gray-800 transition-colors mb-6 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {reportId ? 'Get Starter' : 'Create Report First'}
+                  {isAuthenticated ? 'Get Starter' : 'Login Required'}
                 </button>
               )}
 
@@ -281,11 +288,11 @@ function PricingContent() {
               ) : (
                 <button
                   onClick={() => handleUpgrade('pro')}
-                  disabled={!reportId}
+                  disabled={!isAuthenticated}
                   className="w-full py-3 px-4 text-white text-center rounded-lg font-medium transition-colors mb-6 disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ backgroundColor: 'var(--brand-primary)' }}
                 >
-                  {reportId ? 'Get Pro' : 'Create Report First'}
+                  {isAuthenticated ? 'Get Pro' : 'Login Required'}
                 </button>
               )}
 

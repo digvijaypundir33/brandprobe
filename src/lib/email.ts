@@ -22,8 +22,8 @@ export async function sendMagicLinkEmail(
       reportId ? `&reportId=${reportId}` : ''
     }`;
 
-    // In local development, log the magic link URL instead of sending email
-    if (!process.env.RESEND_API_KEY || process.env.RESEND_API_KEY.startsWith('re_your_')) {
+    // In local development, always log the magic link URL
+    if (process.env.NEXT_PUBLIC_SUPABASE_ENV === 'local') {
       console.log('\n========================================');
       console.log('🔐 MAGIC LINK (Local Development)');
       console.log('========================================');
@@ -31,6 +31,10 @@ export async function sendMagicLinkEmail(
       console.log(`Link:  ${verifyUrl}`);
       console.log(`Type:  ${isDashboardAccess ? 'Dashboard Access' : 'Report Verification'}`);
       console.log('========================================\n');
+    }
+
+    // In local development without email service, skip sending email
+    if (!process.env.RESEND_API_KEY || process.env.RESEND_API_KEY.startsWith('re_your_') || process.env.RESEND_API_KEY === 're_placeholder_key_for_build') {
       return { success: true };
     }
 

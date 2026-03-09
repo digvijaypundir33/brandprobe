@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 interface AuthenticatedHeaderProps {
   email: string;
@@ -24,9 +24,15 @@ export default function AuthenticatedHeader({
   reportId,
 }: AuthenticatedHeaderProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const isPro = subscriptionStatus === 'active';
+
+  // Build upgrade URL with return path
+  const upgradeUrl = reportId
+    ? `/pricing?reportId=${reportId}&returnTo=${encodeURIComponent(pathname || '/dashboard')}`
+    : `/pricing?returnTo=${encodeURIComponent(pathname || '/dashboard')}`;
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -59,7 +65,7 @@ export default function AuthenticatedHeader({
             </Link>
             {!isPro && showUpgradeButton && (
               <Link
-                href={`/pricing${reportId ? `?reportId=${reportId}` : ''}`}
+                href={upgradeUrl}
                 className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium transition-colors"
               >
                 Upgrade

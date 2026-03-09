@@ -5,7 +5,7 @@ import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 
 interface PayPalButtonProps {
   tier: 'starter' | 'pro';
-  reportId?: string;
+  reportId?: string | null;
   email: string;
   onSuccess?: () => void;
   onError?: (error: string) => void;
@@ -20,13 +20,13 @@ export default function PayPalButton({
 }: PayPalButtonProps) {
   const [loading, setLoading] = useState(false);
 
+  // Configure PayPal SDK options based on tier
   const initialOptions = {
     clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID!,
     currency: 'USD',
     intent: tier === 'starter' ? 'capture' : 'subscription',
-    // Enable credit/debit card payments (guest checkout)
+    vault: tier === 'pro', // Enable vault for subscriptions
     components: 'buttons,funding-eligibility',
-    // Don't disable any funding sources
   } as any;
 
   return (
@@ -47,10 +47,18 @@ export default function PayPalButton({
             ? async () => {
                 setLoading(true);
                 try {
+                  const payload: { tier: 'starter'; email: string; reportId?: string } = {
+                    tier: 'starter',
+                    email,
+                  };
+                  if (reportId) {
+                    payload.reportId = reportId;
+                  }
+
                   const response = await fetch('/api/paypal/checkout', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ tier: 'starter', reportId, email }),
+                    body: JSON.stringify(payload),
                   });
 
                   const data = await response.json();
@@ -76,10 +84,18 @@ export default function PayPalButton({
             ? async () => {
                 setLoading(true);
                 try {
+                  const payload: { tier: 'pro'; email: string; reportId?: string } = {
+                    tier: 'pro',
+                    email,
+                  };
+                  if (reportId) {
+                    payload.reportId = reportId;
+                  }
+
                   const response = await fetch('/api/paypal/checkout', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ tier: 'pro', reportId, email }),
+                    body: JSON.stringify(payload),
                   });
 
                   const data = await response.json();

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPayPalSubscription } from '@/lib/paypal';
 import { getOrCreateUser, updateUser } from '@/lib/supabase';
-import { getSessionFromRequest } from '@/lib/auth';
+import { getSessionFromRequest, createSession, setSessionCookie } from '@/lib/auth';
 
 /**
  * Handle successful PayPal subscription (Pro tier - $29/month)
@@ -51,6 +51,10 @@ export async function GET(request: NextRequest) {
       reportsLimit: 10,
       currentPeriodStart: new Date().toISOString(),
     });
+
+    // Refresh session with new subscription status
+    const newToken = await createSession(user.id, session.email, 'active');
+    await setSessionCookie(newToken);
 
     // Redirect to report or homepage
     const redirectUrl = reportId

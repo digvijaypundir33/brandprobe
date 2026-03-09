@@ -749,6 +749,10 @@ export default function DashboardClient({ user, reports, session }: DashboardCli
                     className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                     required
                     disabled={isCreating}
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck="false"
                   />
                 </div>
 
