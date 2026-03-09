@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
+import { PayPalScriptProvider, PayPalButtons, FUNDING } from '@paypal/react-paypal-js';
 
 interface PayPalButtonProps {
   tier: 'starter' | 'pro';
@@ -41,7 +41,7 @@ export default function PayPalButton({
           tagline: false,
           height: 48,
         }}
-        fundingSource={undefined} // Show all available payment methods
+        fundingSource={FUNDING.PAYPAL} // Only show PayPal button, no debit/credit card
         createOrder={
           tier === 'starter'
             ? async () => {

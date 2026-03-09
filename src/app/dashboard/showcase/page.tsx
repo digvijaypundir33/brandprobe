@@ -195,6 +195,9 @@ function ShowcaseDashboardContent() {
 
   useEffect(() => {
     if (isAuthenticated) {
+      // Reset loading state when reportId changes
+      setIsLoading(true);
+      setReport(null);
       fetchReportData();
     }
   }, [isAuthenticated, fetchReportData]);
@@ -290,6 +293,7 @@ function ShowcaseDashboardContent() {
     }
   };
 
+  // Show loading state while authenticating or fetching data
   if (!isAuthenticated || isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -472,7 +476,9 @@ function ShowcaseDashboardContent() {
     );
   }
 
-  if (!report) {
+  // Only show "Report Not Found" when we have a reportId but failed to load
+  // (indicated by having an error or being done loading with no report)
+  if (reportId && !report) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -490,6 +496,10 @@ function ShowcaseDashboardContent() {
     );
   }
 
+  // At this point, if we have reportId, we definitely have report (non-null)
+  // TypeScript needs this assertion since it can't infer from the conditional above
+  const currentReport = report!;
+
   return (
     <div className="min-h-screen bg-gray-50">
       <AuthenticatedHeader
@@ -503,7 +513,7 @@ function ShowcaseDashboardContent() {
       <main className="container mx-auto max-w-6xl px-4 py-8">
 
         {/* Status Banner */}
-        {!report.isPublic && (
+        {!currentReport.isPublic && (
           <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
             <div className="flex items-center gap-3">
               <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -831,7 +841,7 @@ function ShowcaseDashboardContent() {
                     </button>
                     <button
                       type="submit"
-                      disabled={isSaving || !report.isPublic}
+                      disabled={isSaving || !currentReport.isPublic}
                       className="px-6 py-3 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50"
                       style={{ backgroundColor: 'var(--brand-primary)' }}
                     >
@@ -848,7 +858,7 @@ function ShowcaseDashboardContent() {
                     </Link>
                     <button
                       type="submit"
-                      disabled={isSaving || !report.isPublic}
+                      disabled={isSaving || !currentReport.isPublic}
                       className="px-6 py-3 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50"
                       style={{ backgroundColor: 'var(--brand-primary)' }}
                     >
@@ -916,23 +926,23 @@ function ShowcaseDashboardContent() {
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-xs font-medium text-gray-500">BrandProbe Score</span>
                     <span className="text-sm font-bold text-gray-900">
-                      {report.overallScore ?? '--'}/100
+                      {currentReport.overallScore ?? '--'}/100
                     </span>
                   </div>
                   <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all duration-500 ${
-                        report.overallScore
-                          ? report.overallScore >= 70
+                        currentReport.overallScore
+                          ? currentReport.overallScore >= 70
                             ? 'bg-green-500'
-                            : report.overallScore >= 50
+                            : currentReport.overallScore >= 50
                             ? 'bg-yellow-500'
-                            : report.overallScore >= 30
+                            : currentReport.overallScore >= 30
                             ? 'bg-orange-500'
                             : 'bg-red-500'
                           : 'bg-gray-200'
                       }`}
-                      style={{ width: `${report.overallScore ?? 0}%` }}
+                      style={{ width: `${currentReport.overallScore ?? 0}%` }}
                     />
                   </div>
                 </div>
@@ -978,7 +988,7 @@ function ShowcaseDashboardContent() {
 
                 {/* Website URL (subtle) */}
                 <div className="mt-3 pt-3 border-t border-gray-100">
-                  <p className="text-xs text-gray-400 truncate">{report.url}</p>
+                  <p className="text-xs text-gray-400 truncate">{currentReport.url}</p>
                 </div>
               </div>
             </div>
@@ -1098,7 +1108,7 @@ function ShowcaseDashboardContent() {
                   <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
-                  Your BrandProbe score ({report.overallScore ?? '--'}/100)
+                  Your BrandProbe score ({currentReport.overallScore ?? '--'}/100)
                 </li>
                 <li className="flex items-center gap-2">
                   <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
