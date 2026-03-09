@@ -132,8 +132,9 @@ export async function createPayPalSubscription(
         applicationContext: {
           brandName: 'BrandProbe',
           userAction: ApplicationContextUserAction.SubscribeNow,
-          returnUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/paypal/subscription/success${reportId ? `?reportId=${reportId}` : ''}`,
+          returnUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/paypal/success${reportId ? `?reportId=${reportId}` : ''}`,
           cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL}${reportId ? `/report/${reportId}` : ''}?payment=cancelled`,
+          shippingPreference: 'NO_SHIPPING' as any,
         },
       },
     });
@@ -149,9 +150,20 @@ export async function createPayPalSubscription(
     }
 
     return { subscriptionId, approvalUrl };
-  } catch (error) {
+  } catch (error: any) {
     console.error('PayPal create subscription error:', error);
-    throw new Error('Failed to create PayPal subscription');
+
+    // Log detailed error information for debugging
+    if (error.result) {
+      console.error('PayPal error details:', JSON.stringify(error.result, null, 2));
+    }
+    if (error.body) {
+      console.error('PayPal error body:', JSON.stringify(error.body, null, 2));
+    }
+
+    // Provide helpful error message
+    const errorMessage = error.result?.message || error.message || 'Failed to create PayPal subscription';
+    throw new Error(errorMessage);
   }
 }
 

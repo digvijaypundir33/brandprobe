@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import PayPalButton from '@/components/PayPalButton';
+import PaymentOptions from '@/components/PaymentOptions';
 
 function CheckoutContent() {
   const router = useRouter();
@@ -14,16 +14,19 @@ function CheckoutContent() {
   const tier = searchParams.get('tier') as 'starter' | 'pro' | null;
   const reportId = searchParams.get('reportId');
   const email = searchParams.get('email');
+  const returnTo = searchParams.get('returnTo') || '/dashboard';
 
   useEffect(() => {
-    if (!tier || !reportId || !email) {
+    // For checkout, tier and email are required
+    // reportId is optional (Pro subscriptions can be account-level)
+    if (!tier || !email) {
       setError('Missing required checkout information');
       setLoading(false);
       return;
     }
 
     setLoading(false);
-  }, [tier, reportId, email]);
+  }, [tier, email]);
 
   const handleSuccess = () => {
     // Redirect back to report page after successful payment
@@ -43,11 +46,8 @@ function CheckoutContent() {
   };
 
   const handleCancel = () => {
-    if (reportId) {
-      router.push(`/report/${reportId}?payment=cancelled`);
-    } else {
-      router.push('/');
-    }
+    // Return to where the user came from
+    router.push(returnTo);
   };
 
   if (loading) {
@@ -65,7 +65,7 @@ function CheckoutContent() {
     );
   }
 
-  if (error || !tier || !reportId || !email) {
+  if (error || !tier || !email) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-4">
         <motion.div
@@ -227,7 +227,7 @@ function CheckoutContent() {
             )}
 
             <div className="mb-6">
-              <PayPalButton
+              <PaymentOptions
                 tier={tier}
                 reportId={reportId}
                 email={email}
@@ -264,12 +264,6 @@ function CheckoutContent() {
           className="mt-12 text-center"
         >
           <div className="flex items-center justify-center gap-8 text-sm text-gray-600">
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <span>Money-back guarantee</span>
-            </div>
             <div className="flex items-center gap-2">
               <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
