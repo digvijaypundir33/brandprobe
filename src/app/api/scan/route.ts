@@ -224,6 +224,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (user.subscriptionStatus === 'active' && completedReportsCount >= user.reportsLimit) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Monthly report limit reached',
+          message: `You have used all ${user.reportsLimit} reports for this month. Your limit will reset on your billing renewal date.`,
+        },
+        { status: 403 }
+      );
+    }
+
     // Get or create site
     const site = await getOrCreateSite(user.id, normalizedUrl, domain);
 
@@ -315,10 +326,69 @@ export async function processReport(
     console.log(`[${reportId}] Analyzing technical performance (rules-based)`);
     const technical = await analyzeTechnicalPerformance(url, scrapedData.html);
 
+    // Prepare previous report data for AI consistency (if this is a rescan)
+    let previousReportData = null;
+    if (previousReport) {
+      // Extract top 5 high/medium priority issues from previous report for tracking
+      const previousKeyIssues: Array<{ category: string; issue: string; priority: string }> = [];
+
+      // Collect issues from each section
+      const sections = [
+        { name: 'messaging', data: previousReport.messagingAnalysis },
+        { name: 'seo', data: previousReport.seoOpportunities },
+        { name: 'content', data: previousReport.contentStrategy },
+        { name: 'ads', data: previousReport.adAngles },
+        { name: 'conversion', data: previousReport.conversionOptimization },
+        { name: 'distribution', data: previousReport.distributionStrategy },
+        { name: 'aiSearch', data: previousReport.aiSearchVisibility },
+        { name: 'technical', data: previousReport.technicalPerformance },
+        { name: 'brandHealth', data: previousReport.brandHealth },
+        { name: 'designAuth', data: previousReport.designAuthenticity },
+      ];
+
+      for (const section of sections) {
+        if (section.data && typeof section.data === 'object' && 'keyIssues' in section.data) {
+          const keyIssues = (section.data as any).keyIssues || [];
+          for (const issue of keyIssues) {
+            if (typeof issue === 'object' && issue.issue && issue.priority) {
+              previousKeyIssues.push({
+                category: section.name,
+                issue: issue.issue,
+                priority: issue.priority,
+              });
+            }
+          }
+        }
+      }
+
+      // Sort by priority (high first) and take top 5
+      const priorityOrder = { high: 1, medium: 2, low: 3 };
+      previousKeyIssues.sort((a, b) => {
+        const aPriority = priorityOrder[a.priority.toLowerCase() as keyof typeof priorityOrder] || 99;
+        const bPriority = priorityOrder[b.priority.toLowerCase() as keyof typeof priorityOrder] || 99;
+        return aPriority - bPriority;
+      });
+
+      previousReportData = {
+        overallScore: previousReport.overallScore ?? 50,
+        messagingScore: previousReport.messagingScore ?? 50,
+        seoScore: previousReport.seoScore ?? 50,
+        contentScore: previousReport.contentScore ?? 50,
+        adsScore: previousReport.adsScore ?? 50,
+        conversionScore: previousReport.conversionScore ?? 50,
+        distributionScore: previousReport.distributionScore ?? 50,
+        aiSearchScore: previousReport.aiSearchScore ?? 50,
+        technicalScore: previousReport.technicalScore ?? 50,
+        brandHealthScore: previousReport.brandHealthScore ?? 50,
+        designAuthScore: previousReport.designAuthenticityScore ?? 50,
+        keyIssues: previousKeyIssues.slice(0, 5),
+      };
+    }
+
     // Step 4b: Analyze with AI (marketing sections in parallel)
     console.log(`[${reportId}] Starting AI analysis`);
     const [analysis, screenshotUrl] = await Promise.all([
-      analyzeWebsite(websiteContent, technical, scrapedData.brandConfig),
+      analyzeWebsite(websiteContent, technical, scrapedData.brandConfig, previousReportData),
       screenshotPromise,
     ]);
 

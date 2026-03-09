@@ -171,6 +171,7 @@ async function callAnthropic<T>(prompt: string, websiteContent: string): Promise
   const response = await client.messages.create({
     model: MODELS.anthropic,
     max_tokens: 4096,
+    temperature: 0, // Consistency for scoring
     system: SYSTEM_PROMPT,
     messages: [
       {
@@ -198,6 +199,7 @@ async function callOpenAI<T>(prompt: string, websiteContent: string): Promise<T>
   const response = await client.chat.completions.create({
     model: MODELS.openai,
     max_tokens: 4096,
+    temperature: 0, // Consistency for scoring
     messages: [
       {
         role: 'system',
@@ -230,6 +232,7 @@ async function callGroq<T>(prompt: string, websiteContent: string): Promise<T> {
   const response = await client.chat.completions.create({
     model: MODELS.groq,
     max_tokens: 4096,
+    temperature: 0, // Consistency for scoring
     messages: [
       {
         role: 'system',
@@ -278,7 +281,7 @@ async function callOllama<T>(prompt: string, websiteContent: string): Promise<T>
       stream: false,
       format: 'json', // Request JSON output
       options: {
-        temperature: 0.7,
+        temperature: 0, // Consistency for scoring
         num_predict: 4096,
       },
     }),
@@ -337,6 +340,66 @@ interface TechnicalDistributionResponse {
   designAuthenticity: DesignAuthenticity;
 }
 
+// Type for previous report data
+interface PreviousReportData {
+  overallScore: number;
+  messagingScore: number;
+  seoScore: number;
+  contentScore: number;
+  adsScore: number;
+  conversionScore: number;
+  distributionScore: number;
+  aiSearchScore: number;
+  technicalScore: number;
+  brandHealthScore: number;
+  designAuthScore: number;
+  keyIssues?: Array<{ category: string; issue: string; priority: string }>;
+}
+
+/**
+ * Format previous report data into context for AI prompts
+ * This helps maintain scoring consistency on rescans
+ */
+function formatPreviousScoreContext(previousReport: PreviousReportData | null): string {
+  if (!previousReport) {
+    return '';
+  }
+
+  const context = `
+
+---
+
+PREVIOUS SCAN BASELINE (for consistency):
+
+This website was previously scanned with the following scores:
+- Overall: ${previousReport.overallScore}/100
+- Messaging: ${previousReport.messagingScore}/100
+- SEO: ${previousReport.seoScore}/100
+- Content: ${previousReport.contentScore}/100
+- Ads: ${previousReport.adsScore}/100
+- Conversion: ${previousReport.conversionScore}/100
+- Distribution: ${previousReport.distributionScore}/100
+- AI Search: ${previousReport.aiSearchScore}/100
+- Technical: ${previousReport.technicalScore}/100
+- Brand Health: ${previousReport.brandHealthScore}/100
+- Design Authenticity: ${previousReport.designAuthScore}/100
+
+${previousReport.keyIssues && previousReport.keyIssues.length > 0 ? `
+Key Issues Previously Identified:
+${previousReport.keyIssues.map((issue, i) => `${i + 1}. [${issue.category}] ${issue.issue} (Priority: ${issue.priority})`).join('\n')}
+` : ''}
+
+SCORING CONSISTENCY GUIDELINES:
+- If the website appears UNCHANGED: Keep scores within ±5 points of previous baseline.
+- If MINOR changes detected (small text updates, minor design tweaks): Adjust scores by ±3-8 points based on improvement/decline.
+- If SIGNIFICANT changes detected (major redesign, new features, complete messaging overhaul): Evaluate from scratch, baseline is for reference only.
+- For issues: Check if previously identified issues are resolved. If an issue persists, mention it was "still present from previous scan".
+- Be consistent but honest - don't inflate scores just to match baseline, but also don't penalize for variance in your own interpretation.
+`;
+
+  return context;
+}
+
 // Default section template for when AI doesn't return complete data
 function createDefaultSection(sectionName: string): Record<string, unknown> {
   return {
@@ -374,7 +437,8 @@ function ensureSection<T extends { score?: number; summary?: string; keyIssues?:
 export async function analyzeWebsite(
   websiteContent: string,
   technical: TechnicalPerformance,
-  brandConfig?: { baselineScores?: Record<string, number>; brandInfo?: any }
+  brandConfig?: { baselineScores?: Record<string, number>; brandInfo?: any },
+  previousReport?: PreviousReportData | null
 ): Promise<{
   messaging: MessagingAnalysis;
   seo: SeoOpportunities;
@@ -390,6 +454,12 @@ export async function analyzeWebsite(
   const provider = getAIProvider();
   console.log(`[AI] Using provider: ${provider}${provider === 'ollama' ? ` (model: ${MODELS.ollama})` : ''}`);
 
+  // Format previous score context if this is a rescan
+  const previousScoreContext = formatPreviousScoreContext(previousReport || null);
+  if (previousReport) {
+    console.log(`[AI] Rescan detected - including previous baseline scores for consistency`);
+  }
+
   // Use consolidated prompts (2 calls instead of 9)
   // This reduces total time from ~4 min to ~1 min for Ollama
   const useConsolidated = process.env.USE_CONSOLIDATED_PROMPTS !== 'false';
@@ -401,13 +471,13 @@ export async function analyzeWebsite(
     const [coreMarketing, techDistribution] = await Promise.all([
       (async () => {
         console.log('[AI] Starting: Core Marketing Analysis...');
-        const result = await callAI<CoreMarketingResponse>(CORE_MARKETING_PROMPT, websiteContent);
+        const result = await callAI<CoreMarketingResponse>(CORE_MARKETING_PROMPT, websiteContent + previousScoreContext);
         console.log('[AI] Completed: Core Marketing Analysis');
         return result;
       })(),
       (async () => {
         console.log('[AI] Starting: Technical & Distribution Analysis...');
-        const result = await callAI<TechnicalDistributionResponse>(TECHNICAL_DISTRIBUTION_PROMPT, websiteContent);
+        const result = await callAI<TechnicalDistributionResponse>(TECHNICAL_DISTRIBUTION_PROMPT, websiteContent + previousScoreContext);
         console.log('[AI] Completed: Technical & Distribution Analysis');
 
         return result;
@@ -474,15 +544,17 @@ export async function analyzeWebsite(
     return results;
   }
 
+  const contentWithContext = websiteContent + previousScoreContext;
+
   const tasks: (() => Promise<unknown>)[] = [
-    () => callAI<MessagingAnalysis>(MESSAGING_PROMPT, websiteContent),
-    () => callAI<SeoOpportunities>(SEO_PROMPT, websiteContent),
-    () => callAI<ContentStrategy>(CONTENT_PROMPT, websiteContent),
-    () => callAI<AdAngles>(AD_ANGLES_PROMPT, websiteContent),
-    () => callAI<ConversionOptimization>(CONVERSION_PROMPT, websiteContent),
-    () => callAI<DistributionStrategy>(DISTRIBUTION_PROMPT, websiteContent),
-    () => callAI<AISearchVisibility>(AI_SEARCH_PROMPT, websiteContent),
-    () => callAI<BrandHealth>(BRAND_HEALTH_PROMPT, websiteContent),
+    () => callAI<MessagingAnalysis>(MESSAGING_PROMPT, contentWithContext),
+    () => callAI<SeoOpportunities>(SEO_PROMPT, contentWithContext),
+    () => callAI<ContentStrategy>(CONTENT_PROMPT, contentWithContext),
+    () => callAI<AdAngles>(AD_ANGLES_PROMPT, contentWithContext),
+    () => callAI<ConversionOptimization>(CONVERSION_PROMPT, contentWithContext),
+    () => callAI<DistributionStrategy>(DISTRIBUTION_PROMPT, contentWithContext),
+    () => callAI<AISearchVisibility>(AI_SEARCH_PROMPT, contentWithContext),
+    () => callAI<BrandHealth>(BRAND_HEALTH_PROMPT, contentWithContext),
   ];
 
   const results = await runInBatches(tasks, parallelCalls);
