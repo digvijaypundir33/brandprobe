@@ -44,10 +44,10 @@ export default function ContactPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex flex-col">
         <Header />
 
-        <div className="flex items-center justify-center px-4 py-12 sm:py-16">
+        <div className="flex-1 flex items-center justify-center px-4 py-12 sm:py-16">
           <div className="max-w-md w-full bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-6 sm:p-8 text-center">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg
@@ -95,14 +95,14 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex flex-col">
       <Header />
 
-      <div className="py-8 sm:py-12 px-4">
+      <div className="flex-1 py-8 sm:py-12 px-4">
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-6 sm:mb-8">
-            <h1 className="heading-1 text-gray-900 mb-3 sm:mb-4">Contact Us</h1>
-            <p className="text-responsive-lg text-gray-600">
+            <h1 className="heading-2 text-gray-900 mb-3 sm:mb-4">Contact Us</h1>
+            <p className="text-responsive-base text-gray-600">
               Have a question or need help? We're here for you.
             </p>
           </div>
@@ -193,7 +193,7 @@ export default function ContactPage() {
           </div>
 
           {/* Contact Info */}
-          <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl sm:rounded-2xl border border-purple-200 p-6 sm:p-8">
+          <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl sm:rounded-2xl p-6 sm:p-8">
             <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">Other Ways to Reach Us</h3>
 
             <div className="space-y-4">

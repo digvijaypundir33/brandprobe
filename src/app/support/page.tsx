@@ -1,5 +1,6 @@
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import Link from 'next/link';
 
 export default function SupportPage() {
   return (
@@ -25,9 +26,16 @@ export default function SupportPage() {
                   support@brandprobe.com
                 </a>
               </p>
-              <p className="text-xs sm:text-sm text-gray-600">
+              <p className="text-xs sm:text-sm text-gray-600 mb-4">
                 We typically respond within 24 hours (Monday-Friday)
               </p>
+              <Link
+                href="/contact"
+                className="inline-block px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base text-white font-semibold rounded-lg transition-opacity hover:opacity-90"
+                style={{ backgroundColor: 'var(--brand-primary)' }}
+              >
+                Contact Us
+              </Link>
             </div>
 
             <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mt-6 sm:mt-8 mb-3 sm:mb-4">Frequently Asked Questions</h2>

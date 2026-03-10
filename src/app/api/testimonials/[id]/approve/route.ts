@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { getSession } from '@/lib/auth';
+import { getSessionFromRequest } from '@/lib/auth';
 import { getUserByEmail } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
@@ -16,7 +16,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getSession();
+    const session = await getSessionFromRequest(request);
 
     if (!session) {
       return NextResponse.json(
@@ -80,7 +80,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getSession();
+    const session = await getSessionFromRequest(request);
 
     if (!session) {
       return NextResponse.json(

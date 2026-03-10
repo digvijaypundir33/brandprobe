@@ -74,6 +74,11 @@ export default function Footer() {
                   View My Reports
                 </Link>
               </li>
+              <li>
+                <Link href="/faq" className="text-xs sm:text-sm hover:text-white transition-colors block py-1">
+                  FAQ
+                </Link>
+              </li>
             </ul>
           </div>
 

@@ -48,10 +48,10 @@ export default function SubmitTestimonialPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex flex-col">
         <Header />
 
-        <div className="flex items-center justify-center p-4 py-8 sm:py-12">
+        <div className="flex-1 flex items-center justify-center p-4 py-8 sm:py-12">
           <div className="max-w-md w-full bg-white rounded-xl border border-gray-200 p-6 sm:p-8 text-center">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg
@@ -96,10 +96,10 @@ export default function SubmitTestimonialPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex flex-col">
       <Header />
 
-      <div className="py-8 sm:py-12 px-4">
+      <div className="flex-1 py-8 sm:py-12 px-4">
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-6 sm:mb-8">
             <h1 className="heading-2 text-gray-900 mb-2">Share Your Experience</h1>

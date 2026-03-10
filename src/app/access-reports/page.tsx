@@ -48,10 +48,10 @@ export default function AccessReportsPage() {
 
   if (linkSent) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex flex-col">
         <Header />
 
-        <div className="flex items-center justify-center px-4 py-12 sm:py-16">
+        <div className="flex-1 flex items-center justify-center px-4 py-12 sm:py-16">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -112,11 +112,11 @@ export default function AccessReportsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex flex-col">
       <Header />
 
       {/* Main Content */}
-      <main className="px-4 py-12 sm:py-16 md:py-20 flex items-center justify-center">
+      <main className="flex-1 px-4 py-12 sm:py-16 md:py-20 flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

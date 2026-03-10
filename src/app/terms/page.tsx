@@ -1,5 +1,6 @@
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import Link from 'next/link';
 
 export default function TermsPage() {
   return (
@@ -73,6 +74,20 @@ export default function TermsPage() {
                 support@brandprobe.com
               </a>
             </p>
+
+            <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg sm:rounded-xl p-4 sm:p-6 mt-6 sm:mt-8">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-3">Need Clarification?</h3>
+              <p className="text-sm sm:text-base text-gray-700 mb-4">
+                Have questions about our terms of service? We're happy to help.
+              </p>
+              <Link
+                href="/contact"
+                className="inline-block px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base text-white font-semibold rounded-lg transition-opacity hover:opacity-90"
+                style={{ backgroundColor: 'var(--brand-primary)' }}
+              >
+                Contact Us
+              </Link>
+            </div>
           </div>
 
         </div>
