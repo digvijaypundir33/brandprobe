@@ -42,7 +42,7 @@ export default function ShowcaseCard({ entry, onView }: ShowcaseCardProps) {
   };
 
   return (
-    <div className="relative pt-3">
+    <div className="relative pt-3 min-w-0">
       <Link
         href={`/showcase/${reportId}`}
         onClick={handleClick}
@@ -70,7 +70,7 @@ export default function ShowcaseCard({ entry, onView }: ShowcaseCardProps) {
         )}
 
       {/* Header: Icon + Name + Tagline */}
-      <div className="flex items-start gap-3 mb-4">
+      <div className="flex items-start gap-3 mb-4 min-w-0">
         {/* Icon */}
         <div className="flex-shrink-0">
           {iconUrl ? (
@@ -100,7 +100,7 @@ export default function ShowcaseCard({ entry, onView }: ShowcaseCardProps) {
           <h3 className="font-semibold text-gray-900 truncate group-hover:text-blue-600 transition-colors">
             {displayName}
           </h3>
-          <p className="text-sm text-gray-500 line-clamp-2">{tagline}</p>
+          <p className="text-sm text-gray-500 line-clamp-2 break-words">{tagline}</p>
         </div>
       </div>
 
@@ -174,8 +174,8 @@ export default function ShowcaseCard({ entry, onView }: ShowcaseCardProps) {
       </div>
 
       {/* Website URL (subtle) */}
-      <div className="mt-3 pt-3 border-t border-gray-100">
-        <p className="text-xs text-gray-400 truncate">{websiteUrl}</p>
+      <div className="mt-3 pt-3 border-t border-gray-100 min-w-0">
+        <p className="text-xs text-gray-400 truncate break-all">{websiteUrl}</p>
       </div>
     </Link>
     </div>

@@ -63,17 +63,17 @@ function PricingContent() {
           reportId={reportId || undefined}
         />
       ) : (
-        <header className="py-6 px-4 bg-white border-b border-gray-200">
+        <header className="py-4 sm:py-6 px-4 bg-white border-b border-gray-200">
           <div className="max-w-6xl mx-auto flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{backgroundColor: 'var(--brand-primary)'}}>
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center" style={{backgroundColor: 'var(--brand-primary)'}}>
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
-              <span className="text-xl font-bold text-gray-900">BrandProbe</span>
+              <span className="text-lg sm:text-xl font-bold text-gray-900">BrandProbe</span>
             </Link>
-            <Link href="/" className="text-sm font-medium text-gray-600 hover:text-gray-900">
+            <Link href="/" className="text-xs sm:text-sm font-medium text-gray-600 hover:text-gray-900">
               Home
             </Link>
           </div>
@@ -81,87 +81,87 @@ function PricingContent() {
       )}
 
       {/* Main Content */}
-      <main className="px-4 py-16">
+      <main className="px-4 py-8 sm:py-12 md:py-16">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-16"
+            className="text-center mb-8 sm:mb-12 md:mb-16"
           >
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-3 sm:mb-4">
               Choose Your Plan
             </h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-2xl mx-auto px-2">
               Get actionable insights to grow your startup. Start free, upgrade anytime.
             </p>
           </motion.div>
 
           {/* Pricing Cards */}
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8 max-w-5xl mx-auto">
             {/* Free Plan */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className={`bg-white rounded-2xl border-2 p-8 relative overflow-hidden ${
+              className={`bg-white rounded-2xl border-2 p-5 sm:p-6 md:p-8 relative overflow-hidden ${
                 subscriptionStatus === 'free' || !subscriptionStatus ? 'border-green-500' : 'border-gray-200'
               }`}
             >
               {(subscriptionStatus === 'free' || !subscriptionStatus) && (
-                <div className="absolute top-0 right-0 px-4 py-1 text-xs font-bold text-white rounded-bl-lg bg-green-500">
+                <div className="absolute top-0 right-0 px-3 sm:px-4 py-1 text-xs font-bold text-white rounded-bl-lg bg-green-500">
                   CURRENT PLAN
                 </div>
               )}
 
-              <div className="mb-6">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Free</h3>
-                <div className="flex items-baseline gap-2 mb-4">
-                  <span className="text-4xl font-bold text-gray-900">$0</span>
+              <div className="mb-5 sm:mb-6">
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Free</h3>
+                <div className="flex items-baseline gap-2 mb-3 sm:mb-4">
+                  <span className="text-3xl sm:text-4xl font-bold text-gray-900">$0</span>
                 </div>
-                <p className="text-gray-600 text-sm">Perfect for getting started</p>
+                <p className="text-gray-600 text-xs sm:text-sm">Perfect for getting started</p>
               </div>
 
               {subscriptionStatus === 'free' || !subscriptionStatus ? (
                 <button
                   disabled
-                  className="w-full py-3 px-4 bg-gray-300 text-gray-500 text-center rounded-lg font-medium mb-6 cursor-not-allowed"
+                  className="w-full py-2.5 sm:py-3 px-4 bg-gray-300 text-gray-500 text-center rounded-lg font-medium mb-5 sm:mb-6 cursor-not-allowed text-sm sm:text-base"
                 >
                   Current Plan
                 </button>
               ) : (
                 <Link
                   href="/"
-                  className="block w-full py-3 px-4 bg-gray-900 text-white text-center rounded-lg font-medium hover:bg-gray-800 transition-colors mb-6"
+                  className="block w-full py-2.5 sm:py-3 px-4 bg-gray-900 text-white text-center rounded-lg font-medium hover:bg-gray-800 transition-colors mb-5 sm:mb-6 text-sm sm:text-base"
                 >
                   Get Started Free
                 </Link>
               )}
 
-              <div className="space-y-3">
+              <div className="space-y-2.5 sm:space-y-3">
                 <div className="flex items-start gap-2">
                   <svg className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  <span className="text-sm text-gray-700">1 report per email</span>
+                  <span className="text-xs sm:text-sm text-gray-700">1 report per email</span>
                 </div>
                 <div className="flex items-start gap-2">
                   <svg className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  <span className="text-sm text-gray-700">4 sections unlocked</span>
+                  <span className="text-xs sm:text-sm text-gray-700">4 sections unlocked</span>
                 </div>
                 <div className="flex items-start gap-2">
                   <svg className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  <span className="text-sm text-gray-700">All 10 scores visible</span>
+                  <span className="text-xs sm:text-sm text-gray-700">All 10 scores visible</span>
                 </div>
                 <div className="flex items-start gap-2">
                   <svg className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  <span className="text-sm text-gray-700">Preview of 6 pro sections</span>
+                  <span className="text-xs sm:text-sm text-gray-700">Preview of 6 pro sections</span>
                 </div>
               </div>
             </motion.div>
@@ -171,36 +171,36 @@ function PricingContent() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className={`bg-white rounded-2xl border-2 p-8 relative overflow-hidden ${
+              className={`bg-white rounded-2xl border-2 p-5 sm:p-6 md:p-8 relative overflow-hidden ${
                 subscriptionStatus === 'starter' ? 'border-green-500' : 'border-gray-200'
               }`}
             >
               {subscriptionStatus === 'starter' && (
-                <div className="absolute top-0 right-0 px-4 py-1 text-xs font-bold text-white rounded-bl-lg bg-green-500">
+                <div className="absolute top-0 right-0 px-3 sm:px-4 py-1 text-xs font-bold text-white rounded-bl-lg bg-green-500">
                   CURRENT PLAN
                 </div>
               )}
 
-              <div className="mb-6">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Starter</h3>
-                <div className="flex items-baseline gap-2 mb-4">
-                  <span className="text-4xl font-bold text-gray-900">$9</span>
-                  <span className="text-gray-600">one-time</span>
+              <div className="mb-5 sm:mb-6">
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Starter</h3>
+                <div className="flex items-baseline gap-2 mb-3 sm:mb-4">
+                  <span className="text-3xl sm:text-4xl font-bold text-gray-900">$9</span>
+                  <span className="text-gray-600 text-sm sm:text-base">one-time</span>
                 </div>
-                <p className="text-gray-600 text-sm">2 complete website analyses</p>
+                <p className="text-gray-600 text-xs sm:text-sm">2 complete website analyses</p>
               </div>
 
               {subscriptionStatus === 'starter' ? (
                 <button
                   disabled
-                  className="w-full py-3 px-4 bg-gray-300 text-gray-500 text-center rounded-lg font-medium mb-6 cursor-not-allowed"
+                  className="w-full py-2.5 sm:py-3 px-4 bg-gray-300 text-gray-500 text-center rounded-lg font-medium mb-5 sm:mb-6 cursor-not-allowed text-sm sm:text-base"
                 >
                   Current Plan
                 </button>
               ) : subscriptionStatus === 'active' ? (
                 <button
                   disabled
-                  className="w-full py-3 px-4 bg-gray-300 text-gray-500 text-center rounded-lg font-medium mb-6 cursor-not-allowed"
+                  className="w-full py-2.5 sm:py-3 px-4 bg-gray-300 text-gray-500 text-center rounded-lg font-medium mb-5 sm:mb-6 cursor-not-allowed text-sm sm:text-base"
                 >
                   Already on Pro
                 </button>
@@ -208,48 +208,48 @@ function PricingContent() {
                 <button
                   onClick={() => handleUpgrade('starter')}
                   disabled={!isAuthenticated}
-                  className="w-full py-3 px-4 bg-gray-900 text-white text-center rounded-lg font-medium hover:bg-gray-800 transition-colors mb-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-2.5 sm:py-3 px-4 bg-gray-900 text-white text-center rounded-lg font-medium hover:bg-gray-800 transition-colors mb-5 sm:mb-6 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
                 >
                   {isAuthenticated ? 'Get Starter' : 'Login Required'}
                 </button>
               )}
 
-              <div className="space-y-3">
+              <div className="space-y-2.5 sm:space-y-3">
                 <div className="flex items-start gap-2">
                   <svg className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  <span className="text-sm text-gray-700 font-semibold">2 complete reports</span>
+                  <span className="text-xs sm:text-sm text-gray-700 font-semibold">2 complete reports</span>
                 </div>
                 <div className="flex items-start gap-2">
                   <svg className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  <span className="text-sm text-gray-700">All 10 sections for each report</span>
+                  <span className="text-xs sm:text-sm text-gray-700">All 10 sections for each report</span>
                 </div>
                 <div className="flex items-start gap-2">
                   <svg className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  <span className="text-sm text-gray-700">AI Search visibility analysis</span>
+                  <span className="text-xs sm:text-sm text-gray-700">AI Search visibility analysis</span>
                 </div>
                 <div className="flex items-start gap-2">
                   <svg className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  <span className="text-sm text-gray-700">Technical performance audit</span>
+                  <span className="text-xs sm:text-sm text-gray-700">Technical performance audit</span>
                 </div>
                 <div className="flex items-start gap-2">
                   <svg className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  <span className="text-sm text-gray-700">Brand health & design analysis</span>
+                  <span className="text-xs sm:text-sm text-gray-700">Brand health & design analysis</span>
                 </div>
                 <div className="flex items-start gap-2">
                   <svg className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  <span className="text-sm text-gray-700">PDF export</span>
+                  <span className="text-xs sm:text-sm text-gray-700">PDF export</span>
                 </div>
               </div>
             </motion.div>
@@ -259,29 +259,29 @@ function PricingContent() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className={`bg-white rounded-2xl border-2 p-8 relative overflow-hidden ${
+              className={`bg-white rounded-2xl border-2 p-5 sm:p-6 md:p-8 relative overflow-hidden sm:col-span-2 md:col-span-1 ${
                 subscriptionStatus === 'active' ? 'border-green-500' : ''
               }`}
               style={subscriptionStatus === 'active' ? {} : { borderColor: 'var(--brand-primary)' }}
             >
-              <div className="absolute top-0 right-0 px-4 py-1 text-xs font-bold text-white rounded-bl-lg"
+              <div className="absolute top-0 right-0 px-3 sm:px-4 py-1 text-xs font-bold text-white rounded-bl-lg"
                 style={{ backgroundColor: subscriptionStatus === 'active' ? '#10b981' : 'var(--brand-primary)' }}>
                 {subscriptionStatus === 'active' ? 'CURRENT PLAN' : 'POPULAR'}
               </div>
 
-              <div className="mb-6">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Pro</h3>
-                <div className="flex items-baseline gap-2 mb-4">
-                  <span className="text-4xl font-bold text-gray-900">$29</span>
-                  <span className="text-gray-600">/month</span>
+              <div className="mb-5 sm:mb-6">
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Pro</h3>
+                <div className="flex items-baseline gap-2 mb-3 sm:mb-4">
+                  <span className="text-3xl sm:text-4xl font-bold text-gray-900">$29</span>
+                  <span className="text-gray-600 text-sm sm:text-base">/month</span>
                 </div>
-                <p className="text-gray-600 text-sm">For serious founders and marketers</p>
+                <p className="text-gray-600 text-xs sm:text-sm">For serious founders and marketers</p>
               </div>
 
               {subscriptionStatus === 'active' ? (
                 <button
                   disabled
-                  className="w-full py-3 px-4 bg-gray-300 text-gray-500 text-center rounded-lg font-medium mb-6 cursor-not-allowed"
+                  className="w-full py-2.5 sm:py-3 px-4 bg-gray-300 text-gray-500 text-center rounded-lg font-medium mb-5 sm:mb-6 cursor-not-allowed text-sm sm:text-base"
                 >
                   Current Plan
                 </button>
@@ -289,43 +289,43 @@ function PricingContent() {
                 <button
                   onClick={() => handleUpgrade('pro')}
                   disabled={!isAuthenticated}
-                  className="w-full py-3 px-4 text-white text-center rounded-lg font-medium transition-colors mb-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-2.5 sm:py-3 px-4 text-white text-center rounded-lg font-medium transition-colors mb-5 sm:mb-6 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
                   style={{ backgroundColor: 'var(--brand-primary)' }}
                 >
                   {isAuthenticated ? 'Get Pro' : 'Login Required'}
                 </button>
               )}
 
-              <div className="space-y-3">
+              <div className="space-y-2.5 sm:space-y-3">
                 <div className="flex items-start gap-2">
                   <svg className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  <span className="text-sm text-gray-700 font-semibold">10 full reports per month</span>
+                  <span className="text-xs sm:text-sm text-gray-700 font-semibold">10 full reports per month</span>
                 </div>
                 <div className="flex items-start gap-2">
                   <svg className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  <span className="text-sm text-gray-700">All 10 sections for every report</span>
+                  <span className="text-xs sm:text-sm text-gray-700">All 10 sections for every report</span>
                 </div>
                 <div className="flex items-start gap-2">
                   <svg className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  <span className="text-sm text-gray-700">Monthly auto re-scan</span>
+                  <span className="text-xs sm:text-sm text-gray-700">Monthly auto re-scan</span>
                 </div>
                 <div className="flex items-start gap-2">
                   <svg className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  <span className="text-sm text-gray-700">Progress tracking over time</span>
+                  <span className="text-xs sm:text-sm text-gray-700">Progress tracking over time</span>
                 </div>
                 <div className="flex items-start gap-2">
                   <svg className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  <span className="text-sm text-gray-700">PDF export</span>
+                  <span className="text-xs sm:text-sm text-gray-700">PDF export</span>
                 </div>
               </div>
             </motion.div>
@@ -336,33 +336,33 @@ function PricingContent() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="mt-20 max-w-3xl mx-auto"
+            className="mt-12 sm:mt-16 md:mt-20 max-w-3xl mx-auto"
           >
-            <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 text-center mb-8 sm:mb-12">
               Frequently Asked Questions
             </h2>
-            <div className="space-y-6">
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            <div className="space-y-4 sm:space-y-6">
+              <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
                   What's the difference between Starter and Pro?
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-sm sm:text-base text-gray-600">
                   Starter ($9) unlocks all 10 sections for ONE specific report. Pro ($29/month) gives you 10 full reports per month across any websites you want to analyze, plus automatic monthly re-scanning and progress tracking.
                 </p>
               </div>
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
                   Can I upgrade from Starter to Pro later?
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-sm sm:text-base text-gray-600">
                   Yes! You can upgrade to Pro anytime from your dashboard. Your Starter purchase will give you access to that specific report forever.
                 </p>
               </div>
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
                   What payment methods do you accept?
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-sm sm:text-base text-gray-600">
                   We accept all major credit cards and PayPal through our secure payment processor.
                 </p>
               </div>

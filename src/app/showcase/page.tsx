@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import ShowcaseCard from '@/components/ShowcaseCard';
 import { SHOWCASE_CATEGORIES, type ShowcaseCategory, type ShowcaseEntry } from '@/types/report';
 
@@ -11,27 +13,12 @@ export default function ShowcasePage() {
   const [entries, setEntries] = useState<ShowcaseEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Filters
   const [category, setCategory] = useState<ShowcaseCategory | ''>('');
   const [sortBy, setSortBy] = useState<SortOption>('rank');
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
-
-  // Check authentication
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const response = await fetch('/api/auth/session');
-        const data = await response.json();
-        setIsAuthenticated(data.authenticated);
-      } catch (error) {
-        console.error('Failed to check auth:', error);
-      }
-    };
-    checkAuth();
-  }, []);
 
   // Pagination
   const [offset, setOffset] = useState(0);
@@ -106,77 +93,26 @@ export default function ShowcasePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      {/* Header */}
-      <header className="py-6 px-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{backgroundColor: 'var(--brand-primary)'}}>
-              <svg
-                className="w-5 h-5 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </div>
-            <span className="text-xl font-bold text-gray-900">BrandProbe</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link
-              href="/"
-              className="text-sm font-medium text-gray-600 hover:text-gray-900"
-            >
-              Home
-            </Link>
-            {isAuthenticated ? (
-              <Link
-                href="/dashboard"
-                className="text-sm font-medium text-gray-600 hover:text-gray-900"
-              >
-                Dashboard
-              </Link>
-            ) : (
-              <Link
-                href="/access-reports"
-                className="text-sm font-medium text-gray-600 hover:text-gray-900"
-              >
-                View My Reports
-              </Link>
-            )}
-            <Link
-              href="/plans"
-              className="text-sm font-medium text-gray-600 hover:text-gray-900"
-            >
-              Pricing
-            </Link>
-          </div>
-        </div>
-      </header>
+      <Header />
 
-      <main className="max-w-6xl mx-auto px-4 py-12">
+      <main className="max-w-6xl mx-auto px-4 py-8 sm:py-12 overflow-hidden">
         {/* Page Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Startup Showcase</h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-4">
+        <div className="text-center mb-8 sm:mb-12">
+          <h1 className="heading-1 text-gray-900 mb-3 sm:mb-4">Startup Showcase</h1>
+          <p className="text-responsive-lg text-gray-600 max-w-2xl mx-auto mb-4">
             Browse startups with their BrandProbe scores and analysis. Discover great products, showcase your work, and learn from other founders.
           </p>
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-full">
-            <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+          <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-green-50 border border-green-200 rounded-full">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
             </svg>
-            <span className="text-sm font-medium text-green-700">Showcase is free for all users during launch</span>
+            <span className="text-xs sm:text-sm font-medium text-green-700">Free for all users during launch</span>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-xl border border-gray-200 p-4 mb-8">
-          <div className="flex flex-col md:flex-row gap-4">
+        <div className="bg-white rounded-lg sm:rounded-xl border border-gray-200 p-3 sm:p-4 mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             {/* Search */}
             <form onSubmit={handleSearch} className="flex-1">
               <div className="relative">
@@ -282,7 +218,7 @@ export default function ShowcasePage() {
 
         {/* Grid */}
         {entries.length > 0 ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full">
             {entries.map((entry) => (
               <ShowcaseCard key={entry.reportId} entry={entry} />
             ))}
@@ -372,41 +308,7 @@ export default function ShowcasePage() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="py-8 px-4 border-t border-gray-200 mt-16">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div
-              className="w-6 h-6 rounded flex items-center justify-center"
-              style={{ backgroundColor: 'var(--brand-primary)' }}
-            >
-              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </div>
-            <span className="font-semibold text-gray-900">BrandProbe</span>
-          </div>
-          <div className="flex items-center gap-6 text-sm text-gray-500">
-            <Link href="/privacy" className="hover:text-gray-900">
-              Privacy
-            </Link>
-            <Link href="/terms" className="hover:text-gray-900">
-              Terms
-            </Link>
-            <Link href="/support" className="hover:text-gray-900">
-              Support
-            </Link>
-          </div>
-          <p className="text-sm text-gray-500">
-            &copy; {new Date().getFullYear()} BrandProbe
-          </p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
