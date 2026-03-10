@@ -498,12 +498,20 @@ export default function DashboardClient({ user, reports, session }: DashboardCli
                   </p>
                 </div>
               </div>
-              <Link
-                href="/dashboard/showcase"
-                className="px-4 py-2 bg-white text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition-colors border border-blue-200"
-              >
-                Manage Showcase
-              </Link>
+              <div className="flex gap-3">
+                <Link
+                  href="/dashboard/showcase"
+                  className="px-4 py-2 bg-white text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition-colors border border-blue-200"
+                >
+                  Manage Showcase
+                </Link>
+                <Link
+                  href="/dashboard/testimonials"
+                  className="px-4 py-2 bg-white text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition-colors border border-blue-200"
+                >
+                  Manage Testimonials
+                </Link>
+              </div>
             </div>
           </motion.div>
         )}

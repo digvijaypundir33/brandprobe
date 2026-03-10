@@ -191,6 +191,18 @@ export default function UserProfileModal({
                         </span>
                       </div>
                     </div>
+                    <div className="mt-3 pt-3 border-t border-gray-200">
+                      <a
+                        href="/submit-testimonial"
+                        className="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
+                        onClick={onClose}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                        </svg>
+                        Share Your Experience
+                      </a>
+                    </div>
                   </div>
 
                   {/* Profile Form */}
@@ -202,37 +214,40 @@ export default function UserProfileModal({
                       This information will be shown on your showcased sites.
                     </p>
 
-                    {/* Display Name */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Display Name
-                      </label>
-                      <input
-                        type="text"
-                        value={profile.displayName}
-                        onChange={(e) => setProfile({ ...profile, displayName: e.target.value })}
-                        placeholder="John Doe"
-                        maxLength={50}
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
-                      <p className="mt-1 text-xs text-gray-400">
-                        Shown instead of your email on showcases
-                      </p>
-                    </div>
+                    {/* Display Name & Company */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Display Name */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Display Name
+                        </label>
+                        <input
+                          type="text"
+                          value={profile.displayName}
+                          onChange={(e) => setProfile({ ...profile, displayName: e.target.value })}
+                          placeholder="John Doe"
+                          maxLength={50}
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                        <p className="mt-1 text-xs text-gray-400">
+                          Shown instead of your email
+                        </p>
+                      </div>
 
-                    {/* Company */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Company
-                      </label>
-                      <input
-                        type="text"
-                        value={profile.company}
-                        onChange={(e) => setProfile({ ...profile, company: e.target.value })}
-                        placeholder="Acme Inc."
-                        maxLength={100}
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
+                      {/* Company */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Company
+                        </label>
+                        <input
+                          type="text"
+                          value={profile.company}
+                          onChange={(e) => setProfile({ ...profile, company: e.target.value })}
+                          placeholder="Acme Inc."
+                          maxLength={100}
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
                     </div>
 
                     {/* Bio */}

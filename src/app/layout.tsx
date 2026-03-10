@@ -8,21 +8,22 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "BrandProbe - Know why you're not growing in 60 seconds",
-  description: "AI-powered marketing intelligence that analyzes your website and tells you exactly what to fix this week.",
+  title: "BrandProbe - Website Marketing Analysis & SEO Audit Tool for Startups",
+  description: "Get instant website marketing analysis and actionable startup feedback in 60 seconds. AI-powered marketing audit tool covering SEO, messaging, content strategy, and conversion optimization.",
+  keywords: ["website marketing analysis", "startup website feedback", "marketing audit tool", "SEO audit", "website analyzer", "conversion optimization", "content strategy tool"],
   metadataBase: new URL('https://brandprobe.io'),
   alternates: {
     canonical: '/',
   },
   openGraph: {
-    title: "BrandProbe - Know why you're not growing in 60 seconds",
-    description: "AI-powered marketing intelligence that analyzes your website and tells you exactly what to fix this week.",
+    title: "BrandProbe - Website Marketing Analysis & SEO Audit Tool",
+    description: "Get instant website marketing analysis and actionable startup feedback in 60 seconds. AI-powered marketing audit covering SEO, messaging, and conversion.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "BrandProbe - Know why you're not growing in 60 seconds",
-    description: "AI-powered marketing intelligence that analyzes your website and tells you exactly what to fix this week.",
+    title: "BrandProbe - Website Marketing Analysis Tool",
+    description: "Get instant website marketing analysis and actionable startup feedback in 60 seconds. AI-powered marketing audit covering SEO, messaging, and conversion.",
   },
 };
 
