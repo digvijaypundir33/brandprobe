@@ -13,7 +13,7 @@ const ADMIN_EMAILS = [
 // POST - Approve testimonial (admin only)
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getSession();
@@ -34,7 +34,7 @@ export async function POST(
       );
     }
 
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const { isFeatured = false, displayOrder = 0 } = body;
 
@@ -77,7 +77,7 @@ export async function POST(
 // DELETE - Reject testimonial (admin only)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getSession();
@@ -98,7 +98,7 @@ export async function DELETE(
       );
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     // Delete the testimonial (rejection)
     const { error } = await supabase

@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 // PUT - Update testimonial (admin only)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getSession();
@@ -19,7 +19,7 @@ export async function PUT(
       );
     }
 
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const {
       authorName,
@@ -84,7 +84,7 @@ export async function PUT(
 // DELETE - Delete testimonial (admin only)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getSession();
@@ -96,7 +96,7 @@ export async function DELETE(
       );
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     const { error } = await supabase
       .from('testimonials')
