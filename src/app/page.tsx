@@ -110,7 +110,7 @@ export default function Home() {
               </div>
               <h3 className="heading-3 text-gray-900 mb-2">We Probe</h3>
               <p className="text-responsive-base text-gray-600">
-                AI analyzes your messaging, SEO, content, ads, conversion, and distribution.
+                We analyze your messaging, SEO, content, ads, conversion, and distribution.
               </p>
             </div>
             <div className="text-center sm:col-span-2 md:col-span-1">

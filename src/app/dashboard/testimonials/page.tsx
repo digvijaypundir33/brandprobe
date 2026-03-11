@@ -266,7 +266,7 @@ export default function TestimonialsManagementPage() {
                   value={formData.authorName}
                   onChange={(e) => setFormData({ ...formData, authorName: e.target.value })}
                   className="w-full px-3 py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-                  placeholder="DJ"
+                  placeholder="John Doe"
                 />
               </div>
 
@@ -280,7 +280,7 @@ export default function TestimonialsManagementPage() {
                   value={formData.authorRole}
                   onChange={(e) => setFormData({ ...formData, authorRole: e.target.value })}
                   className="w-full px-3 py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-                  placeholder="Founder, ChatCrafterAI"
+                  placeholder="Founder, Acme Inc"
                 />
               </div>
 
@@ -293,7 +293,7 @@ export default function TestimonialsManagementPage() {
                   value={formData.companyName}
                   onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
                   className="w-full px-3 py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-                  placeholder="ChatCrafterAI"
+                  placeholder="Acme Inc"
                 />
               </div>
 
@@ -306,7 +306,7 @@ export default function TestimonialsManagementPage() {
                   value={formData.websiteUrl}
                   onChange={(e) => setFormData({ ...formData, websiteUrl: e.target.value })}
                   className="w-full px-3 py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-                  placeholder="https://chatcrafterai.com"
+                  placeholder="https://example.com"
                 />
               </div>
 

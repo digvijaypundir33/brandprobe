@@ -10,6 +10,8 @@ CREATE TABLE IF NOT EXISTS testimonials (
   is_featured BOOLEAN DEFAULT false,
   display_order INTEGER DEFAULT 0,
   is_active BOOLEAN DEFAULT true,
+  is_verified BOOLEAN DEFAULT true,
+  submitted_by_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
