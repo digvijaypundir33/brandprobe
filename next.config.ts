@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
       './node_modules/@sparticuz/chromium/**/*',
     ],
   },
+  pageExtensions: ['js', 'jsx', 'ts', 'tsx'],
 };
 
 export default nextConfig;

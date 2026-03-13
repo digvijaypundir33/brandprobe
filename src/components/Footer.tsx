@@ -52,6 +52,11 @@ export default function Footer() {
                   Showcase
                 </Link>
               </li>
+              <li>
+                <Link href="/blog" className="text-xs sm:text-sm hover:text-white transition-colors block py-1">
+                  Blog
+                </Link>
+              </li>
             </ul>
           </div>
 

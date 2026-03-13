@@ -1,0 +1,44 @@
+# BrandProbe
+
+> AI-powered marketing intelligence that analyzes your website and tells you exactly what to fix this week.
+
+## What is BrandProbe?
+
+BrandProbe is a website marketing analysis tool for startups and businesses. Enter your URL and get instant, actionable feedback on your messaging, SEO, content strategy, conversion optimization, and more.
+
+## How it works
+
+1. Paste your website URL
+2. We probe and analyze 10 key marketing areas
+3. You get specific, actionable fixes you can implement this week
+
+## Key Features
+
+- **Messaging & Positioning Analysis**: Evaluate clarity and effectiveness of your value proposition
+- **SEO Opportunities**: Identify quick wins and long-term SEO improvements
+- **Content Strategy**: Get recommendations for content that drives growth
+- **Ad Angles**: Discover compelling angles for paid advertising
+- **Conversion Optimization**: Find friction points and improve conversion rates
+- **Distribution Strategy**: Learn the best channels to reach your audience
+- **AI Search Visibility**: Optimize for AI-powered search engines
+- **Technical Performance**: Identify speed and performance issues
+- **Brand Health**: Assess overall brand perception and consistency
+- **Design Authenticity**: Evaluate visual design and user experience
+
+## Pricing
+
+- Free: 1 website analysis
+- Pro: $29/month for 10 reports with priority support
+- Enterprise: Custom pricing for agencies and teams
+
+## Links
+
+- Website: https://brandprobe.io
+- Pricing: https://brandprobe.io/pricing
+- Support: https://brandprobe.io/support
+- FAQ: https://brandprobe.io/faq
+- Contact: https://brandprobe.io/contact
+
+## Contact
+
+For support inquiries, visit https://brandprobe.io/support
