@@ -304,7 +304,16 @@ export async function processReport(
     // Optimization: Free users get quick mode (1-2 pages) to stay within 60s timeout
     const effectiveAnalysisType = isPaidUser ? analysisType : 'quick';
 
-    // Step 1: Scrape website using Fly.io Playwright service (all users)
+    // Step 1: Start PageSpeed API call FIRST (runs in parallel with scraping)
+    // This saves ~18 seconds by running alongside scraping
+    console.log(`[${reportId}] Starting PageSpeed API call (parallel)`);
+    const { getPageSpeedInsights } = await import('@/lib/pagespeed');
+    const pageSpeedPromise = getPageSpeedInsights(url, {
+      strategy: (process.env.PAGESPEED_STRATEGY as 'mobile' | 'desktop') || 'mobile',
+      categories: ['performance', 'seo', 'best-practices', 'accessibility'],
+    });
+
+    // Step 2: Scrape website using Fly.io Playwright service (runs in parallel with PageSpeed)
     console.log(`[${reportId}] Starting scrape for ${url} (${effectiveAnalysisType} mode, paid: ${isPaidUser})`);
     const scrapedData = await scrapeWebsite(url, {
       analysisType: effectiveAnalysisType,
@@ -315,16 +324,19 @@ export async function processReport(
       scrapedData,
     });
 
-    // Step 2: Format for Claude
+    // Step 3: Format for Claude
     const websiteContent = formatScrapedDataForPrompt(scrapedData);
 
-    // Step 3: Capture screenshot (for all users)
+    // Step 4: Capture screenshot (for all users)
     console.log(`[${reportId}] Capturing screenshot`);
     const screenshotPromise = captureScreenshot(url);
 
-    // Step 4a: Analyze technical performance (rules-based, instant)
-    console.log(`[${reportId}] Analyzing technical performance (rules-based)`);
-    const technical = await analyzeTechnicalPerformance(url, scrapedData.html);
+    // Step 5: Analyze technical performance
+    // Pass the PageSpeed promise (may still be running) so it awaits when ready
+    console.log(`[${reportId}] Analyzing technical performance`);
+    const technical = await analyzeTechnicalPerformance(url, scrapedData.html, {
+      pageSpeedPromise, // PageSpeed likely still running, will await when needed
+    });
 
     // Prepare previous report data for AI consistency (if this is a rescan)
     let previousReportData = null;

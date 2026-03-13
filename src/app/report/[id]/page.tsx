@@ -4,7 +4,7 @@ import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import ScoreSummaryCard from '@/components/ScoreSummaryCard';
-import ScoreRadarChart from '@/components/ScoreRadarChart';
+import AIPlatformVisibilityPreview from '@/components/AIPlatformVisibilityPreview';
 import ScoreBarChart from '@/components/ScoreBarChart';
 import ScanningAnimation from '@/components/ScanningAnimation';
 import QuickWinsSection from '@/components/QuickWinsSection';
@@ -21,10 +21,12 @@ import AISearchVisibilityCard from '@/components/AISearchVisibilityCard';
 import TechnicalPerformanceCard from '@/components/TechnicalPerformanceCard';
 import BrandHealthCard from '@/components/BrandHealthCard';
 import DesignAuthenticityCard from '@/components/DesignAuthenticityCard';
+import SiteQualityCard from '@/components/SiteQualityCard';
 import AuthenticatedHeader from '@/components/AuthenticatedHeader';
 import ImprovementsSummary from '@/components/ImprovementsSummary';
 import AlertModal from '@/components/AlertModal';
-import type { Report } from '@/types/report';
+import { analyzeSiteQuality } from '@/lib/site-quality-analyzer';
+import type { Report, SiteQualityScore } from '@/types/report';
 
 type TabType = 'overview' | 'messaging' | 'seo' | 'content' | 'ads' | 'conversion' | 'distribution' | 'aiSearch' | 'technical' | 'brandHealth' | 'designAuth';
 
@@ -124,8 +126,12 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
   }, [id, paymentCancelled]);
 
   const handleUnlock = (tier: 'starter' | 'pro') => {
+    // Debug: Log authentication state
+    console.log('[Unlock] isAuthenticated:', isAuthenticated, 'visitorEmail:', visitorEmail, 'userEmail:', userEmail);
+
     // If visitor has no email, show email input modal first
     if (!visitorEmail && !emailInput) {
+      console.log('[Unlock] No visitor email, showing email modal');
       setPendingTier(tier);
       setShowEmailModal(true);
       return;
@@ -133,6 +139,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
 
     // Redirect to checkout page with tier, reportId, and email
     const email = emailInput || visitorEmail || userEmail;
+    console.log('[Unlock] Redirecting to checkout with email:', email);
     const checkoutUrl = `/checkout?tier=${tier}&reportId=${id}&email=${encodeURIComponent(email)}`;
     router.push(checkoutUrl);
   };
@@ -531,22 +538,30 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
                   </span>
                 )}
               </div>
-              {!hasFullAccess && (
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => handleUnlock('starter')}
-                    className="px-4 py-2 bg-white border-2 border-gray-900 text-gray-900 text-sm font-semibold rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    Unlock for $9
-                  </button>
-                  <button
-                    onClick={() => handleUnlock('pro')}
-                    className="px-4 py-2 bg-gray-900 text-white text-sm font-semibold rounded-lg hover:bg-gray-800 transition-colors"
-                  >
-                    Get Pro - $29/mo
-                  </button>
-                </div>
-              )}
+              <div className="flex items-center gap-3">
+                {!hasFullAccess && (
+                  <>
+                    <button
+                      onClick={() => handleUnlock('starter')}
+                      className="px-4 py-2 bg-white border-2 border-gray-900 text-gray-900 text-sm font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      Unlock for $9
+                    </button>
+                    <button
+                      onClick={() => handleUnlock('pro')}
+                      className="px-4 py-2 bg-gray-900 text-white text-sm font-semibold rounded-lg hover:bg-gray-800 transition-colors"
+                    >
+                      Get Pro - $29/mo
+                    </button>
+                  </>
+                )}
+                <a
+                  href="/access-reports"
+                  className="text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors"
+                >
+                  My Reports
+                </a>
+              </div>
             </div>
           </div>
         </header>
@@ -711,20 +726,23 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
 
               {/* Charts Section */}
               <div className="grid lg:grid-cols-2 gap-6">
-                {/* Radar Chart */}
+                {/* AI Platform Visibility */}
                 <div className="bg-white rounded-xl border border-gray-200 p-6">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-10 h-10 bg-gray-900 rounded-lg flex items-center justify-center">
                       <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                       </svg>
                     </div>
                     <div>
-                      <h2 className="text-lg font-semibold text-gray-900">Score Overview</h2>
-                      <p className="text-sm text-gray-500">Performance across all areas</p>
+                      <h2 className="text-lg font-semibold text-gray-900">AI Platform Visibility</h2>
+                      <p className="text-sm text-gray-500">Your brand across AI assistants</p>
                     </div>
                   </div>
-                  <ScoreRadarChart scores={scores} hasFullAccess={hasFullAccess} />
+                  <AIPlatformVisibilityPreview
+                    aeoScore={report.aiSearchVisibility?.detailedAnalysis?.aeoScore || 0}
+                    hasFullAccess={hasFullAccess}
+                  />
                 </div>
 
                 {/* Bar Chart */}
@@ -748,6 +766,16 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
               {report.scrapedData && (
                 <WebsiteInfoCard data={report.scrapedData} />
               )}
+
+              {/* Site Quality Card */}
+              {report.scrapedData?.technicalData && (() => {
+                const siteQuality = analyzeSiteQuality(
+                  report.scrapedData.technicalData,
+                  report.scrapedData.title || '',
+                  report.scrapedData.metaDescription || ''
+                );
+                return <SiteQualityCard siteQuality={siteQuality} />;
+              })()}
 
               {/* Issues List */}
               <IssuesList report={report} hasFullAccess={hasFullAccess} />
@@ -786,7 +814,10 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
           )}
 
           {activeTab === 'technical' && report.technicalPerformance && (
-            <TechnicalPerformanceCard technical={report.technicalPerformance} />
+            <TechnicalPerformanceCard
+              technical={report.technicalPerformance}
+              technicalData={report.scrapedData?.technicalData}
+            />
           )}
 
           {activeTab === 'brandHealth' && report.brandHealth && (

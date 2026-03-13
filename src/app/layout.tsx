@@ -20,11 +20,21 @@ export const metadata: Metadata = {
     title: "BrandProbe - Website Marketing Analysis & SEO Audit Tool",
     description: "Get instant website marketing analysis and actionable startup feedback in 60 seconds. AI-powered marketing audit covering SEO, messaging, and conversion.",
     type: "website",
+    url: "https://brandprobe.io",
+    images: [
+      {
+        url: "https://brandprobe.io/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "BrandProbe - Website Marketing Analysis Tool",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "BrandProbe - Website Marketing Analysis Tool",
     description: "Get instant website marketing analysis and actionable startup feedback in 60 seconds. AI-powered marketing audit covering SEO, messaging, and conversion.",
+    images: ["https://brandprobe.io/og-image.png"],
   },
 };
 

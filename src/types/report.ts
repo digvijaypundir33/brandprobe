@@ -159,6 +159,26 @@ export interface TechnicalPerformance extends ReportSection {
     structuredDataPresence: string;
     imageOptimization: string;
     recommendations: string[];
+
+    // PageSpeed Insights data (null if API disabled or unavailable)
+    pageSpeedInsights?: {
+      lcp: { value: number; displayValue: string; score: number; rating: string };
+      fcp: { value: number; displayValue: string; score: number; rating: string };
+      tbt: { value: number; displayValue: string; score: number; rating: string };
+      cls: { value: number; displayValue: string; score: number; rating: string };
+      speedIndex: { value: number; displayValue: string; score: number; rating: string };
+      performanceScore: number;
+      seoScore: number;
+      bestPracticesScore: number;
+      accessibilityScore: number;
+      strategy: 'mobile' | 'desktop';
+      fetchTime: string;
+      lighthouseVersion: string;
+      hasFieldData: boolean;
+    } | null;
+
+    // Indicates source of technical analysis data
+    dataSource?: 'pagespeed-api' | 'heuristic-fallback';
   };
 }
 
@@ -313,6 +333,7 @@ export interface TechnicalData {
   hasCanonicalTag: boolean;
   hasRobotsTxt: boolean;
   hasSitemap: boolean;
+  hasLlmsTxt: boolean;
   imagesWithAlt: number;
   imagesWithoutAlt: number;
   formCount: number;
@@ -324,6 +345,108 @@ export interface TechnicalData {
   hasFAQSchema: boolean;
   loadTimeEstimate: 'fast' | 'medium' | 'slow';
   pageSize: string;
+  htmlLang: string | null;
+
+  // Title & Meta
+  titleLength: number;
+  metaDescriptionLength: number;
+
+  // Open Graph details
+  ogTitle: string | null;
+  ogDescription: string | null;
+  ogImage: string | null;
+  ogUrl: string | null;
+  ogType: string | null;
+
+  // Twitter Card details
+  twitterCard: string | null;
+  twitterTitle: string | null;
+  twitterDescription: string | null;
+  twitterImage: string | null;
+
+  // Canonical
+  canonicalUrl: string | null;
+
+  // Favicon URL
+  faviconUrl: string | null;
+
+  // Viewport content
+  viewportContent: string | null;
+
+  // Charset
+  charset: string | null;
+
+  // Headings hierarchy
+  headingsHierarchy: {
+    h1Count: number;
+    h2Count: number;
+    h3Count: number;
+    h4Count: number;
+    h5Count: number;
+    h6Count: number;
+    hasProperHierarchy: boolean;
+    hierarchyIssues: string[];
+  };
+
+  // Robots.txt content preview
+  robotsTxtContent: string | null;
+
+  // Security Headers
+  securityHeaders: {
+    hasHSTS: boolean;
+    hstsValue: string | null;
+    hasCSP: boolean;
+    cspValue: string | null;
+    hasXFrameOptions: boolean;
+    xFrameOptionsValue: string | null;
+    hasXContentTypeOptions: boolean;
+    xContentTypeOptionsValue: string | null;
+    hasReferrerPolicy: boolean;
+    referrerPolicyValue: string | null;
+    hasPermissionsPolicy: boolean;
+    permissionsPolicyValue: string | null;
+  };
+}
+
+// Site Quality Score breakdown (like YourWebsiteScore)
+export interface SiteQualityScore {
+  totalScore: number;
+  maxScore: number;
+
+  // Individual scores
+  title: { score: number; max: number; value: string; length: number; status: 'good' | 'warning' | 'error' };
+  metaDescription: { score: number; max: number; value: string; length: number; status: 'good' | 'warning' | 'error' };
+  favicon: { score: number; max: number; present: boolean; url: string | null };
+  viewport: { score: number; max: number; present: boolean; content: string | null; status: 'good' | 'warning' | 'error' };
+  robotsTxt: { score: number; max: number; present: boolean; content: string | null; status: 'good' | 'warning' | 'error' };
+  sitemap: { score: number; max: number; present: boolean };
+  llmsTxt: { score: number; max: number; present: boolean };
+  headings: { score: number; max: number; hasProperHierarchy: boolean; issues: string[] };
+  schemaOrg: { score: number; max: number; present: boolean; types: string[] };
+  canonical: { score: number; max: number; present: boolean; url: string | null };
+  htmlLang: { score: number; max: number; present: boolean; value: string | null };
+  charset: { score: number; max: number; present: boolean; value: string | null };
+
+  // Open Graph
+  openGraph: {
+    score: number;
+    max: number;
+    title: { present: boolean; value: string | null };
+    description: { present: boolean; value: string | null };
+    image: { present: boolean; url: string | null };
+    url: { present: boolean; value: string | null };
+    type: { present: boolean; value: string | null };
+  };
+
+  // Twitter Cards
+  twitterCards: {
+    score: number;
+    max: number;
+    cardType: { present: boolean; value: string | null };
+    title: { present: boolean; value: string | null };
+    description: { present: boolean; value: string | null };
+    image: { present: boolean; url: string | null };
+  };
 }
 
 export interface SubPageData {

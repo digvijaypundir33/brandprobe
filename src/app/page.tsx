@@ -49,7 +49,7 @@ export default function Home() {
             <span className="sm:inline block"> in 60 seconds</span>
           </h1>
           <p className="text-responsive-lg text-gray-600 mb-6 sm:mb-8 max-w-2xl mx-auto px-2">
-            Paste your URL. Get brutally honest insights on what&apos;s working
+            Paste your URL. Get brutally honest insights on messaging, SEO, AI search visibility,
             and what&apos;s killing your growth. No fluff, just actionable fixes.
           </p>
 
@@ -110,7 +110,7 @@ export default function Home() {
               </div>
               <h3 className="heading-3 text-gray-900 mb-2">We Probe</h3>
               <p className="text-responsive-base text-gray-600">
-                We analyze your messaging, SEO, content, ads, conversion, and distribution.
+                We analyze your AI search visibility, messaging, SEO, content, ads, conversion, and distribution.
               </p>
             </div>
             <div className="text-center sm:col-span-2 md:col-span-1">
@@ -178,11 +178,16 @@ export default function Home() {
             What You Get: 10 Comprehensive Sections
           </h2>
           <p className="text-center text-responsive-base text-gray-600 mb-8 sm:mb-12 max-w-2xl mx-auto">
-            A complete analysis of your website covering messaging, SEO, content,
+            A complete analysis covering AI search visibility, messaging, SEO, content,
             ads, conversion, distribution, and more. 4 sections free, 6 unlock with Pro.
           </p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 grid-gap-mobile">
             {[
+              {
+                title: 'AI Search Visibility',
+                desc: 'Will ChatGPT, Perplexity, and Claude recommend your brand when people ask?',
+                free: false,
+              },
               {
                 title: 'Messaging & Positioning',
                 desc: 'Is your message clear? Do people understand what you do?',
@@ -211,11 +216,6 @@ export default function Home() {
               {
                 title: 'Distribution Strategy',
                 desc: 'Which channels should you focus on and what tone?',
-                free: false,
-              },
-              {
-                title: 'AI Search Visibility',
-                desc: 'Will AI assistants like ChatGPT recommend your brand?',
                 free: false,
               },
               {

@@ -305,21 +305,33 @@ export async function scrapeWebsite(
 async function scrapeTechnicalData(url: string, html: string): Promise<TechnicalData> {
   const startTime = Date.now();
 
-  // Parse HTML using DOMParser (available in Node.js via linkedom or similar)
-  // For now, we'll use regex-based parsing for meta tags
+  // Helper to extract meta content
+  const getMetaContent = (nameOrProperty: string, isProperty = false): string | null => {
+    const attr = isProperty ? 'property' : 'name';
+    const regex = new RegExp(`<meta\\s+${attr}=["']${nameOrProperty}["'][^>]*content=["']([^"']*)["']`, 'i');
+    const altRegex = new RegExp(`<meta\\s+content=["']([^"']*)["'][^>]*${attr}=["']${nameOrProperty}["']`, 'i');
+    const match = html.match(regex) || html.match(altRegex);
+    return match ? match[1] : null;
+  };
+
+  // Extract Open Graph data
+  const ogTitle = getMetaContent('og:title', true);
+  const ogDescription = getMetaContent('og:description', true);
+  const ogImage = getMetaContent('og:image', true);
+  const ogUrl = getMetaContent('og:url', true);
+  const ogType = getMetaContent('og:type', true);
 
   // Check for Open Graph tags
-  const hasOpenGraph = !!(
-    html.match(/<meta\s+property="og:title"/i) ||
-    html.match(/<meta\s+property="og:description"/i) ||
-    html.match(/<meta\s+property="og:image"/i)
-  );
+  const hasOpenGraph = !!(ogTitle || ogDescription || ogImage);
+
+  // Extract Twitter Card data
+  const twitterCard = getMetaContent('twitter:card');
+  const twitterTitle = getMetaContent('twitter:title');
+  const twitterDescription = getMetaContent('twitter:description');
+  const twitterImage = getMetaContent('twitter:image');
 
   // Check for Twitter Cards
-  const hasTwitterCards = !!(
-    html.match(/<meta\s+name="twitter:card"/i) ||
-    html.match(/<meta\s+name="twitter:title"/i)
-  );
+  const hasTwitterCards = !!(twitterCard || twitterTitle);
 
   // Check for structured data (JSON-LD)
   const structuredDataMatches = html.match(/<script\s+type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi);
@@ -353,24 +365,44 @@ async function scrapeTechnicalData(url: string, html: string): Promise<Technical
     }
   }
 
-  // Check for favicon
-  const hasFavicon = !!(
-    html.match(/<link\s+rel="icon"/i) ||
-    html.match(/<link\s+rel="shortcut icon"/i) ||
-    html.match(/<link\s+rel="apple-touch-icon"/i)
-  );
+  // Check for favicon and extract URL
+  const faviconMatch = html.match(/<link\s+[^>]*rel=["'](icon|shortcut icon|apple-touch-icon)["'][^>]*href=["']([^"']*)["']/i) ||
+    html.match(/<link\s+[^>]*href=["']([^"']*)["'][^>]*rel=["'](icon|shortcut icon|apple-touch-icon)["']/i);
+  const hasFavicon = !!faviconMatch;
+  let faviconUrl: string | null = null;
+  if (faviconMatch) {
+    faviconUrl = faviconMatch[2] || faviconMatch[1];
+    if (faviconUrl && !faviconUrl.startsWith('http')) {
+      try {
+        faviconUrl = new URL(faviconUrl, url).href;
+      } catch {
+        // Keep relative URL
+      }
+    }
+  }
 
-  // Check for canonical tag
-  const hasCanonicalTag = !!html.match(/<link\s+rel="canonical"/i);
+  // Check for canonical tag and extract URL
+  const canonicalMatch = html.match(/<link\s+[^>]*rel=["']canonical["'][^>]*href=["']([^"']*)["']/i) ||
+    html.match(/<link\s+[^>]*href=["']([^"']*)["'][^>]*rel=["']canonical["']/i);
+  const hasCanonicalTag = !!canonicalMatch;
+  const canonicalUrl = canonicalMatch ? canonicalMatch[1] : null;
 
-  // Check for viewport meta
-  const hasViewportMeta = !!html.match(/<meta\s+name="viewport"/i);
+  // Check for viewport meta and extract content
+  const viewportMatch = html.match(/<meta\s+[^>]*name=["']viewport["'][^>]*content=["']([^"']*)["']/i) ||
+    html.match(/<meta\s+[^>]*content=["']([^"']*)["'][^>]*name=["']viewport["']/i);
+  const hasViewportMeta = !!viewportMatch;
+  const viewportContent = viewportMatch ? viewportMatch[1] : null;
 
-  // Check for charset meta
-  const hasCharsetMeta = !!(
-    html.match(/<meta\s+charset/i) ||
-    html.match(/<meta\s+http-equiv="Content-Type"/i)
-  );
+  // Check for charset meta and extract value
+  const charsetMatch = html.match(/<meta\s+charset=["']([^"']*)["']/i) ||
+    html.match(/<meta\s+[^>]*charset=["']([^"']*)["']/i);
+  const contentTypeMatch = html.match(/charset=([^"'\s;]+)/i);
+  const hasCharsetMeta = !!(charsetMatch || contentTypeMatch);
+  const charset = charsetMatch ? charsetMatch[1] : (contentTypeMatch ? contentTypeMatch[1] : null);
+
+  // Extract HTML lang attribute
+  const langMatch = html.match(/<html[^>]*\slang=["']([^"']*)["']/i);
+  const htmlLang = langMatch ? langMatch[1] : null;
 
   // Count images with and without alt text
   const imgMatches = html.match(/<img[^>]*>/gi) || [];
@@ -439,16 +471,149 @@ async function scrapeTechnicalData(url: string, html: string): Promise<Technical
     loadTimeEstimate = 'medium';
   }
 
-  // Check for robots.txt and sitemap (basic check)
+  // Analyze headings hierarchy
+  const h1Count = (html.match(/<h1[^>]*>/gi) || []).length;
+  const h2Count = (html.match(/<h2[^>]*>/gi) || []).length;
+  const h3Count = (html.match(/<h3[^>]*>/gi) || []).length;
+  const h4Count = (html.match(/<h4[^>]*>/gi) || []).length;
+  const h5Count = (html.match(/<h5[^>]*>/gi) || []).length;
+  const h6Count = (html.match(/<h6[^>]*>/gi) || []).length;
+
+  // Check heading hierarchy issues
+  const hierarchyIssues: string[] = [];
+  if (h1Count === 0) {
+    hierarchyIssues.push('Missing H1 heading');
+  } else if (h1Count > 1) {
+    hierarchyIssues.push(`Multiple H1 headings (${h1Count} found)`);
+  }
+  if (h3Count > 0 && h2Count === 0) {
+    hierarchyIssues.push('H3 used without H2 (skipped heading level)');
+  }
+  if (h4Count > 0 && h3Count === 0) {
+    hierarchyIssues.push('H4 used without H3 (skipped heading level)');
+  }
+  const hasProperHierarchy = hierarchyIssues.length === 0;
+
+  const headingsHierarchy = {
+    h1Count,
+    h2Count,
+    h3Count,
+    h4Count,
+    h5Count,
+    h6Count,
+    hasProperHierarchy,
+    hierarchyIssues,
+  };
+
+  // Extract title and meta description lengths
+  const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
+  const titleText = titleMatch ? titleMatch[1].trim() : '';
+  const titleLength = titleText.length;
+  const metaDescriptionText = getMetaContent('description') || '';
+  const metaDescriptionLength = metaDescriptionText.length;
+
+  // Check for robots.txt, sitemap, llms.txt, and security headers
   let hasRobotsTxt = false;
   let hasSitemap = false;
+  let hasLlmsTxt = false;
+  let robotsTxtContent: string | null = null;
+
+  // Security headers
+  let securityHeaders = {
+    hasHSTS: false,
+    hstsValue: null as string | null,
+    hasCSP: false,
+    cspValue: null as string | null,
+    hasXFrameOptions: false,
+    xFrameOptionsValue: null as string | null,
+    hasXContentTypeOptions: false,
+    xContentTypeOptionsValue: null as string | null,
+    hasReferrerPolicy: false,
+    referrerPolicyValue: null as string | null,
+    hasPermissionsPolicy: false,
+    permissionsPolicyValue: null as string | null,
+  };
+
   try {
     const baseUrl = new URL(url);
-    const robotsResponse = await fetch(`${baseUrl.origin}/robots.txt`, { method: 'HEAD' });
-    hasRobotsTxt = robotsResponse.ok;
 
-    const sitemapResponse = await fetch(`${baseUrl.origin}/sitemap.xml`, { method: 'HEAD' });
+    // Fetch security headers from the main URL
+    const headersResponse = await fetch(url, {
+      method: 'HEAD',
+      signal: AbortSignal.timeout(5000),
+      redirect: 'follow',
+    });
+
+    if (headersResponse.ok) {
+      const headers = headersResponse.headers;
+
+      // HSTS (Strict-Transport-Security)
+      const hsts = headers.get('strict-transport-security');
+      if (hsts) {
+        securityHeaders.hasHSTS = true;
+        securityHeaders.hstsValue = hsts;
+      }
+
+      // CSP (Content-Security-Policy)
+      const csp = headers.get('content-security-policy');
+      if (csp) {
+        securityHeaders.hasCSP = true;
+        securityHeaders.cspValue = csp.slice(0, 500); // Truncate for storage
+      }
+
+      // X-Frame-Options
+      const xfo = headers.get('x-frame-options');
+      if (xfo) {
+        securityHeaders.hasXFrameOptions = true;
+        securityHeaders.xFrameOptionsValue = xfo;
+      }
+
+      // X-Content-Type-Options
+      const xcto = headers.get('x-content-type-options');
+      if (xcto) {
+        securityHeaders.hasXContentTypeOptions = true;
+        securityHeaders.xContentTypeOptionsValue = xcto;
+      }
+
+      // Referrer-Policy
+      const rp = headers.get('referrer-policy');
+      if (rp) {
+        securityHeaders.hasReferrerPolicy = true;
+        securityHeaders.referrerPolicyValue = rp;
+      }
+
+      // Permissions-Policy (or Feature-Policy)
+      const pp = headers.get('permissions-policy') || headers.get('feature-policy');
+      if (pp) {
+        securityHeaders.hasPermissionsPolicy = true;
+        securityHeaders.permissionsPolicyValue = pp.slice(0, 500); // Truncate for storage
+      }
+    }
+
+    // Check robots.txt and get content
+    const robotsResponse = await fetch(`${baseUrl.origin}/robots.txt`, {
+      method: 'GET',
+      signal: AbortSignal.timeout(5000),
+    });
+    if (robotsResponse.ok) {
+      hasRobotsTxt = true;
+      const text = await robotsResponse.text();
+      robotsTxtContent = text.slice(0, 500); // First 500 chars
+    }
+
+    // Check sitemap
+    const sitemapResponse = await fetch(`${baseUrl.origin}/sitemap.xml`, {
+      method: 'HEAD',
+      signal: AbortSignal.timeout(5000),
+    });
     hasSitemap = sitemapResponse.ok;
+
+    // Check llms.txt (new AI visibility standard)
+    const llmsResponse = await fetch(`${baseUrl.origin}/llms.txt`, {
+      method: 'HEAD',
+      signal: AbortSignal.timeout(5000),
+    });
+    hasLlmsTxt = llmsResponse.ok;
   } catch {
     // Ignore errors
   }
@@ -463,6 +628,7 @@ async function scrapeTechnicalData(url: string, html: string): Promise<Technical
     hasCanonicalTag,
     hasRobotsTxt,
     hasSitemap,
+    hasLlmsTxt,
     imagesWithAlt,
     imagesWithoutAlt,
     formCount,
@@ -474,6 +640,25 @@ async function scrapeTechnicalData(url: string, html: string): Promise<Technical
     hasFAQSchema,
     loadTimeEstimate,
     pageSize,
+    htmlLang,
+    titleLength,
+    metaDescriptionLength,
+    ogTitle,
+    ogDescription,
+    ogImage,
+    ogUrl,
+    ogType,
+    twitterCard,
+    twitterTitle,
+    twitterDescription,
+    twitterImage,
+    canonicalUrl,
+    faviconUrl,
+    viewportContent,
+    charset,
+    headingsHierarchy,
+    robotsTxtContent,
+    securityHeaders,
   };
 }
 

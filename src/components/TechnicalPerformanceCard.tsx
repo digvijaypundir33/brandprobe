@@ -1,12 +1,14 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import type { TechnicalPerformance } from '@/types/report';
+import type { TechnicalPerformance, TechnicalData } from '@/types/report';
 import IssuesAndQuickWins from './IssuesAndQuickWins';
+import PageSpeedMetrics from './PageSpeedMetrics';
 import { getScoreColorClass } from '@/lib/utils';
 
 interface TechnicalPerformanceCardProps {
   technical: TechnicalPerformance;
+  technicalData?: Partial<TechnicalData>;
 }
 
 function getSpeedColor(speed: string): string {
@@ -22,10 +24,13 @@ function getSpeedColor(speed: string): string {
   }
 }
 
-export default function TechnicalPerformanceCard({ technical }: TechnicalPerformanceCardProps) {
+export default function TechnicalPerformanceCard({ technical, technicalData }: TechnicalPerformanceCardProps) {
   const analysis = technical.detailedAnalysis || {};
   const securityIndicators = Array.isArray(analysis.securityIndicators) ? analysis.securityIndicators : [];
   const accessibilityFlags = Array.isArray(analysis.accessibilityFlags) ? analysis.accessibilityFlags : [];
+
+  // Security headers from scraped data
+  const securityHeaders = technicalData?.securityHeaders;
 
   return (
     <motion.div
@@ -104,6 +109,34 @@ export default function TechnicalPerformanceCard({ technical }: TechnicalPerform
           </div>
         </div>
 
+        {/* PageSpeed Insights (when available) */}
+        {analysis.pageSpeedInsights && (
+          <div className="mb-6">
+            <PageSpeedMetrics pageSpeedInsights={analysis.pageSpeedInsights} />
+          </div>
+        )}
+
+        {/* Data source indicator */}
+        {analysis.dataSource && (
+          <div className="mb-4 text-xs text-gray-500 flex items-center gap-2">
+            {analysis.dataSource === 'pagespeed-api' ? (
+              <>
+                <svg className="w-3 h-3 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <span>Powered by Google PageSpeed Insights (Lighthouse {analysis.pageSpeedInsights?.lighthouseVersion})</span>
+              </>
+            ) : (
+              <>
+                <svg className="w-3 h-3 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92z" clipRule="evenodd" />
+                </svg>
+                <span>Estimated (PageSpeed API unavailable)</span>
+              </>
+            )}
+          </div>
+        )}
+
         {/* Security Indicators */}
         {securityIndicators.length > 0 && (
           <div className="mb-6">
@@ -122,6 +155,133 @@ export default function TechnicalPerformanceCard({ technical }: TechnicalPerform
                   {indicator}
                 </span>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Security Headers */}
+        {securityHeaders && (
+          <div className="mb-6">
+            <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              Security Headers
+            </h4>
+            <div className="space-y-2">
+              {/* HSTS */}
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+                <div className="flex items-center gap-2">
+                  {securityHeaders.hasHSTS ? (
+                    <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                  <span className="text-sm font-medium text-gray-700">Strict-Transport-Security (HSTS)</span>
+                </div>
+                <span className={`text-xs px-2 py-1 rounded ${securityHeaders.hasHSTS ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                  {securityHeaders.hasHSTS ? 'Present' : 'Missing'}
+                </span>
+              </div>
+
+              {/* CSP */}
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+                <div className="flex items-center gap-2">
+                  {securityHeaders.hasCSP ? (
+                    <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                  <span className="text-sm font-medium text-gray-700">Content-Security-Policy (CSP)</span>
+                </div>
+                <span className={`text-xs px-2 py-1 rounded ${securityHeaders.hasCSP ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                  {securityHeaders.hasCSP ? 'Present' : 'Missing'}
+                </span>
+              </div>
+
+              {/* X-Frame-Options */}
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+                <div className="flex items-center gap-2">
+                  {securityHeaders.hasXFrameOptions ? (
+                    <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                  <span className="text-sm font-medium text-gray-700">X-Frame-Options</span>
+                </div>
+                <span className={`text-xs px-2 py-1 rounded ${securityHeaders.hasXFrameOptions ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                  {securityHeaders.hasXFrameOptions ? securityHeaders.xFrameOptionsValue || 'Present' : 'Missing'}
+                </span>
+              </div>
+
+              {/* X-Content-Type-Options */}
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+                <div className="flex items-center gap-2">
+                  {securityHeaders.hasXContentTypeOptions ? (
+                    <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                  <span className="text-sm font-medium text-gray-700">X-Content-Type-Options</span>
+                </div>
+                <span className={`text-xs px-2 py-1 rounded ${securityHeaders.hasXContentTypeOptions ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                  {securityHeaders.hasXContentTypeOptions ? securityHeaders.xContentTypeOptionsValue || 'Present' : 'Missing'}
+                </span>
+              </div>
+
+              {/* Referrer-Policy */}
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+                <div className="flex items-center gap-2">
+                  {securityHeaders.hasReferrerPolicy ? (
+                    <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                  <span className="text-sm font-medium text-gray-700">Referrer-Policy</span>
+                </div>
+                <span className={`text-xs px-2 py-1 rounded ${securityHeaders.hasReferrerPolicy ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                  {securityHeaders.hasReferrerPolicy ? securityHeaders.referrerPolicyValue || 'Present' : 'Optional'}
+                </span>
+              </div>
+
+              {/* Permissions-Policy */}
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+                <div className="flex items-center gap-2">
+                  {securityHeaders.hasPermissionsPolicy ? (
+                    <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                  <span className="text-sm font-medium text-gray-700">Permissions-Policy</span>
+                </div>
+                <span className={`text-xs px-2 py-1 rounded ${securityHeaders.hasPermissionsPolicy ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                  {securityHeaders.hasPermissionsPolicy ? 'Present' : 'Optional'}
+                </span>
+              </div>
             </div>
           </div>
         )}

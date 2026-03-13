@@ -6,5 +6,8 @@ Allow: /
 Disallow: /api/
 Disallow: /dashboard
 
+# Host
+Host: brandprobe.io
+
 # Sitemap location
 Sitemap: https://brandprobe.io/sitemap.xml

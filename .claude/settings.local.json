@@ -4,7 +4,8 @@
       "Bash(npm run build:*)",
       "Bash(TEST_URL=https://workoutproai.com npm run test:ai:*)",
       "Bash(npx supabase:*)",
-      "Bash(docker exec:*)"
+      "Bash(docker exec:*)",
+      "Bash(psql:*)"
     ]
   }
 }
