@@ -549,6 +549,13 @@ export interface ShowcaseEntry {
   reportId: string;
   url: string;
   overallScore: number | null;
+  messagingScore?: number | null;
+  seoScore?: number | null;
+  aiSearchScore?: number | null;
+  technicalScore?: number | null;
+  brandHealthScore?: number | null;
+  designAuthenticityScore?: number | null;
+  technicalPerformance?: any; // JSON field with SEO checklist data
   showcaseViews: number;
   showcaseClicks: number;
   showcaseUpvotes: number;

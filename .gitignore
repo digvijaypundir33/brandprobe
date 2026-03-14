@@ -47,3 +47,6 @@ next-env.d.ts
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Scripts with sensitive data
+/scripts/cleanup-stuck-reports.ts

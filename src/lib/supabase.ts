@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Report, User, Site } from '@/types/report';
+import { analyzeSiteQuality } from './site-quality-analyzer';
 
 // Determine environment and get appropriate Supabase credentials
 // Default to production unless explicitly set to 'local'
@@ -914,6 +915,124 @@ export async function getShowcaseEntries(filters: ShowcaseFilters = {}): Promise
 // Get featured showcase entries (top ranked for homepage)
 export async function getFeaturedShowcaseEntries(limit: number = 4): Promise<ShowcaseEntry[]> {
   return getShowcaseEntries({ sortBy: 'rank', limit });
+}
+
+// Get all unique analyzed sites (latest report for each unique URL)
+export async function getShowcaseExtremes(): Promise<ShowcaseEntry[]> {
+  console.log('[getShowcaseExtremes] Starting to fetch reports...');
+
+  // Get all ready reports
+  const { data: allReports, error } = await supabaseAdmin
+    .from('reports')
+    .select(`
+      id,
+      url,
+      overall_score,
+      messaging_score,
+      seo_score,
+      ai_search_score,
+      technical_score,
+      brand_health_score,
+      design_authenticity_score,
+      technical_performance,
+      scraped_data,
+      created_at,
+      showcase_views,
+      showcase_clicks,
+      showcase_upvotes,
+      showcase_rank,
+      design_authenticity,
+      showcase_profiles (
+        display_name,
+        tagline,
+        description,
+        icon_url,
+        screenshot_url,
+        category,
+        website_url,
+        default_name,
+        default_tagline,
+        default_icon_url,
+        is_priority
+      )
+    `)
+    .eq('status', 'ready')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('[getShowcaseExtremes] Failed to get reports:', error);
+    return [];
+  }
+
+  console.log('[getShowcaseExtremes] Found reports:', allReports?.length || 0);
+
+  if (!allReports || allReports.length === 0) {
+    return [];
+  }
+
+  // Group by URL and keep only the latest report for each unique URL
+  const urlMap = new Map();
+  for (const report of allReports) {
+    if (!urlMap.has(report.url)) {
+      urlMap.set(report.url, report);
+    }
+  }
+
+  const uniqueReports = Array.from(urlMap.values());
+  console.log('[getShowcaseExtremes] Unique URLs:', uniqueReports.length);
+
+  // Transform to ShowcaseEntry format
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return uniqueReports.map((row: any) => {
+    const profile = row.showcase_profiles?.[0] || row.showcase_profiles;
+    // Get screenshot from design_authenticity or profile
+    const screenshotUrl = row.design_authenticity?.detailedAnalysis?.screenshotUrl ||
+                          profile?.screenshot_url ||
+                          null;
+
+    const displayName = profile?.display_name || profile?.default_name || extractDomainFromUrl(row.url);
+    const defaultTagline = `Scanned ${new Date(row.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+
+    // Compute site quality from scraped_data
+    let siteQuality = null;
+    if (row.scraped_data?.technicalData) {
+      try {
+        siteQuality = analyzeSiteQuality(
+          row.scraped_data.technicalData,
+          row.scraped_data.title || '',
+          row.scraped_data.metaDescription || ''
+        );
+      } catch (error) {
+        console.error('[getShowcaseExtremes] Failed to analyze site quality:', error);
+      }
+    }
+
+    return {
+      reportId: row.id,
+      url: row.url,
+      overallScore: row.overall_score,
+      messagingScore: row.messaging_score,
+      seoScore: row.seo_score,
+      aiSearchScore: row.ai_search_score,
+      technicalScore: row.technical_score,
+      brandHealthScore: row.brand_health_score,
+      designAuthenticityScore: row.design_authenticity_score,
+      technicalPerformance: siteQuality,
+      showcaseViews: row.showcase_views || 0,
+      showcaseClicks: row.showcase_clicks || 0,
+      showcaseUpvotes: row.showcase_upvotes || 0,
+      showcaseRank: row.showcase_rank || 0,
+      createdAt: row.created_at,
+      displayName,
+      tagline: profile?.tagline || profile?.default_tagline || defaultTagline,
+      description: profile?.description || null,
+      iconUrl: profile?.icon_url || profile?.default_icon_url || null,
+      screenshotUrl,
+      category: profile?.category,
+      websiteUrl: profile?.website_url,
+      isPriority: profile?.is_priority || false,
+    };
+  });
 }
 
 // Calculate showcase rank based on various factors
