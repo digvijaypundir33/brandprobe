@@ -99,7 +99,7 @@ export default function AnalysisCard({ entry }: AnalysisCardProps) {
   const displayScores = [...topScores, ...bottomScores];
 
   return (
-    <div className="flex-shrink-0 w-80 bg-white rounded-lg shadow-md p-4 border border-gray-200">
+    <div className="flex-shrink-0 w-80 bg-white rounded-lg shadow-md p-4 border border-gray-200 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:z-10">
       {/* Screenshot or Initials Placeholder */}
       <div className="relative w-full h-40 bg-gray-100 rounded-md overflow-hidden mb-3">
         {entry.screenshotUrl ? (
