@@ -4,7 +4,7 @@ import { fetchSitemap, selectBestPages, extractSitemapMetadata } from './sitemap
 import { getBrandUrlsToScrape } from './brand-recognizer';
 
 // Playwright service configuration
-const TIMEOUT = 30000; // 30 seconds max per page
+const TIMEOUT = 50000; // 50 seconds max per page (allows for heavy pages)
 const MAX_SUBPAGES = 3;
 const PLAYWRIGHT_SERVICE_URL = process.env.PLAYWRIGHT_SERVICE_URL || 'https://playwright-service.fly.dev';
 
@@ -24,6 +24,8 @@ async function scrapeWithService(url: string): Promise<{
         timeout: TIMEOUT,
       },
     }),
+    // Add fetch-level timeout (50s page timeout + 10s buffer = 60s max)
+    signal: AbortSignal.timeout(60000),
   });
 
   if (!response.ok) {
@@ -190,6 +192,80 @@ async function parseHTML(url: string, html: string) {
     socialProof: socialProof.slice(0, 5),
   };
 }
+/**
+ * Detect page characteristics BEFORE full scraping
+ * Returns signals about page size/complexity to determine scraping strategy
+ */
+async function detectPageCharacteristics(url: string): Promise<{
+  contentLengthBytes: number | null;
+  connectionTimeMs: number;
+  estimatedComplexity: 'light' | 'medium' | 'heavy';
+  recommendedSubpageCount: number;
+}> {
+  const connectionStart = Date.now();
+
+  try {
+    // HEAD request to get headers without full body
+    const response = await fetch(url, {
+      method: 'HEAD',
+      signal: AbortSignal.timeout(5000),
+      redirect: 'follow',
+    });
+
+    const connectionTimeMs = Date.now() - connectionStart;
+    const contentLength = response.headers.get('content-length');
+    const contentLengthBytes = contentLength ? parseInt(contentLength, 10) : null;
+
+    // Estimate complexity based on size and connection time
+    let estimatedComplexity: 'light' | 'medium' | 'heavy';
+    let recommendedSubpageCount = 3; // Default: full mode
+
+    // Heavy if large page OR slow connection
+    if ((contentLengthBytes && contentLengthBytes > 500000) || connectionTimeMs > 5000) {
+      estimatedComplexity = 'heavy';
+      recommendedSubpageCount = 1; // Scrape only 1 subpage to avoid timeout
+    } else if (contentLengthBytes && contentLengthBytes < 100000) {
+      // Light: Small page with known size
+      estimatedComplexity = 'light';
+      recommendedSubpageCount = 3; // Full mode - 3 subpages
+    } else if (!contentLengthBytes && connectionTimeMs > 1000) {
+      // Unknown size but slow connection (>1s) → assume medium-heavy
+      estimatedComplexity = 'medium';
+      recommendedSubpageCount = 2; // Conservative: 2 subpages
+    } else if (!contentLengthBytes) {
+      // Unknown size but fast connection → assume light
+      estimatedComplexity = 'light';
+      recommendedSubpageCount = 3;
+    } else {
+      // Medium: 100-500KB
+      estimatedComplexity = 'medium';
+      recommendedSubpageCount = 2; // Scrape 2 subpages
+    }
+
+    console.log(
+      `[Scraper] Page detection: ${estimatedComplexity} ` +
+        `(${contentLengthBytes || 'unknown'} bytes, ${connectionTimeMs}ms TTFB) ` +
+        `→ ${recommendedSubpageCount} subpages`
+    );
+
+    return {
+      contentLengthBytes,
+      connectionTimeMs,
+      estimatedComplexity,
+      recommendedSubpageCount,
+    };
+  } catch (error) {
+    // If HEAD request fails, assume medium complexity
+    // Better to try full mode and fall back than skip unnecessarily
+    console.log('[Scraper] Page detection failed, assuming medium complexity');
+    return {
+      contentLengthBytes: null,
+      connectionTimeMs: 0,
+      estimatedComplexity: 'medium',
+      recommendedSubpageCount: 2,
+    };
+  }
+}
 
 /**
  * Main scraper function - scrapes a URL and returns structured data
@@ -198,10 +274,20 @@ async function parseHTML(url: string, html: string) {
  */
 export async function scrapeWebsite(
   url: string,
-  options: { analysisType?: 'quick' | 'full' } = {}
-): Promise<ScrapedData & { brandConfig?: any; pagesAnalyzed: number }> {
-  const { analysisType = 'full' } = options;
+  options: { analysisType?: 'quick' | 'full'; skipDetection?: boolean } = {}
+): Promise<ScrapedData & { brandConfig?: any; pagesAnalyzed: number; detectionResult?: any }> {
+  const { analysisType = 'full', skipDetection = false } = options;
   const normalizedUrl = normalizeUrl(url);
+
+  // Step 0: Pre-flight page detection (if full mode and not skipped)
+  let maxSubpagesToScrape = 3; // Default for full mode
+  let detectionResult = null;
+
+  if (!skipDetection && analysisType === 'full') {
+    console.log('[Scraper] Running pre-flight page detection...');
+    detectionResult = await detectPageCharacteristics(normalizedUrl);
+    maxSubpagesToScrape = detectionResult.recommendedSubpageCount;
+  }
 
   // Step 1: Brand detection and URL routing
   console.log(`[Scraper] Analysis type: ${analysisType}`);
@@ -239,8 +325,10 @@ export async function scrapeWebsite(
   }
 
   // Step 2: Scrape main page using Playwright service
+  const mainPageStart = Date.now();
   const rawData = await scrapeWithService(urlsToScrape[0]);
   const parsedData = await parseHTML(rawData.url, rawData.html);
+  const mainPageTimeMs = Date.now() - mainPageStart;
 
   const mainPageData = {
     ...rawData,
@@ -255,15 +343,31 @@ export async function scrapeWebsite(
   let subPageUrls: string[] = [];
 
   if (analysisType === 'full') {
-    if (brandRouting.useBrandBaselines || useSitemap) {
-      // Already have URLs from brand routing or sitemap
-      subPageUrls = urlsToScrape.slice(1);
+    // Fallback detection: If main page was slow, skip subpages entirely
+    if (mainPageTimeMs > 25000) {
+      console.log(`[Scraper] Main page took ${mainPageTimeMs}ms (>25s). Skipping subpages to avoid timeout.`);
+      detectionResult = {
+        ...detectionResult,
+        mainPageTimeMs,
+        skipReason: 'Main page scraping exceeded 25 seconds',
+      };
     } else {
-      // Fall back to nav-based discovery
-      subPageUrls = getSubPageUrls(mainPageData.navLinks, normalizedUrl);
-    }
+      if (brandRouting.useBrandBaselines || useSitemap) {
+        // Already have URLs from brand routing or sitemap
+        subPageUrls = urlsToScrape.slice(1);
+      } else {
+        // Fall back to nav-based discovery
+        subPageUrls = getSubPageUrls(mainPageData.navLinks, normalizedUrl);
+      }
 
-    subPages = await scrapeSubPages(subPageUrls);
+      // Apply smart detection limit to reduce subpage count for heavy pages
+      if (subPageUrls.length > maxSubpagesToScrape) {
+        console.log(`[Scraper] Limiting subpages from ${subPageUrls.length} to ${maxSubpagesToScrape} based on page complexity`);
+        subPageUrls = subPageUrls.slice(0, maxSubpagesToScrape);
+      }
+
+      subPages = await scrapeSubPages(subPageUrls);
+    }
   }
 
   // Step 5: Extract sitemap metadata (if available, for SEO analysis)
@@ -296,6 +400,7 @@ export async function scrapeWebsite(
     sitemapMetadata,
     brandConfig: brandRouting.useBrandBaselines ? brandRouting : undefined,
     pagesAnalyzed,
+    detectionResult: detectionResult || undefined,
   };
 }
 
@@ -735,31 +840,52 @@ function getSubPageUrls(navLinks: string[], baseUrl: string): string[] {
  * Scrape subpages using Playwright service
  */
 async function scrapeSubPages(urls: string[]): Promise<SubPageData[]> {
-  // Parallelize subpage scraping for massive performance improvement
-  // Previously: sequential (45-60s for 3 pages), Now: parallel (15-20s total)
-  const scrapePromises = urls.map(async (url) => {
-    try {
-      const rawData = await scrapeWithService(url);
-      const parsedData = await parseHTML(rawData.url, rawData.html);
+  // Full parallelization: all pages at once for maximum speed
+  // Batching was causing sequential waits (Batch1: 50s + Batch2: 50s = 100s)
+  // Full parallel: max(50s, 50s, 50s) = 50s - saves 50 seconds!
+  const MAX_CONCURRENT = urls.length;
+  const subPages: SubPageData[] = [];
 
-      return {
-        url: rawData.url,
-        title: rawData.title,
-        h1: parsedData.h1,
-        h2: parsedData.h2,
-        mainContent: parsedData.heroText || (parsedData.h1.length > 0 ? parsedData.h1[0] : ''),
-      };
-    } catch (error) {
-      console.error(`Failed to scrape subpage ${url}:`, error);
-      return null; // Return null for failed pages
-    }
-  });
+  console.log(`[Scraper] Scraping ${urls.length} subpages in batches of ${MAX_CONCURRENT}`);
 
-  // Wait for all scrapes to complete in parallel
-  const results = await Promise.all(scrapePromises);
+  // Process urls in batches of MAX_CONCURRENT
+  for (let i = 0; i < urls.length; i += MAX_CONCURRENT) {
+    const batch = urls.slice(i, i + MAX_CONCURRENT);
+    const batchStart = Date.now();
 
-  // Filter out null results (failed scrapes)
-  return results.filter((page): page is SubPageData => page !== null);
+    console.log(`[Scraper] Starting batch ${Math.floor(i / MAX_CONCURRENT) + 1}: ${batch.join(', ')}`);
+
+    const batchPromises = batch.map(async (url) => {
+      const pageStart = Date.now();
+      try {
+        const rawData = await scrapeWithService(url);
+        const parsedData = await parseHTML(rawData.url, rawData.html);
+
+        console.log(`[Scraper] ✓ Scraped ${url} in ${Date.now() - pageStart}ms`);
+
+        return {
+          url: rawData.url,
+          title: rawData.title,
+          h1: parsedData.h1,
+          h2: parsedData.h2,
+          mainContent: parsedData.heroText || (parsedData.h1.length > 0 ? parsedData.h1[0] : ''),
+        };
+      } catch (error) {
+        console.error(`[Scraper] ✗ Failed to scrape ${url} after ${Date.now() - pageStart}ms:`, error);
+        return null; // Return null for failed pages
+      }
+    });
+
+    // Wait for current batch to complete
+    const batchResults = await Promise.all(batchPromises);
+
+    console.log(`[Scraper] Batch ${Math.floor(i / MAX_CONCURRENT) + 1} completed in ${Date.now() - batchStart}ms`);
+
+    // Add successful results
+    subPages.push(...batchResults.filter((page): page is SubPageData => page !== null));
+  }
+
+  return subPages;
 }
 
 /**

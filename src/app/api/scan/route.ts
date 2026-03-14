@@ -314,10 +314,12 @@ export async function processReport(
     });
 
     // Step 2: Scrape website using Fly.io Playwright service (runs in parallel with PageSpeed)
+    const scrapeStart = Date.now();
     console.log(`[${reportId}] Starting scrape for ${url} (${effectiveAnalysisType} mode, paid: ${isPaidUser})`);
     const scrapedData = await scrapeWebsite(url, {
       analysisType: effectiveAnalysisType,
     });
+    console.log(`[${reportId}] ⏱️  Scraping completed in ${Date.now() - scrapeStart}ms`);
 
     // Update report with scraped data
     await updateReport(reportId, {
@@ -333,10 +335,12 @@ export async function processReport(
 
     // Step 5: Analyze technical performance
     // Pass the PageSpeed promise (may still be running) so it awaits when ready
+    const techStart = Date.now();
     console.log(`[${reportId}] Analyzing technical performance`);
     const technical = await analyzeTechnicalPerformance(url, scrapedData.html, {
       pageSpeedPromise, // PageSpeed likely still running, will await when needed
     });
+    console.log(`[${reportId}] ⏱️  Technical analysis completed in ${Date.now() - techStart}ms`);
 
     // Prepare previous report data for AI consistency (if this is a rescan)
     let previousReportData = null;
@@ -398,11 +402,13 @@ export async function processReport(
     }
 
     // Step 4b: Analyze with AI (marketing sections in parallel)
+    const aiStart = Date.now();
     console.log(`[${reportId}] Starting AI analysis`);
     const [analysis, screenshotUrl] = await Promise.all([
       analyzeWebsite(websiteContent, technical, scrapedData.brandConfig, previousReportData),
       screenshotPromise,
     ]);
+    console.log(`[${reportId}] ⏱️  AI analysis completed in ${Date.now() - aiStart}ms`);
 
     // Add screenshot to design authenticity if available
     if (screenshotUrl && analysis.designAuthenticity) {
