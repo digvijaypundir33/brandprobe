@@ -297,6 +297,9 @@ export async function updateReport(
     scanTimeMs: number;
     analysisType: 'quick' | 'full';
     pagesAnalyzed: number;
+    // Error handling fields
+    errorMessage: string;
+    errorTimestamp: string;
   }>
 ): Promise<void> {
   const { error } = await supabaseAdmin
@@ -334,6 +337,9 @@ export async function updateReport(
       scan_time_ms: updates.scanTimeMs,
       analysis_type: updates.analysisType,
       pages_analyzed: updates.pagesAnalyzed,
+      // Error handling fields
+      error_message: updates.errorMessage,
+      error_timestamp: updates.errorTimestamp,
     })
     .eq('id', reportId);
 
