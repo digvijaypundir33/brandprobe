@@ -107,7 +107,7 @@ export default function AnalysisCard({ entry }: AnalysisCardProps) {
             src={entry.screenshotUrl}
             alt={entry.displayName}
             fill
-            className="object-cover"
+            className="object-cover object-top"
             sizes="(max-width: 768px) 100vw, 320px"
           />
         ) : (
