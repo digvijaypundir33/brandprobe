@@ -19,6 +19,7 @@ import { sendMagicLinkEmail } from '@/lib/email';
 import { getSessionFromRequest } from '@/lib/auth';
 import type { Report, SectionScores, IssueComparison } from '@/types/report';
 import { compareIssues } from '@/lib/issue-comparator';
+import { logger } from '@/lib/logger';
 
 // Feature flag for improvement tracking
 const ENABLE_IMPROVEMENT_TRACKING = process.env.NEXT_PUBLIC_ENABLE_IMPROVEMENT_TRACKING === 'true';
@@ -293,20 +294,46 @@ export async function processReport(
 ): Promise<void> {
   // Extract previous scores for tracking
   const previousOverallScore = previousReport?.overallScore ?? null;
+
+  // Set logger context for this report
+  logger.setContext({ reportId, url });
+  logger.info('Starting report processing', {
+    analysisType,
+    hasPreviousScan: !!previousReport,
+    userEmail: userEmail ? '***' : undefined
+  });
+
+  let timeoutChecker: NodeJS.Timeout | null = null;
   try {
     // Check if user has paid subscription (for optimizations)
     let isPaidUser = false;
     if (userEmail) {
       const user = await getUserByEmail(userEmail);
       isPaidUser = user?.subscriptionStatus === 'active' || user?.subscriptionStatus === 'starter';
+      logger.info('User subscription checked', { isPaidUser, status: user?.subscriptionStatus });
     }
 
     // Optimization: Free users get quick mode (1-2 pages) to stay within 60s timeout
     const effectiveAnalysisType = isPaidUser ? analysisType : 'quick';
+    if (effectiveAnalysisType !== analysisType) {
+      logger.info('Analysis type adjusted for free user', {
+        requested: analysisType,
+        effective: effectiveAnalysisType
+      });
+    }
+
+    // Warn if approaching Vercel timeout (60s limit)
+    const checkTimeout = () => {
+      const elapsed = Date.now() - startTime;
+      if (elapsed > 50000) { // 50s warning
+        logger.warn('Approaching Vercel timeout limit', { elapsed, limit: 60000 });
+      }
+    };
+    const timeoutChecker = setInterval(checkTimeout, 10000); // Check every 10s
 
     // Step 1: Start PageSpeed API call FIRST (runs in parallel with scraping)
     // This saves ~18 seconds by running alongside scraping
-    console.log(`[${reportId}] Starting PageSpeed API call (parallel)`);
+    logger.info('Starting PageSpeed API call (parallel)');
     const { getPageSpeedInsights } = await import('@/lib/pagespeed');
     const pageSpeedPromise = getPageSpeedInsights(url, {
       strategy: (process.env.PAGESPEED_STRATEGY as 'mobile' | 'desktop') || 'mobile',
@@ -314,12 +341,15 @@ export async function processReport(
     });
 
     // Step 2: Scrape website using Fly.io Playwright service (runs in parallel with PageSpeed)
-    const scrapeStart = Date.now();
-    console.log(`[${reportId}] Starting scrape for ${url} (${effectiveAnalysisType} mode, paid: ${isPaidUser})`);
+    const scrapeStart = logger.startTimer();
+    logger.info('Starting website scrape', { mode: effectiveAnalysisType, isPaidUser });
     const scrapedData = await scrapeWebsite(url, {
       analysisType: effectiveAnalysisType,
     });
-    console.log(`[${reportId}] ⏱️  Scraping completed in ${Date.now() - scrapeStart}ms`);
+    const scrapeDuration = logger.endTimer(scrapeStart, 'Website scraping', {
+      pagesAnalyzed: scrapedData.pagesAnalyzed,
+      detectionResult: scrapedData.detectionResult
+    });
 
     // Update report with scraped data
     await updateReport(reportId, {
@@ -567,7 +597,14 @@ export async function processReport(
       pagesAnalyzed: scrapedData.pagesAnalyzed,
     });
 
-    console.log(`[${reportId}] Report complete. Score: ${overallScore}. Time: ${scanTimeMs}ms`);
+    const totalTime = Date.now() - startTime;
+    logger.info('Report completed successfully', {
+      overallScore,
+      scanTimeMs,
+      totalTime,
+      scoreChange,
+      pagesAnalyzed: scrapedData.pagesAnalyzed
+    });
 
     // Note: Report count is now dynamically calculated from completed reports (status='ready')
     // No need to increment a counter - the count is self-correcting
@@ -575,10 +612,19 @@ export async function processReport(
     // Send report ready email if email provided
     if (userEmail) {
       const { sendReportReadyEmail } = await import('@/lib/email');
-      await sendReportReadyEmail(userEmail, reportId, url).catch(console.error);
+      await sendReportReadyEmail(userEmail, reportId, url).catch((err) => {
+        logger.error('Failed to send report ready email', err);
+      });
     }
+
+    if (timeoutChecker) clearInterval(timeoutChecker);
+    logger.clearContext();
   } catch (error) {
-    console.error(`[${reportId}] Processing failed:`, error);
+    if (timeoutChecker) clearInterval(timeoutChecker);
+    logger.error('Report processing failed', error, {
+      stage: 'unknown',
+      totalTime: Date.now() - startTime
+    });
 
     // Determine error message based on error type
     let errorMessage = 'An unexpected error occurred during report generation.';
