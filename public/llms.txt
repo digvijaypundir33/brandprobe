@@ -34,6 +34,7 @@ BrandProbe is a website marketing analysis tool for startups and businesses. Ent
 ## Links
 
 - Website: https://brandprobe.io
+- Blog: https://brandprobe.io/blog
 - Pricing: https://brandprobe.io/pricing
 - Support: https://brandprobe.io/support
 - FAQ: https://brandprobe.io/faq

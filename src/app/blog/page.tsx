@@ -49,49 +49,57 @@ export default function BlogPage() {
               <p className="text-base sm:text-lg text-gray-600">No blog posts yet. Check back soon!</p>
             </div>
           ) : (
-            <div className="space-y-6 sm:space-y-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {posts.map((post) => (
                 <article
                   key={post.slug}
-                  className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 hover:shadow-lg transition-shadow"
+                  className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all group flex flex-col h-full"
                 >
-                  <div className="flex items-start justify-between gap-4 mb-3">
-                    <div className="flex-1">
-                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
-                        <span className="text-xs sm:text-sm font-medium px-2 sm:px-2.5 py-1 rounded bg-blue-100 text-blue-700">
-                          {post.category}
-                        </span>
-                        <span className="text-xs sm:text-sm text-gray-500">
-                          {new Date(post.publishedAt).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })}
-                        </span>
-                        <span className="text-xs sm:text-sm text-gray-500">•</span>
-                        <span className="text-xs sm:text-sm text-gray-500">{post.readingTime}</span>
+                  {/* Featured Image */}
+                  {post.ogImage && (
+                    <Link href={`/blog/${post.slug}`}>
+                      <div className="aspect-[16/9] overflow-hidden bg-gray-100">
+                        <img
+                          src={post.ogImage}
+                          alt={post.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
                       </div>
-                      <Link href={`/blog/${post.slug}`}>
-                        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-2 sm:mb-3 hover:text-blue-600 transition-colors leading-tight">
-                          {post.title}
-                        </h2>
-                      </Link>
-                      <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4 line-clamp-2 leading-relaxed">
-                        {post.description}
-                      </p>
-                      <div className="flex flex-wrap items-center gap-2 mb-3 sm:mb-4">
-                        {post.tags.slice(0, 3).map((tag) => (
-                          <span
-                            key={tag}
-                            className="text-xs sm:text-sm text-gray-500 bg-gray-100 px-2 sm:px-2.5 py-1 rounded"
-                          >
-                            #{tag}
-                          </span>
-                        ))}
-                      </div>
+                    </Link>
+                  )}
+
+                  <div className="p-5 flex flex-col flex-1">
+                    {/* Meta */}
+                    <div className="flex items-center gap-2 mb-3 text-xs text-gray-500">
+                      <span className="font-medium px-2.5 py-1 rounded bg-blue-100 text-blue-700">
+                        {post.category}
+                      </span>
+                      <span>{post.readingTime}</span>
+                    </div>
+
+                    {/* Title */}
+                    <Link href={`/blog/${post.slug}`} className="flex-1">
+                      <h2 className="text-lg font-bold text-gray-900 mb-3 hover:text-blue-600 transition-colors leading-tight line-clamp-3">
+                        {post.title}
+                      </h2>
+                    </Link>
+
+                    {/* Description */}
+                    <p className="text-sm text-gray-600 mb-4 line-clamp-2 leading-relaxed">
+                      {post.description}
+                    </p>
+
+                    {/* Footer */}
+                    <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-100">
+                      <span className="text-xs text-gray-500">
+                        {new Date(post.publishedAt).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </span>
                       <Link
                         href={`/blog/${post.slug}`}
-                        className="inline-flex items-center text-sm sm:text-base font-medium text-blue-600 hover:text-blue-700"
+                        className="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center"
                       >
                         Read more
                         <svg
