@@ -182,12 +182,21 @@ export default function DashboardClient({ user, reports, session }: DashboardCli
     return 'available';
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, errorMessage?: string | null) => {
     switch (status) {
       case 'ready':
         return <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-md font-medium">Ready</span>;
       case 'scanning':
         return <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-md font-medium">Scanning...</span>;
+      case 'failed':
+        return (
+          <span
+            className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-md font-medium cursor-help"
+            title={errorMessage || 'Scan failed'}
+          >
+            Failed
+          </span>
+        );
       case 'error':
         return <span className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-md font-medium">Error</span>;
       default:
@@ -636,7 +645,7 @@ export default function DashboardClient({ user, reports, session }: DashboardCli
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        {getStatusBadge(report.status)}
+                        {getStatusBadge(report.status, report.errorMessage)}
                       </td>
                       <td className="px-6 py-4">
                         <span className="text-sm text-gray-600">
@@ -824,7 +833,7 @@ export default function DashboardClient({ user, reports, session }: DashboardCli
                             <span className="text-xs text-gray-400">No score</span>
                           )}
                           <span className="text-gray-300">•</span>
-                          {getStatusBadge(report.status)}
+                          {getStatusBadge(report.status, report.errorMessage)}
                         </div>
                       </div>
                     </div>

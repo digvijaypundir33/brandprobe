@@ -281,6 +281,11 @@ export interface Report {
   isPublic: boolean;
   createdAt: string;
 
+  // Error handling
+  errorMessage?: string | null;
+  errorTimestamp?: string | null;
+  lastActivityAt?: string | null;
+
   // Showcase fields
   showcaseEnabled: boolean;
   showcaseRank: number;

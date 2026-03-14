@@ -574,8 +574,28 @@ export async function processReport(
   } catch (error) {
     console.error(`[${reportId}] Processing failed:`, error);
 
+    // Determine error message based on error type
+    let errorMessage = 'An unexpected error occurred during report generation.';
+
+    if (error instanceof Error) {
+      // Check for common error types
+      if (error.message.includes('timeout') || error.message.includes('ETIMEDOUT')) {
+        errorMessage = 'Report generation timed out. Please try again with a simpler website or contact support.';
+      } else if (error.message.includes('rate limit') || error.message.includes('429')) {
+        errorMessage = 'AI service rate limit reached. Please try again in a few minutes.';
+      } else if (error.message.includes('token') || error.message.includes('context length')) {
+        errorMessage = 'Website content is too large to analyze. Please contact support.';
+      } else if (error.message.includes('ENOTFOUND') || error.message.includes('ECONNREFUSED')) {
+        errorMessage = 'Could not connect to the website. Please check the URL and try again.';
+      } else {
+        errorMessage = `Error: ${error.message.substring(0, 200)}`;
+      }
+    }
+
     await updateReport(reportId, {
       status: 'failed',
+      errorMessage,
+      errorTimestamp: new Date().toISOString(),
     });
   }
 }

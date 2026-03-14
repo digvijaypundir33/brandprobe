@@ -413,8 +413,8 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Scan Failed</h1>
           <p className="text-gray-600 mb-4">
-            We couldn&apos;t analyze this website. This can happen if the site is down,
-            blocks automated access, or uses heavy JavaScript.
+            {report.errorMessage ||
+              "We couldn't analyze this website. This can happen if the site is down, blocks automated access, or uses heavy JavaScript."}
           </p>
 
           {/* Don't worry message */}
