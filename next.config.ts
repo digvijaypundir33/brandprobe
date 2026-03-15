@@ -8,6 +8,15 @@ const nextConfig: NextConfig = {
     ],
   },
   pageExtensions: ['js', 'jsx', 'ts', 'tsx'],
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'mcsdmpejxwbyxxuhraap.supabase.co',
+        pathname: '/storage/v1/object/public/**',
+      },
+    ],
+  },
 };
 
 export default nextConfig;

@@ -32,12 +32,16 @@ export async function GET(
 
     // 2. Check if image already exists and is recent
     if (report.share_image_url && !report.share_image_url.startsWith('data:')) {
-      // Only use cached if it's a real URL (not base64)
-      return NextResponse.json({
-        success: true,
-        imageUrl: report.share_image_url,
-        cached: true,
-      });
+      // Only use cached if it's a real URL (not base64) and from the correct bucket
+      if (report.share_image_url.includes('/share-images/')) {
+        return NextResponse.json({
+          success: true,
+          imageUrl: report.share_image_url,
+          cached: true,
+        });
+      }
+      // Invalid cache (old bucket), regenerate
+      console.log('Invalidating old cache from showcase-images bucket');
     }
 
     // 3. Calculate top 5 scores
