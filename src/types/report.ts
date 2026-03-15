@@ -293,6 +293,11 @@ export interface Report {
   showcaseClicks: number;
   showcaseUpvotes: number;
   isPriority?: boolean;
+
+  // Share tracking
+  shareImageUrl?: string | null;
+  shareCount?: number;
+  lastSharedAt?: string | null;
 }
 
 export interface SitemapMetadata {

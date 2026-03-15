@@ -25,6 +25,7 @@ import SiteQualityCard from '@/components/SiteQualityCard';
 import AuthenticatedHeader from '@/components/AuthenticatedHeader';
 import ImprovementsSummary from '@/components/ImprovementsSummary';
 import AlertModal from '@/components/AlertModal';
+import ShareButton from '@/components/ShareButton';
 import { analyzeSiteQuality } from '@/lib/site-quality-analyzer';
 import type { Report, SiteQualityScore } from '@/types/report';
 
@@ -604,7 +605,33 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
                     </svg>
                   </a>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex items-center gap-3">
+                  {/* Share count - Show if report has been shared */}
+                  {report.shareCount && report.shareCount > 0 && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600 px-3 py-1 bg-gray-50 rounded-lg">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                      </svg>
+                      Shared {report.shareCount} {report.shareCount === 1 ? 'time' : 'times'}
+                    </div>
+                  )}
+
+                  {/* Share Button */}
+                  <ShareButton
+                    reportId={id}
+                    isPublic={isPublic}
+                    overallScore={report.overallScore || 0}
+                    websiteUrl={report.url}
+                    onShare={async () => {
+                      // Refresh report to update share count
+                      const response = await fetch(`/api/report/${id}`);
+                      const data = await response.json();
+                      if (data.success) {
+                        setReport(data.report);
+                      }
+                    }}
+                  />
+
                   {/* Privacy Toggle - Only show for owner */}
                   {visitorEmail === userEmail && (
                     <button
