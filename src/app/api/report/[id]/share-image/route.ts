@@ -352,7 +352,7 @@ export async function GET(
       const blob = new Blob([screenshot], { type: 'image/png' });
 
       // Upload using the helper function
-      imageUrl = await uploadImage(blob, filename, 'showcase-images');
+      imageUrl = await uploadImage(blob, filename, 'share-images');
     } catch (uploadError) {
       console.error('Failed to upload to storage:', uploadError);
       // Fallback to base64 for preview
