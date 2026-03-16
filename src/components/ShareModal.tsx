@@ -138,13 +138,22 @@ export default function ShareModal({
             </div>
           ) : imageUrl ? (
             <>
-              <Image
-                src={imageUrl}
-                alt="Share preview"
-                width={1200}
-                height={630}
-                className="w-full"
-              />
+              {/* Use regular img tag for local dev (127.0.0.1), Next.js Image for production */}
+              {imageUrl.includes('127.0.0.1') ? (
+                <img
+                  src={imageUrl}
+                  alt="Share preview"
+                  className="w-full"
+                />
+              ) : (
+                <Image
+                  src={imageUrl}
+                  alt="Share preview"
+                  width={1200}
+                  height={630}
+                  className="w-full"
+                />
+              )}
             </>
           ) : null}
         </div>
