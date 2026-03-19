@@ -4,6 +4,30 @@
   --background: #ffffff;
   --foreground: #171717;
   --brand-primary: rgb(91, 91, 213);
+
+  /* Editorial Intelligence Design System */
+  --primary: #4b4bc5;
+  --primary-container: #9596ff;
+  --primary-dim: #3f3db8;
+  --surface-container-low: #eef1f3;
+  --surface-container-lowest: #ffffff;
+  --surface-container: #e5e9eb;
+  --surface-container-high: #dfe3e6;
+  --surface-container-highest: #d9dde0;
+  --surface-bright: #f5f7f9;
+  --on-surface: #2c2f31;
+  --on-surface-variant: #595c5e;
+  --outline-variant: #abadaf;
+  --outline: #747779;
+  --secondary: #006a2d;
+  --secondary-container: #6bff8f;
+  --on-secondary-container: #005f28;
+  --tertiary: #6f5900;
+  --tertiary-container: #fed01b;
+  --on-tertiary-container: #594700;
+  --background-surface: #f5f7f9;
+  --on-primary: #f4f1ff;
+  --surface-tint: #4b4bc5;
 }
 
 @theme inline {
@@ -308,4 +332,100 @@ body {
   .safe-right {
     padding-right: max(1rem, env(safe-area-inset-right));
   }
+}
+
+/* ================================
+   Editorial Intelligence Design System
+   ================================ */
+
+/* Primary gradient button */
+.primary-gradient {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-container) 100%);
+}
+
+/* Ghost border (15% opacity) */
+.ghost-border {
+  border: 1px solid rgba(171, 173, 175, 0.15);
+}
+
+/* Ambient shadow (soft diffused) */
+.ambient-shadow {
+  box-shadow: 0 20px 40px rgba(44, 47, 49, 0.06);
+}
+
+/* Glass navigation */
+.glass-nav {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Font families */
+.font-headline {
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.font-body {
+  font-family: 'Manrope', sans-serif;
+}
+
+.font-label {
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+/* No scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ================================
+   Hero Intelligence Deck Animations
+   ================================ */
+
+/* Deck group cycling animation */
+.deck-group {
+  position: absolute;
+  inset: 0;
+  animation: groupCycle 16s ease-in-out infinite;
+  opacity: 0;
+}
+
+.deck-group:nth-child(1) { animation-delay: 0s; }
+.deck-group:nth-child(2) { animation-delay: 4s; }
+.deck-group:nth-child(3) { animation-delay: 8s; }
+.deck-group:nth-child(4) { animation-delay: 12s; }
+
+@keyframes groupCycle {
+  0%, 22% { opacity: 1; transform: translateY(0); }
+  25%, 100% { opacity: 0; transform: translateY(20px); }
+}
+
+/* Progress bar animation */
+.inner-progress-bar {
+  animation: innerProgress 16s linear infinite;
+}
+
+@keyframes innerProgress {
+  0% { width: 0%; }
+  25% { width: 25%; }
+  50% { width: 50%; }
+  75% { width: 75%; }
+  100% { width: 100%; }
+}
+
+/* Dynamic status text animation */
+.dynamic-status::after {
+  content: "Analyzing Messaging & SEO Structure...";
+  animation: textUpdate 16s step-end infinite;
+}
+
+@keyframes textUpdate {
+  0% { content: "Analyzing Messaging & SEO Structure..."; }
+  25% { content: "Evaluating Content & Ad Opportunities..."; }
+  50% { content: "Checking AI Visibility & Technical Performance..."; }
+  75% { content: "Finalizing Brand Health & Design Analysis..."; }
 }

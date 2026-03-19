@@ -341,46 +341,48 @@ export default function URLInput() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-xl mx-auto">
-      <div className="space-y-4">
-        <div>
-          <label htmlFor="url" className="sr-only">
-            Website URL
-          </label>
-          <input
-            id="url"
-            type="text"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="yourwebsite.com"
-            className="w-full px-6 py-4 text-lg rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all bg-white text-gray-900 placeholder-gray-400"
-            required
-            disabled={loading}
-            autoComplete="off"
-            autoCorrect="off"
-            autoCapitalize="off"
-            spellCheck="false"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="email" className="sr-only">
-            Email Address
-          </label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@email.com"
-            className="w-full px-6 py-4 text-lg rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all bg-white text-gray-900 placeholder-gray-400"
-            required
-            disabled={loading}
-            autoComplete="off"
-            autoCorrect="off"
-            autoCapitalize="off"
-            spellCheck="false"
-          />
+    <form onSubmit={handleSubmit} className="w-full max-w-2xl mx-auto">
+      <div className="flex flex-col gap-4 mb-6">
+        {/* URL and Email inputs side by side on desktop */}
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-grow relative">
+            <label htmlFor="url" className="sr-only">
+              Website URL
+            </label>
+            <input
+              id="url"
+              type="text"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://yourstartup.com"
+              className="w-full bg-[var(--surface-container-lowest)] ghost-border rounded-xl px-6 py-4 text-[var(--on-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)] transition-all"
+              required
+              disabled={loading}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck="false"
+            />
+          </div>
+          <div className="flex-grow relative">
+            <label htmlFor="email" className="sr-only">
+              Email Address
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@email.com"
+              className="w-full bg-[var(--surface-container-lowest)] ghost-border rounded-xl px-6 py-4 text-[var(--on-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)] transition-all"
+              required
+              disabled={loading}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck="false"
+            />
+          </div>
         </div>
 
         {error && (
@@ -392,21 +394,7 @@ export default function URLInput() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-4 px-8 text-lg font-semibold text-white rounded-xl transition-colors shadow-lg"
-          style={{
-            backgroundColor: loading ? 'color-mix(in srgb, var(--brand-primary) 60%, white)' : 'var(--brand-primary)',
-            boxShadow: '0 10px 15px -3px color-mix(in srgb, var(--brand-primary) 20%, transparent)'
-          }}
-          onMouseEnter={(e) => {
-            if (!loading) {
-              e.currentTarget.style.backgroundColor = 'color-mix(in srgb, var(--brand-primary) 90%, black)';
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (!loading) {
-              e.currentTarget.style.backgroundColor = 'var(--brand-primary)';
-            }
-          }}
+          className="primary-gradient text-[var(--on-primary)] px-8 py-4 rounded-xl font-[family-name:var(--font-space-grotesk)] font-bold text-lg hover:scale-[0.98] transition-transform disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {loading ? (
             <span className="flex items-center justify-center gap-2">
@@ -433,14 +421,10 @@ export default function URLInput() {
               Analyzing...
             </span>
           ) : (
-            'Get My Report'
+            'Analyze My Site'
           )}
         </button>
       </div>
-
-      <p className="mt-4 text-center text-sm text-gray-500">
-        Free report ready in 60 seconds • No credit card required
-      </p>
     </form>
   );
 }

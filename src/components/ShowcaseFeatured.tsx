@@ -33,7 +33,7 @@ export default function ShowcaseFeatured() {
   // Don't render if no entries or loading
   if (isLoading) {
     return (
-      <section className="py-16 px-4 bg-white">
+      <section className="py-16 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="flex justify-center">
             <div className="animate-pulse flex space-x-4">
@@ -72,7 +72,7 @@ export default function ShowcaseFeatured() {
   };
 
   return (
-    <section className="py-16 px-4 bg-gray-50">
+    <section className="py-16 px-4">
       <div className="max-w-6xl mx-auto w-full overflow-hidden">
         {/* Header */}
         <div className="text-center mb-10">
