@@ -137,14 +137,14 @@ export default function IntelligenceDeck() {
               }`}
             >
               <div className="flex justify-between items-start mb-6">
-                <span className={`${module.isFree ? 'text-[#5B5BD5]' : 'text-gray-400'} text-3xl`}>
+                <span className="text-gray-400 text-3xl">
                   {module.icon}
                 </span>
                 <span
-                  className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
+                  className={`px-2 py-1 rounded-full text-xs font-bold ${
                     module.isFree
                       ? 'bg-green-100 text-green-700'
-                      : 'bg-gray-100 text-gray-600'
+                      : 'bg-gradient-to-r from-yellow-400 to-amber-500 text-white'
                   }`}
                 >
                   {module.isFree ? 'FREE' : 'PRO'}

@@ -36,13 +36,13 @@ export default function Header({ sticky = false }: HeaderProps) {
   }, [mobileMenuOpen]);
 
   const headerClasses = sticky
-    ? 'safe-top py-4 sm:py-6 px-4 sticky top-0 bg-gradient-to-b from-blue-50 to-transparent backdrop-blur-sm z-30'
-    : 'py-4 sm:py-6 px-4';
+    ? 'safe-top py-4 sm:py-6 px-8 sticky top-0 bg-gradient-to-b from-blue-50 to-transparent backdrop-blur-sm z-30'
+    : 'py-4 sm:py-6 px-8';
 
   return (
     <>
       <header className={headerClasses}>
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <div
               className="w-8 h-8 rounded-lg flex items-center justify-center"
