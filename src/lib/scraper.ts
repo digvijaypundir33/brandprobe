@@ -4,40 +4,107 @@ import { fetchSitemap, selectBestPages, extractSitemapMetadata } from './sitemap
 import { getBrandUrlsToScrape } from './brand-recognizer';
 
 // Playwright service configuration
-const TIMEOUT = 50000; // 50 seconds max per page (allows for heavy pages)
+// Reduced from 50s to 25s to stay well within Vercel's 60s limit
+// Most well-optimized sites load in <10s, heavy sites in <20s
+const TIMEOUT = 25000; // 25 seconds max per page
+const FALLBACK_TIMEOUT = 10000; // 10 seconds for lightweight fallback
 const MAX_SUBPAGES = 3;
 const PLAYWRIGHT_SERVICE_URL = process.env.PLAYWRIGHT_SERVICE_URL || 'https://playwright-service.fly.dev';
 
+/**
+ * Lightweight fallback scraper using simple HTTP fetch
+ * Used when Playwright times out - gets basic HTML without JS rendering
+ * Still provides useful content for analysis (meta tags, static content, headers)
+ */
+async function scrapeWithFallback(url: string): Promise<{
+  url: string;
+  title: string;
+  html: string;
+  isPartial: boolean;
+}> {
+  console.log(`[Scraper] Using lightweight fallback for ${url}`);
+  const startTime = Date.now();
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; BrandProbeBot/1.0; +https://brandprobe.io)',
+        'Accept': 'text/html,application/xhtml+xml',
+      },
+      signal: AbortSignal.timeout(FALLBACK_TIMEOUT),
+      redirect: 'follow',
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const html = await response.text();
+    const elapsed = Date.now() - startTime;
+    console.log(`[Scraper] Fallback fetch completed in ${elapsed}ms (${html.length} bytes)`);
+
+    // Extract title from HTML
+    const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
+    const title = titleMatch ? titleMatch[1].trim() : '';
+
+    return {
+      url: response.url, // May differ from input due to redirects
+      title,
+      html,
+      isPartial: true, // Flag that this is static HTML only (no JS rendering)
+    };
+  } catch (error) {
+    console.error(`[Scraper] Fallback also failed:`, error);
+    throw error;
+  }
+}
+
 // Helper function to scrape a URL using the Playwright service
+// Falls back to lightweight scraper if Playwright times out
 async function scrapeWithService(url: string): Promise<{
   url: string;
   title: string;
   html: string;
+  isPartial?: boolean;
 }> {
-  const response = await fetch(`${PLAYWRIGHT_SERVICE_URL}/scrape`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      url,
-      options: {
-        waitUntil: 'domcontentloaded',
-        timeout: TIMEOUT,
-      },
-    }),
-    // Add fetch-level timeout (50s page timeout + 10s buffer = 60s max)
-    signal: AbortSignal.timeout(60000),
-  });
+  const startTime = Date.now();
 
-  if (!response.ok) {
-    throw new Error(`Playwright service error: ${response.statusText}`);
+  try {
+    const response = await fetch(`${PLAYWRIGHT_SERVICE_URL}/scrape`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        url,
+        options: {
+          waitUntil: 'domcontentloaded',
+          timeout: TIMEOUT,
+        },
+      }),
+      // Fetch-level timeout: 25s page timeout + 5s buffer = 30s max
+      signal: AbortSignal.timeout(30000),
+    });
+
+    const elapsed = Date.now() - startTime;
+    console.log(`[Scraper] Playwright service responded in ${elapsed}ms for ${url}`);
+
+    if (!response.ok) {
+      throw new Error(`Playwright service error: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.error || 'Scraping failed');
+    }
+
+    return { ...result.data, isPartial: false };
+  } catch (error) {
+    const elapsed = Date.now() - startTime;
+    console.warn(`[Scraper] Playwright failed after ${elapsed}ms, trying fallback:`, error);
+
+    // Try lightweight fallback - better to get static HTML than nothing
+    return scrapeWithFallback(url);
   }
-
-  const result = await response.json();
-  if (!result.success) {
-    throw new Error(result.error || 'Scraping failed');
-  }
-
-  return result.data;
 }
 
 // Parse HTML and extract structured data
@@ -275,7 +342,7 @@ async function detectPageCharacteristics(url: string): Promise<{
 export async function scrapeWebsite(
   url: string,
   options: { analysisType?: 'quick' | 'full'; skipDetection?: boolean } = {}
-): Promise<ScrapedData & { brandConfig?: any; pagesAnalyzed: number; detectionResult?: any }> {
+): Promise<ScrapedData & { brandConfig?: any; pagesAnalyzed: number; detectionResult?: any; usedFallback?: boolean }> {
   const { analysisType = 'full', skipDetection = false } = options;
   const normalizedUrl = normalizeUrl(url);
 
@@ -324,11 +391,24 @@ export async function scrapeWebsite(
     }
   }
 
-  // Step 2: Scrape main page using Playwright service
+  // Step 2: Scrape main page using Playwright service (with fallback)
   const mainPageStart = Date.now();
   const rawData = await scrapeWithService(urlsToScrape[0]);
   const parsedData = await parseHTML(rawData.url, rawData.html);
   const mainPageTimeMs = Date.now() - mainPageStart;
+
+  // Track if we're using partial/fallback data
+  const usedFallback = rawData.isPartial === true;
+  if (usedFallback) {
+    console.log(`[Scraper] ⚠️ Main page used fallback scraper (static HTML only, no JS rendering)`);
+    // When using fallback, skip subpages to save time
+    detectionResult = {
+      ...detectionResult,
+      mainPageTimeMs,
+      usedFallback: true,
+      skipReason: 'Main page used fallback scraper, skipping subpages',
+    };
+  }
 
   const mainPageData = {
     ...rawData,
@@ -342,14 +422,16 @@ export async function scrapeWebsite(
   let subPages: SubPageData[] = [];
   let subPageUrls: string[] = [];
 
-  if (analysisType === 'full') {
+  if (analysisType === 'full' && !usedFallback) {
     // Fallback detection: If main page was slow, skip subpages entirely
-    if (mainPageTimeMs > 25000) {
-      console.log(`[Scraper] Main page took ${mainPageTimeMs}ms (>25s). Skipping subpages to avoid timeout.`);
+    // Reduced threshold from 25s to 15s to stay within Vercel's 60s limit
+    // Budget: 15s main + 15s subpages + 20s AI + 10s buffer = 60s
+    if (mainPageTimeMs > 15000) {
+      console.log(`[Scraper] Main page took ${mainPageTimeMs}ms (>15s). Skipping subpages to avoid timeout.`);
       detectionResult = {
         ...detectionResult,
         mainPageTimeMs,
-        skipReason: 'Main page scraping exceeded 25 seconds',
+        skipReason: 'Main page scraping exceeded 15 seconds',
       };
     } else {
       if (brandRouting.useBrandBaselines || useSitemap) {
@@ -381,6 +463,9 @@ export async function scrapeWebsite(
 
   const pagesAnalyzed = 1 + subPages.length; // Main page + subpages
 
+  // Log summary
+  console.log(`[Scraper] ✓ Scraping complete: ${pagesAnalyzed} pages, ${mainPageTimeMs}ms main page${usedFallback ? ' (fallback)' : ''}`);
+
   return {
     url: mainPageData.url,
     title: mainPageData.title,
@@ -401,6 +486,7 @@ export async function scrapeWebsite(
     brandConfig: brandRouting.useBrandBaselines ? brandRouting : undefined,
     pagesAnalyzed,
     detectionResult: detectionResult || undefined,
+    usedFallback, // Track if we used the lightweight fallback scraper
   };
 }
 
@@ -983,6 +1069,8 @@ export function formatScrapedDataForPrompt(data: ScrapedData): string {
  * Returns a base64 encoded data URL
  */
 export async function captureScreenshot(url: string): Promise<string | null> {
+  const startTime = Date.now();
+
   try {
     const response = await fetch(`${PLAYWRIGHT_SERVICE_URL}/screenshot`, {
       method: 'POST',
@@ -994,13 +1082,17 @@ export async function captureScreenshot(url: string): Promise<string | null> {
           // 'networkidle' waits for ALL assets (ads, trackers) to finish loading
           // 'domcontentloaded' captures as soon as the DOM is ready (faster, still accurate)
           waitUntil: 'domcontentloaded',
-          timeout: TIMEOUT,
-          fullPage: true,
+          timeout: 20000, // 20s max for screenshots (non-critical, can fail gracefully)
+          fullPage: false, // Changed from true - viewport screenshot is faster
           type: 'jpeg',
-          quality: 80,
+          quality: 70, // Reduced from 80 for faster encoding
         },
       }),
+      // Fetch-level timeout: 20s + 5s buffer = 25s max
+      signal: AbortSignal.timeout(25000),
     });
+
+    console.log(`[Screenshot] Captured in ${Date.now() - startTime}ms`);
 
     if (!response.ok) {
       throw new Error(`Screenshot service error: ${response.statusText}`);
