@@ -5,7 +5,9 @@
       "Bash(TEST_URL=https://workoutproai.com npm run test:ai:*)",
       "Bash(npx supabase:*)",
       "Bash(docker exec:*)",
-      "Bash(psql:*)"
+      "Bash(psql:*)",
+      "WebFetch(domain:docs.makemerank.ai)",
+      "WebFetch(domain:makemerank.ai)"
     ]
   }
 }

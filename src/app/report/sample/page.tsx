@@ -19,7 +19,6 @@ import AISearchVisibilityCard from '@/components/AISearchVisibilityCard';
 import TechnicalPerformanceCard from '@/components/TechnicalPerformanceCard';
 import BrandHealthCard from '@/components/BrandHealthCard';
 import DesignAuthenticityCard from '@/components/DesignAuthenticityCard';
-import SiteQualityCard from '@/components/SiteQualityCard';
 import ReportHeader from '@/components/ReportHeader';
 import ReportTabNav from '@/components/ReportTabNav';
 import type { Report, SiteQualityScore } from '@/types/report';
@@ -160,6 +159,14 @@ const sampleReport: Report = {
         hierarchyIssues: [],
       },
       robotsTxtContent: 'User-agent: *\nAllow: /',
+      aiBotPermissions: {
+        gptBot: 'allowed',
+        claudeBot: 'allowed',
+        perplexityBot: 'allowed',
+        googleExtended: 'allowed',
+        ccBot: 'allowed',
+        summary: 'No AI-specific rules found - AI bots can crawl freely',
+      },
       securityHeaders: {
         hasHSTS: true,
         hstsValue: 'max-age=31536000; includeSubDomains',
@@ -1076,9 +1083,6 @@ export default function SampleReportPage() {
                 <WebsiteInfoCard data={sampleReport.scrapedData} />
               )}
 
-              {/* Site Quality Card */}
-              <SiteQualityCard siteQuality={sampleSiteQuality} />
-
               {/* Issues List */}
               <IssuesList report={sampleReport} hasFullAccess={true} />
 
@@ -1092,7 +1096,7 @@ export default function SampleReportPage() {
           )}
 
           {activeTab === 'seo' && sampleReport.seoOpportunities && (
-            <SeoAnalysisCard seo={sampleReport.seoOpportunities} />
+            <SeoAnalysisCard seo={sampleReport.seoOpportunities} siteQuality={sampleSiteQuality} />
           )}
 
           {activeTab === 'content' && sampleReport.contentStrategy && (
@@ -1112,7 +1116,10 @@ export default function SampleReportPage() {
           )}
 
           {activeTab === 'aiSearch' && sampleReport.aiSearchVisibility && (
-            <AISearchVisibilityCard aiSearch={sampleReport.aiSearchVisibility} />
+            <AISearchVisibilityCard
+              aiSearch={sampleReport.aiSearchVisibility}
+              technicalData={sampleReport.scrapedData?.technicalData}
+            />
           )}
 
           {activeTab === 'technical' && sampleReport.technicalPerformance && (

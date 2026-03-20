@@ -43,12 +43,20 @@ Generate advertising ideas:
 - Platform-specific creative direction
 - Audience angle variations
 
+EEAT-ENHANCED ISSUE FORMAT:
+For high-priority issues, provide actionable recommendations with:
+- eeat: Which EEAT principle this addresses (experience, expertise, authoritativeness, trustworthiness)
+- category: Type of fix (contents, technology, schema, messaging, seo)
+- targetArea: Specific location (e.g., "Homepage Hero", "Meta Description", "FAQ Section")
+- exactReplacement: Ready-to-use replacement text (where applicable)
+- expectedEffect: Why this change helps SEO/AI visibility
+
 Return JSON in this exact format:
 {
   "messaging": {
     "score": <0-100>,
     "summary": "<2-3 sentence summary>",
-    "keyIssues": [{"problem": "<issue>", "solution": "<fix>", "priority": "high"|"medium"|"low"}],
+    "keyIssues": [{"problem": "<issue>", "solution": "<fix>", "priority": "high"|"medium"|"low", "eeat": "expertise"|"experience"|"authoritativeness"|"trustworthiness", "category": "messaging"|"contents", "targetArea": "<specific location>", "exactReplacement": "<copy-paste ready text if applicable>", "expectedEffect": "<why this helps>"}],
     "quickWins": [{"action": "<action>", "impact": "<result>", "effort": "easy"|"medium"|"hard"}],
     "detailedAnalysis": {
       "headlineAnalysis": "<headline effectiveness and clarity analysis>",
@@ -183,12 +191,20 @@ Check for default icon libraries:
 - Summarize strengths (what makes it unique)
 - Give 3-5 recommendations to improve authenticity
 
+EEAT-ENHANCED ISSUE FORMAT:
+For high-priority issues, provide actionable recommendations with:
+- eeat: Which EEAT principle this addresses (experience, expertise, authoritativeness, trustworthiness)
+- category: Type of fix (contents, technology, schema, messaging, seo)
+- targetArea: Specific location (e.g., "Homepage Hero", "Meta Description", "FAQ Section")
+- exactReplacement: Ready-to-use replacement text (where applicable)
+- expectedEffect: Why this change helps SEO/AI visibility
+
 Return JSON in this exact format:
 {
   "seo": {
     "score": <0-100>,
     "summary": "<2-3 sentence summary>",
-    "keyIssues": [{"problem": "<issue>", "solution": "<fix>", "priority": "high"|"medium"|"low"}],
+    "keyIssues": [{"problem": "<issue>", "solution": "<fix>", "priority": "high"|"medium"|"low", "eeat": "expertise"|"experience"|"authoritativeness"|"trustworthiness", "category": "seo"|"contents"|"technology", "targetArea": "<specific location>", "exactReplacement": "<copy-paste ready text if applicable>", "expectedEffect": "<why this helps>"}],
     "quickWins": [{"action": "<action>", "impact": "<result>", "effort": "easy"|"medium"|"hard"}],
     "detailedAnalysis": {
       "keywordGapAnalysis": "<keyword opportunities and gaps analysis>",

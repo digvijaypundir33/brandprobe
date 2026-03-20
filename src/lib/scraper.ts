@@ -7,6 +7,15 @@ import { getBrandUrlsToScrape } from './brand-recognizer';
 // Reduced from 50s to 25s to stay well within Vercel's 60s limit
 // Most well-optimized sites load in <10s, heavy sites in <20s
 const TIMEOUT = 25000; // 25 seconds max per page
+
+// Known AI bot user-agents in robots.txt
+const AI_BOTS = {
+  gptBot: ['GPTBot', 'ChatGPT-User'],
+  claudeBot: ['Claude-Web', 'ClaudeBot', 'anthropic-ai'],
+  perplexityBot: ['PerplexityBot'],
+  googleExtended: ['Google-Extended'],
+  ccBot: ['CCBot'], // Common Crawl - used for AI training datasets
+} as const;
 const FALLBACK_TIMEOUT = 10000; // 10 seconds for lightweight fallback
 const MAX_SUBPAGES = 3;
 const PLAYWRIGHT_SERVICE_URL = process.env.PLAYWRIGHT_SERVICE_URL || 'https://playwright-service.fly.dev';
@@ -491,6 +500,129 @@ export async function scrapeWebsite(
 }
 
 /**
+ * Parse robots.txt content to detect AI bot permissions
+ * Returns status for each known AI crawler
+ */
+type BotStatus = 'allowed' | 'blocked' | 'unknown';
+type BotKey = 'gptBot' | 'claudeBot' | 'perplexityBot' | 'googleExtended' | 'ccBot';
+
+function parseAIBotPermissions(robotsTxtContent: string | null): {
+  gptBot: BotStatus;
+  claudeBot: BotStatus;
+  perplexityBot: BotStatus;
+  googleExtended: BotStatus;
+  ccBot: BotStatus;
+  summary: string;
+} {
+  const result: Record<BotKey, BotStatus> & { summary: string } = {
+    gptBot: 'unknown',
+    claudeBot: 'unknown',
+    perplexityBot: 'unknown',
+    googleExtended: 'unknown',
+    ccBot: 'unknown',
+    summary: '',
+  };
+
+  if (!robotsTxtContent) {
+    result.summary = 'No robots.txt found - AI bots can crawl freely';
+    return result;
+  }
+
+  const lines = robotsTxtContent.toLowerCase().split('\n');
+  let currentUserAgent = '';
+
+  // Map bot keys to their user-agent strings
+  const botKeyToNames: Record<BotKey, readonly string[]> = {
+    gptBot: AI_BOTS.gptBot,
+    claudeBot: AI_BOTS.claudeBot,
+    perplexityBot: AI_BOTS.perplexityBot,
+    googleExtended: AI_BOTS.googleExtended,
+    ccBot: AI_BOTS.ccBot,
+  };
+
+  // Simple parser: track current user-agent and look for Disallow: /
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    if (trimmed.startsWith('user-agent:')) {
+      currentUserAgent = trimmed.replace('user-agent:', '').trim();
+    } else if (trimmed.startsWith('disallow:') && trimmed.includes('/')) {
+      // Check if this is a blanket disallow (Disallow: /)
+      const disallowPath = trimmed.replace('disallow:', '').trim();
+      if (disallowPath === '/' || disallowPath === '/*') {
+        // Check which AI bot this applies to
+        for (const botKey of Object.keys(botKeyToNames) as BotKey[]) {
+          const botNames = botKeyToNames[botKey];
+          const isMatch = botNames.some(name =>
+            currentUserAgent.includes(name.toLowerCase()) ||
+            currentUserAgent === '*'
+          );
+          if (isMatch && currentUserAgent !== '*') {
+            result[botKey] = 'blocked';
+          }
+        }
+
+        // If user-agent is *, all bots are blocked by default
+        if (currentUserAgent === '*') {
+          // Mark all as blocked unless specifically allowed later
+          for (const botKey of Object.keys(botKeyToNames) as BotKey[]) {
+            if (result[botKey] === 'unknown') {
+              result[botKey] = 'blocked';
+            }
+          }
+        }
+      }
+    } else if (trimmed.startsWith('allow:')) {
+      // Check for explicit allow
+      for (const botKey of Object.keys(botKeyToNames) as BotKey[]) {
+        const botNames = botKeyToNames[botKey];
+        const isMatch = botNames.some(name =>
+          currentUserAgent.includes(name.toLowerCase())
+        );
+        if (isMatch) {
+          result[botKey] = 'allowed';
+        }
+      }
+    }
+  }
+
+  // Also check for specific bot mentions in the raw content (case-insensitive)
+  const rawLower = robotsTxtContent.toLowerCase();
+  for (const botKey of Object.keys(botKeyToNames) as BotKey[]) {
+    const botNames = botKeyToNames[botKey];
+    for (const name of botNames) {
+      if (rawLower.includes(name.toLowerCase())) {
+        // If mentioned and we see "disallow: /" nearby, it's blocked
+        const botIndex = rawLower.indexOf(name.toLowerCase());
+        const nearbyContent = rawLower.slice(botIndex, botIndex + 100);
+        if (nearbyContent.includes('disallow: /') || nearbyContent.includes('disallow:/')) {
+          result[botKey] = 'blocked';
+        } else if (result[botKey] === 'unknown') {
+          result[botKey] = 'allowed';
+        }
+      }
+    }
+  }
+
+  // Generate summary
+  const botKeys = Object.keys(botKeyToNames) as BotKey[];
+  const blockedCount = botKeys.filter(k => result[k] === 'blocked').length;
+  const allowedCount = botKeys.filter(k => result[k] === 'allowed').length;
+
+  if (blockedCount === 5) {
+    result.summary = 'All AI crawlers are blocked';
+  } else if (blockedCount === 0 && allowedCount === 0) {
+    result.summary = 'No AI-specific rules found - AI bots can crawl freely';
+  } else if (blockedCount > 0) {
+    result.summary = `${blockedCount} AI crawler(s) blocked`;
+  } else {
+    result.summary = 'AI crawlers are allowed';
+  }
+
+  return result;
+}
+
+/**
  * Scrape technical data from HTML
  */
 async function scrapeTechnicalData(url: string, html: string): Promise<TechnicalData> {
@@ -820,6 +952,9 @@ async function scrapeTechnicalData(url: string, html: string): Promise<Technical
     // Ignore errors
   }
 
+  // Parse AI bot permissions from robots.txt (no HTTP request, just string parsing)
+  const aiBotPermissions = parseAIBotPermissions(robotsTxtContent);
+
   return {
     hasSSL,
     hasFavicon,
@@ -860,6 +995,7 @@ async function scrapeTechnicalData(url: string, html: string): Promise<Technical
     charset,
     headingsHierarchy,
     robotsTxtContent,
+    aiBotPermissions,
     securityHeaders,
   };
 }
@@ -1050,6 +1186,14 @@ export function formatScrapedDataForPrompt(data: ScrapedData): string {
     sections.push(`- Canonical Tag: ${tech.hasCanonicalTag ? 'Yes' : 'No'}`);
     sections.push(`- Robots.txt: ${tech.hasRobotsTxt ? 'Yes' : 'No'}`);
     sections.push(`- Sitemap: ${tech.hasSitemap ? 'Yes' : 'No'}`);
+    sections.push(`- LLMs.txt: ${tech.hasLlmsTxt ? 'Yes' : 'No'}`);
+    if (tech.aiBotPermissions) {
+      sections.push(`- AI Bot Permissions: ${tech.aiBotPermissions.summary}`);
+      sections.push(`  - GPTBot: ${tech.aiBotPermissions.gptBot}`);
+      sections.push(`  - ClaudeBot: ${tech.aiBotPermissions.claudeBot}`);
+      sections.push(`  - PerplexityBot: ${tech.aiBotPermissions.perplexityBot}`);
+      sections.push(`  - Google-Extended: ${tech.aiBotPermissions.googleExtended}`);
+    }
     sections.push(`- Viewport Meta: ${tech.hasViewportMeta ? 'Yes' : 'No'}`);
     sections.push(`- Images with Alt: ${tech.imagesWithAlt}`);
     sections.push(`- Images without Alt: ${tech.imagesWithoutAlt}`);

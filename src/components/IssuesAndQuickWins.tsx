@@ -51,6 +51,81 @@ function getEffortBadge(effort?: 'easy' | 'medium' | 'hard') {
   }
 }
 
+function getEEATBadge(eeat?: 'experience' | 'expertise' | 'authoritativeness' | 'trustworthiness') {
+  const config = {
+    experience: { label: 'E', full: 'Experience', bg: 'bg-blue-100', text: 'text-blue-700' },
+    expertise: { label: 'E', full: 'Expertise', bg: 'bg-purple-100', text: 'text-purple-700' },
+    authoritativeness: { label: 'A', full: 'Authority', bg: 'bg-amber-100', text: 'text-amber-700' },
+    trustworthiness: { label: 'T', full: 'Trust', bg: 'bg-green-100', text: 'text-green-700' },
+  };
+
+  if (!eeat || !config[eeat]) return null;
+
+  const { label, full, bg, text } = config[eeat];
+  return (
+    <span className={`text-xs px-1.5 py-0.5 ${bg} ${text} rounded font-medium`} title={full}>
+      {label}-{full}
+    </span>
+  );
+}
+
+function getCategoryBadge(category?: 'contents' | 'technology' | 'schema' | 'messaging' | 'seo') {
+  const config = {
+    contents: { bg: 'bg-indigo-50', text: 'text-indigo-600', border: 'border-indigo-200' },
+    technology: { bg: 'bg-slate-50', text: 'text-slate-600', border: 'border-slate-200' },
+    schema: { bg: 'bg-cyan-50', text: 'text-cyan-600', border: 'border-cyan-200' },
+    messaging: { bg: 'bg-pink-50', text: 'text-pink-600', border: 'border-pink-200' },
+    seo: { bg: 'bg-orange-50', text: 'text-orange-600', border: 'border-orange-200' },
+  };
+
+  if (!category || !config[category]) return null;
+
+  const { bg, text, border } = config[category];
+  return (
+    <span className={`text-[10px] uppercase tracking-wider px-1.5 py-0.5 ${bg} ${text} border ${border} rounded font-medium`}>
+      {category}
+    </span>
+  );
+}
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleCopy}
+      className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded transition-colors flex items-center gap-1"
+    >
+      {copied ? (
+        <>
+          <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          Copied!
+        </>
+      ) : (
+        <>
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+          Copy
+        </>
+      )}
+    </button>
+  );
+}
+
 export default function IssuesAndQuickWins({
   keyIssues,
   quickWins,
@@ -109,7 +184,21 @@ export default function IssuesAndQuickWins({
                 )}
               </button>
               {expandedIssue === i && issue.solution && (
-                <div className="px-3 pb-3 pt-0">
+                <div className="px-3 pb-3 pt-0 space-y-2">
+                  {/* EEAT Badges Row */}
+                  {(issue.eeat || issue.category || issue.targetArea) && (
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      {issue.eeat && getEEATBadge(issue.eeat)}
+                      {issue.category && getCategoryBadge(issue.category)}
+                      {issue.targetArea && (
+                        <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded">
+                          📍 {issue.targetArea}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Solution */}
                   <div className="bg-white rounded-lg p-3 border border-green-200">
                     <div className="flex items-center gap-2 text-xs font-medium text-green-700 mb-1">
                       <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -119,6 +208,37 @@ export default function IssuesAndQuickWins({
                     </div>
                     <p className="text-sm text-gray-700">{issue.solution}</p>
                   </div>
+
+                  {/* Exact Replacement - Copy-ready */}
+                  {issue.exactReplacement && (
+                    <div className="bg-white rounded-lg p-3 border border-blue-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2 text-xs font-medium text-blue-700">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                          Ready-to-Use Replacement
+                        </div>
+                        <CopyButton text={issue.exactReplacement} />
+                      </div>
+                      <div className="bg-blue-50 rounded p-2 font-mono text-sm text-gray-800 whitespace-pre-wrap">
+                        {issue.exactReplacement}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Expected Effect */}
+                  {issue.expectedEffect && (
+                    <div className="bg-white rounded-lg p-3 border border-purple-200">
+                      <div className="flex items-center gap-2 text-xs font-medium text-purple-700 mb-1">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                        </svg>
+                        Expected Effect
+                      </div>
+                      <p className="text-sm text-gray-700">{issue.expectedEffect}</p>
+                    </div>
+                  )}
                 </div>
               )}
             </li>

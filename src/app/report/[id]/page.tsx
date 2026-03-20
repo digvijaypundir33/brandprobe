@@ -21,7 +21,6 @@ import AISearchVisibilityCard from '@/components/AISearchVisibilityCard';
 import TechnicalPerformanceCard from '@/components/TechnicalPerformanceCard';
 import BrandHealthCard from '@/components/BrandHealthCard';
 import DesignAuthenticityCard from '@/components/DesignAuthenticityCard';
-import SiteQualityCard from '@/components/SiteQualityCard';
 import AuthenticatedHeader from '@/components/AuthenticatedHeader';
 import ImprovementsSummary from '@/components/ImprovementsSummary';
 import AlertModal from '@/components/AlertModal';
@@ -460,6 +459,15 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
     designAuth: report.designAuthenticityScore || 0,
   };
 
+  // Compute siteQuality once for reuse
+  const siteQuality = report.scrapedData?.technicalData
+    ? analyzeSiteQuality(
+        report.scrapedData.technicalData,
+        report.scrapedData.title || '',
+        report.scrapedData.metaDescription || ''
+      )
+    : undefined;
+
   // Print handler
   const handlePrint = () => {
     window.open(`/report/${id}/print`, '_blank');
@@ -611,16 +619,6 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
                 <WebsiteInfoCard data={report.scrapedData} />
               )}
 
-              {/* Site Quality Card */}
-              {report.scrapedData?.technicalData && (() => {
-                const siteQuality = analyzeSiteQuality(
-                  report.scrapedData.technicalData,
-                  report.scrapedData.title || '',
-                  report.scrapedData.metaDescription || ''
-                );
-                return <SiteQualityCard siteQuality={siteQuality} />;
-              })()}
-
               {/* Issues List */}
               <IssuesList report={report} hasFullAccess={hasFullAccess} />
 
@@ -634,7 +632,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
           )}
 
           {activeTab === 'seo' && report.seoOpportunities && (
-            <SeoAnalysisCard seo={report.seoOpportunities} />
+            <SeoAnalysisCard seo={report.seoOpportunities} siteQuality={siteQuality} />
           )}
 
           {activeTab === 'content' && report.contentStrategy && (
@@ -654,7 +652,10 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
           )}
 
           {activeTab === 'aiSearch' && report.aiSearchVisibility && (
-            <AISearchVisibilityCard aiSearch={report.aiSearchVisibility} />
+            <AISearchVisibilityCard
+              aiSearch={report.aiSearchVisibility}
+              technicalData={report.scrapedData?.technicalData}
+            />
           )}
 
           {activeTab === 'technical' && report.technicalPerformance && (

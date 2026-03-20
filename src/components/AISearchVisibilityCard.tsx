@@ -1,15 +1,16 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import type { AISearchVisibility } from '@/types/report';
+import type { AISearchVisibility, TechnicalData } from '@/types/report';
 import IssuesAndQuickWins from './IssuesAndQuickWins';
 import { getScoreColorClass } from '@/lib/utils';
 
 interface AISearchVisibilityCardProps {
   aiSearch: AISearchVisibility;
+  technicalData?: TechnicalData;
 }
 
-export default function AISearchVisibilityCard({ aiSearch }: AISearchVisibilityCardProps) {
+export default function AISearchVisibilityCard({ aiSearch, technicalData }: AISearchVisibilityCardProps) {
   const analysis = aiSearch.detailedAnalysis || {};
   const aiSearchAppearance = Array.isArray(analysis.aiSearchAppearance) ? analysis.aiSearchAppearance : [];
   const faqOpportunities = Array.isArray(analysis.faqOpportunities) ? analysis.faqOpportunities : [];
@@ -57,6 +58,99 @@ export default function AISearchVisibilityCard({ aiSearch }: AISearchVisibilityC
             Measures how likely your content is to be cited by AI assistants like ChatGPT and Perplexity.
           </p>
         </div>
+
+        {/* GEO Readiness - AI Crawler Access */}
+        {technicalData && (
+          <div className="bg-gray-50 rounded-lg p-4 mb-6 border border-gray-100">
+            <div className="flex items-center gap-2 mb-3">
+              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              <h4 className="font-medium text-gray-800 text-sm">GEO Readiness</h4>
+            </div>
+
+            {/* llms.txt and robots.txt status */}
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="flex items-center gap-2 p-2 bg-white rounded border border-gray-100">
+                {technicalData.hasLlmsTxt ? (
+                  <span className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center">
+                    <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </span>
+                ) : (
+                  <span className="w-5 h-5 rounded-full bg-amber-100 flex items-center justify-center">
+                    <svg className="w-3 h-3 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01" />
+                    </svg>
+                  </span>
+                )}
+                <div>
+                  <span className="text-xs font-medium text-gray-700">llms.txt</span>
+                  <p className="text-[10px] text-gray-500">{technicalData.hasLlmsTxt ? 'Present' : 'Not found'}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 p-2 bg-white rounded border border-gray-100">
+                {technicalData.hasRobotsTxt ? (
+                  <span className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center">
+                    <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </span>
+                ) : (
+                  <span className="w-5 h-5 rounded-full bg-amber-100 flex items-center justify-center">
+                    <svg className="w-3 h-3 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01" />
+                    </svg>
+                  </span>
+                )}
+                <div>
+                  <span className="text-xs font-medium text-gray-700">robots.txt</span>
+                  <p className="text-[10px] text-gray-500">{technicalData.hasRobotsTxt ? 'Present' : 'Not found'}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* AI Bot Permissions */}
+            {technicalData.aiBotPermissions && (
+              <div>
+                <p className="text-xs text-gray-600 mb-2">{technicalData.aiBotPermissions.summary}</p>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { key: 'gptBot', name: 'GPTBot', status: technicalData.aiBotPermissions.gptBot },
+                    { key: 'claudeBot', name: 'ClaudeBot', status: technicalData.aiBotPermissions.claudeBot },
+                    { key: 'perplexityBot', name: 'PerplexityBot', status: technicalData.aiBotPermissions.perplexityBot },
+                    { key: 'googleExtended', name: 'Google-Extended', status: technicalData.aiBotPermissions.googleExtended },
+                  ].map((bot) => (
+                    <span
+                      key={bot.key}
+                      className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
+                        bot.status === 'allowed'
+                          ? 'bg-green-50 text-green-700 border border-green-200'
+                          : bot.status === 'blocked'
+                          ? 'bg-red-50 text-red-700 border border-red-200'
+                          : 'bg-gray-50 text-gray-600 border border-gray-200'
+                      }`}
+                    >
+                      {bot.status === 'allowed' && (
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                      {bot.status === 'blocked' && (
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      )}
+                      {bot.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Analysis Cards */}
         <div className="grid md:grid-cols-2 gap-4 mb-6">

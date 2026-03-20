@@ -37,7 +37,7 @@ export default function ReportTabNav({
   const tabs: Tab[] = [
     { id: 'overview', label: 'Overview', isFree: true },
     { id: 'messaging', label: 'Messaging', score: scores.messaging, isFree: true },
-    { id: 'seo', label: 'SEO', score: scores.seo, isFree: true },
+    { id: 'seo', label: 'SEO & Tech', score: scores.seo, isFree: true },
     { id: 'content', label: 'Content', score: scores.content, isFree: true },
     { id: 'ads', label: 'Ads', score: scores.ads, isFree: true },
     { id: 'conversion', label: 'CRO', score: scores.conversion, isFree: false, locked: !hasFullAccess },

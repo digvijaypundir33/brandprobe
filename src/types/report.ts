@@ -56,6 +56,12 @@ export interface Issue {
   problem: string;
   solution: string;
   priority?: 'high' | 'medium' | 'low';
+  // EEAT Enhancement fields (optional for backwards compatibility)
+  eeat?: 'experience' | 'expertise' | 'authoritativeness' | 'trustworthiness';
+  category?: 'contents' | 'technology' | 'schema' | 'messaging' | 'seo';
+  targetArea?: string; // e.g., "Homepage Hero", "Meta Description"
+  exactReplacement?: string; // Copy-paste ready text
+  expectedEffect?: string; // Why this helps
 }
 
 export interface QuickWin {
@@ -400,6 +406,16 @@ export interface TechnicalData {
 
   // Robots.txt content preview
   robotsTxtContent: string | null;
+
+  // AI Bot Permissions (parsed from robots.txt)
+  aiBotPermissions: {
+    gptBot: 'allowed' | 'blocked' | 'unknown';
+    claudeBot: 'allowed' | 'blocked' | 'unknown';
+    perplexityBot: 'allowed' | 'blocked' | 'unknown';
+    googleExtended: 'allowed' | 'blocked' | 'unknown';
+    ccBot: 'allowed' | 'blocked' | 'unknown'; // Common Crawl (used by many AI training datasets)
+    summary: string; // Human-readable summary
+  };
 
   // Security Headers
   securityHeaders: {
