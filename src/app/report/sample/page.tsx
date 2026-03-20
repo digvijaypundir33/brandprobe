@@ -943,18 +943,6 @@ export default function SampleReportPage() {
     designAuth: sampleReport.designAuthenticityScore || 0,
   };
 
-  const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: 'BrandProbe Sample Report',
-        text: 'Check out this sample BrandProbe analysis',
-        url: window.location.href,
-      });
-    } else {
-      navigator.clipboard.writeText(window.location.href);
-    }
-  };
-
   const handlePrint = () => {
     window.print();
   };
@@ -1020,7 +1008,6 @@ export default function SampleReportPage() {
             url={sampleReport.url}
             overallScore={sampleReport.overallScore || 0}
             createdAt={sampleReport.createdAt}
-            onShare={handleShare}
             onPrint={handlePrint}
             isSample={true}
           />
