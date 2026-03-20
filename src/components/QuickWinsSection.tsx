@@ -91,37 +91,46 @@ export default function QuickWinsSection({ report, hasFullAccess = false }: Quic
   if (quickWins.length === 0) return null;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+    <section className="bg-slate-50/50 rounded-2xl p-6 md:p-8">
       {/* Header */}
-      <div className="bg-gray-900 p-6 text-white">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
-            <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-            </svg>
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold">Quick Wins</h2>
-            <p className="text-gray-400 text-sm">Actions you can take this week</p>
-          </div>
+      <div className="flex items-center gap-4 mb-6">
+        <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+          <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+        <div>
+          <h2 className="text-xl font-[family-name:var(--font-space-grotesk)] font-bold text-gray-900">
+            Quick Wins
+          </h2>
+          <p className="text-sm text-slate-500">
+            High-impact actions you can implement this week
+          </p>
+        </div>
+        <div className="ml-auto hidden sm:flex items-center gap-2 text-xs text-slate-500">
+          <span className="w-2 h-2 rounded-full bg-red-400"></span>
+          <span>Critical</span>
+          <span className="w-2 h-2 rounded-full bg-amber-400 ml-2"></span>
+          <span>High Impact</span>
+          <span className="w-2 h-2 rounded-full bg-slate-300 ml-2"></span>
+          <span>Quick Fix</span>
         </div>
       </div>
 
-      <div className="p-6">
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {quickWins.map((win, index) => (
-            <ActionCard
-              key={index}
-              title={win.title}
-              description={win.description}
-              priority={win.priority}
-              timeEstimate={win.timeEstimate}
-              category={win.category}
-              locked={win.locked}
-            />
-          ))}
-        </div>
+      {/* Cards Grid */}
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {quickWins.map((win, index) => (
+          <ActionCard
+            key={index}
+            title={win.title}
+            description={win.description}
+            priority={win.priority}
+            timeEstimate={win.timeEstimate}
+            category={win.category}
+            locked={win.locked}
+          />
+        ))}
       </div>
-    </div>
+    </section>
   );
 }

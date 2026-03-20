@@ -3,7 +3,6 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import Link from 'next/link';
-import ScoreSummaryCard from '@/components/ScoreSummaryCard';
 import AIPlatformVisibilityPreview from '@/components/AIPlatformVisibilityPreview';
 import ScoreBarChart from '@/components/ScoreBarChart';
 import QuickWinsSection from '@/components/QuickWinsSection';
@@ -21,6 +20,8 @@ import TechnicalPerformanceCard from '@/components/TechnicalPerformanceCard';
 import BrandHealthCard from '@/components/BrandHealthCard';
 import DesignAuthenticityCard from '@/components/DesignAuthenticityCard';
 import SiteQualityCard from '@/components/SiteQualityCard';
+import ReportHeader from '@/components/ReportHeader';
+import ReportTabNav from '@/components/ReportTabNav';
 import type { Report, SiteQualityScore } from '@/types/report';
 
 type TabType = 'overview' | 'messaging' | 'seo' | 'content' | 'ads' | 'conversion' | 'distribution' | 'aiSearch' | 'technical' | 'brandHealth' | 'designAuth';
@@ -942,62 +943,43 @@ export default function SampleReportPage() {
     designAuth: sampleReport.designAuthenticityScore || 0,
   };
 
-  const tabs: { id: TabType; label: string; score?: number }[] = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'messaging', label: 'Messaging', score: scores.messaging },
-    { id: 'seo', label: 'SEO', score: scores.seo },
-    { id: 'content', label: 'Content', score: scores.content },
-    { id: 'ads', label: 'Ads', score: scores.ads },
-    { id: 'conversion', label: 'CRO', score: scores.conversion },
-    { id: 'distribution', label: 'Channels', score: scores.distribution },
-    { id: 'aiSearch', label: 'AI', score: scores.aiSearch },
-    { id: 'technical', label: 'Tech', score: scores.technical },
-    { id: 'brandHealth', label: 'Brand', score: scores.brandHealth },
-    { id: 'designAuth', label: 'Design', score: scores.designAuth },
-  ];
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: 'BrandProbe Sample Report',
+        text: 'Check out this sample BrandProbe analysis',
+        url: window.location.href,
+      });
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+    }
+  };
 
-  const totalQuickWins =
-    (sampleReport.messagingAnalysis?.quickWins?.length || 0) +
-    (sampleReport.seoOpportunities?.quickWins?.length || 0) +
-    (sampleReport.contentStrategy?.quickWins?.length || 0) +
-    (sampleReport.adAngles?.quickWins?.length || 0) +
-    (sampleReport.conversionOptimization?.quickWins?.length || 0) +
-    (sampleReport.distributionStrategy?.quickWins?.length || 0) +
-    (sampleReport.aiSearchVisibility?.quickWins?.length || 0) +
-    (sampleReport.technicalPerformance?.quickWins?.length || 0) +
-    (sampleReport.brandHealth?.quickWins?.length || 0) +
-    (sampleReport.designAuthenticity?.quickWins?.length || 0);
+  const handlePrint = () => {
+    window.print();
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-[#F5F7F9]">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+      <header className="bg-white/80 backdrop-blur-xl border-b border-gray-200/50 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--brand-primary)' }}>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#5B5BD5]">
               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
-            <span className="text-xl font-bold text-gray-900">BrandProbe</span>
+            <span className="text-xl font-[family-name:var(--font-space-grotesk)] font-bold text-gray-900">BrandProbe</span>
           </Link>
 
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-gradient-to-r from-amber-400 to-orange-500 text-white">
-                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </svg>
-                SAMPLE REPORT
-              </span>
-              <span className="text-sm text-gray-500 hidden md:block">
-                See what a BrandProbe analysis looks like
-              </span>
-            </div>
+            <span className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-gradient-to-r from-amber-400 to-orange-500 text-white">
+              SAMPLE REPORT
+            </span>
             <Link
               href="/"
-              className="px-4 py-2 text-white text-sm font-semibold rounded-lg transition-all hover:opacity-90"
-              style={{ backgroundColor: 'var(--brand-primary)' }}
+              className="px-5 py-2.5 bg-[#5B5BD5] hover:bg-[#5B5BD5]/90 text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-[#5B5BD5]/20"
             >
               Analyze Your Site
             </Link>
@@ -1006,14 +988,14 @@ export default function SampleReportPage() {
       </header>
 
       {/* Sample Report Banner */}
-      <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-200">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-200/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <p className="text-sm text-amber-800">
-              <strong>This is a sample report</strong> for a fictional company. Enter your URL to get a real analysis.
+              <strong>Sample report</strong> for a fictional company. Enter your URL to get a real analysis.
             </p>
           </div>
           <Link
@@ -1028,93 +1010,29 @@ export default function SampleReportPage() {
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        {/* Hero Section with Score */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Premium Report Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
         >
-          <div className="grid lg:grid-cols-3 gap-6">
-            {/* Score Summary Card */}
-            <div className="lg:col-span-1">
-              <ScoreSummaryCard
-                overallScore={sampleReport.overallScore || 0}
-                previousScore={sampleReport.previousOverallScore}
-                scoreChange={sampleReport.scoreChange}
-                sectionScoreChanges={sampleReport.sectionScoreChanges}
-              />
-            </div>
-
-            {/* URL and Details */}
-            <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <h1 className="text-2xl font-bold text-gray-900">
-                      Marketing Analysis Report
-                    </h1>
-                    <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-bold rounded-full">
-                      SAMPLE
-                    </span>
-                  </div>
-                  <p className="text-blue-600 font-medium flex items-center gap-2">
-                    {sampleReport.url}
-                    <span className="text-gray-400 text-sm">(fictional company)</span>
-                  </p>
-                </div>
-              </div>
-
-              {/* Quick Stats */}
-              <div className="grid grid-cols-4 gap-4 mt-6">
-                <div className="bg-gray-50 rounded-lg p-4 text-center border border-gray-100">
-                  <p className="text-3xl font-bold text-gray-900">{Object.values(scores).filter(s => s >= 70).length}</p>
-                  <p className="text-sm text-gray-600 font-medium">Strong</p>
-                </div>
-                <div className="bg-gray-50 rounded-lg p-4 text-center border border-gray-100">
-                  <p className="text-3xl font-bold text-gray-900">{Object.values(scores).filter(s => s >= 50 && s < 70).length}</p>
-                  <p className="text-sm text-gray-600 font-medium">Average</p>
-                </div>
-                <div className="bg-gray-50 rounded-lg p-4 text-center border border-gray-100">
-                  <p className="text-3xl font-bold text-gray-900">{Object.values(scores).filter(s => s < 50).length}</p>
-                  <p className="text-sm text-gray-600 font-medium">Needs Work</p>
-                </div>
-                <div className="bg-gray-50 rounded-lg p-4 text-center border border-gray-100">
-                  <p className="text-3xl font-bold text-gray-900">{totalQuickWins}</p>
-                  <p className="text-sm text-gray-600 font-medium">Quick Wins</p>
-                </div>
-              </div>
-            </div>
-          </div>
+          <ReportHeader
+            url={sampleReport.url}
+            overallScore={sampleReport.overallScore || 0}
+            createdAt={sampleReport.createdAt}
+            onShare={handleShare}
+            onPrint={handlePrint}
+            isSample={true}
+          />
         </motion.div>
 
         {/* Tab Navigation */}
-        <div className="mb-6">
-          <div className="grid grid-cols-5 lg:grid-cols-11 gap-1 bg-white rounded-xl p-1 shadow-sm border border-gray-100">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-2 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 ${
-                  activeTab === tab.id
-                    ? 'bg-gray-900 text-white'
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                <span className="truncate">{tab.label}</span>
-                {tab.score !== undefined && (
-                  <span className={`text-xs px-1 py-0.5 rounded ${
-                    activeTab === tab.id
-                      ? 'bg-white/20'
-                      : 'bg-gray-100 text-gray-500'
-                  }`}>
-                    {tab.score}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
+        <ReportTabNav
+          activeTab={activeTab}
+          onTabChange={(tab) => setActiveTab(tab)}
+          scores={scores}
+          hasFullAccess={true}
+        />
 
         {/* Tab Content */}
         <motion.div

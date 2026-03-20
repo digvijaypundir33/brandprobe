@@ -22,10 +22,20 @@ export default function ShareModal({
   const [isGenerating, setIsGenerating] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [reportUrl, setReportUrl] = useState<string>('');
 
+  // Set report URL immediately when component mounts
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const url = `${window.location.origin}/report/${reportId}`;
+      setReportUrl(url);
+    }
+  }, [reportId]);
+
+  // Generate share image separately
   useEffect(() => {
     generateShareImage();
-  }, []);
+  }, [reportId]);
 
   const generateShareImage = async () => {
     setIsGenerating(true);
@@ -85,10 +95,8 @@ export default function ShareModal({
   };
 
   const copyLink = async () => {
-    const url = `${window.location.origin}/report/${reportId}`;
-
     try {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(reportUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
@@ -119,19 +127,26 @@ export default function ShareModal({
           </button>
         </div>
 
-        {/* Image Preview */}
-        <div className="mb-4 border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
+        {/* Image Preview - Fixed aspect ratio container */}
+        <div className="mb-4 border border-gray-200 rounded-lg overflow-hidden bg-gray-100 relative" style={{ aspectRatio: '1200/630' }}>
           {isGenerating ? (
-            <div className="h-64 flex flex-col items-center justify-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--brand-primary)] mb-4" />
-              <p className="text-gray-600">Generating your share image...</p>
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+              <div className="w-16 h-16 mb-4 relative">
+                <div className="absolute inset-0 rounded-full border-4 border-gray-200"></div>
+                <div className="absolute inset-0 rounded-full border-4 border-t-[#5B5BD5] animate-spin"></div>
+              </div>
+              <p className="text-gray-600 font-medium">Generating your share image...</p>
+              <p className="text-gray-400 text-sm mt-1">This may take a few seconds</p>
             </div>
           ) : error ? (
-            <div className="h-64 flex flex-col items-center justify-center bg-red-50">
-              <p className="text-red-600 mb-4">{error}</p>
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-red-50">
+              <svg className="w-12 h-12 text-red-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <p className="text-red-600 font-medium mb-3">{error}</p>
               <button
                 onClick={generateShareImage}
-                className="px-4 py-2 bg-[var(--brand-primary)] text-white rounded-lg hover:opacity-90"
+                className="px-4 py-2 bg-[#5B5BD5] text-white rounded-lg hover:bg-[#5B5BD5]/90 transition-colors font-medium"
               >
                 Try Again
               </button>
@@ -143,7 +158,7 @@ export default function ShareModal({
                 <img
                   src={imageUrl}
                   alt="Share preview"
-                  className="w-full"
+                  className="w-full h-full object-cover"
                 />
               ) : (
                 <Image
@@ -151,11 +166,15 @@ export default function ShareModal({
                   alt="Share preview"
                   width={1200}
                   height={630}
-                  className="w-full"
+                  className="w-full h-full object-cover"
                 />
               )}
             </>
-          ) : null}
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+              <p className="text-gray-400">No preview available</p>
+            </div>
+          )}
         </div>
 
         {/* Share Buttons */}
@@ -193,13 +212,14 @@ export default function ShareModal({
           <div className="flex gap-2">
             <input
               type="text"
-              value={`${typeof window !== 'undefined' ? window.location.origin : ''}/report/${reportId}`}
+              value={reportUrl || `Loading...`}
               readOnly
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm"
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm text-gray-900"
             />
             <button
               onClick={copyLink}
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors whitespace-nowrap"
+              disabled={!reportUrl}
+              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors whitespace-nowrap disabled:opacity-50"
             >
               {copied ? 'Copied!' : 'Copy Link'}
             </button>

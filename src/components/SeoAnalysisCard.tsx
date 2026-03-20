@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import type { SeoOpportunities } from '@/types/report';
 import IssuesAndQuickWins from './IssuesAndQuickWins';
+import { getScoreColorClass } from '@/lib/utils';
 
 interface SeoAnalysisCardProps {
   seo: SeoOpportunities;
@@ -33,7 +34,7 @@ export default function SeoAnalysisCard({ seo }: SeoAnalysisCardProps) {
             </div>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold">{seo.score}</div>
+            <div className={`text-2xl font-bold ${getScoreColorClass(seo.score)}`}>{seo.score}</div>
             <div className="text-gray-400 text-sm">/100</div>
           </div>
         </div>

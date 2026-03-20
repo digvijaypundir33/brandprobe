@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import type { MessagingAnalysis } from '@/types/report';
 import IssuesAndQuickWins from './IssuesAndQuickWins';
+import { getScoreColorClass } from '@/lib/utils';
 
 interface MessagingAnalysisCardProps {
   messaging: MessagingAnalysis;
@@ -57,7 +58,7 @@ export default function MessagingAnalysisCard({ messaging }: MessagingAnalysisCa
             </div>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold">{messaging.score}</div>
+            <div className={`text-2xl font-bold ${getScoreColorClass(messaging.score)}`}>{messaging.score}</div>
             <div className="text-gray-400 text-sm">/100</div>
           </div>
         </div>

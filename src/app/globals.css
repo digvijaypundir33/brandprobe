@@ -429,3 +429,67 @@ body {
   50% { content: "Checking AI Visibility & Technical Performance..."; }
   75% { content: "Finalizing Brand Health & Design Analysis..."; }
 }
+
+/* ================================
+   Report Page Design System
+   ================================ */
+
+/* Locked section blur effect */
+.locked-blur {
+  filter: blur(8px);
+  user-select: none;
+  pointer-events: none;
+  opacity: 0.3;
+}
+
+/* Score gauge ring animation */
+.gauge-ring {
+  transition: stroke-dashoffset 0.35s;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+}
+
+/* Custom horizontal scrollbar for tabs */
+.custom-scrollbar::-webkit-scrollbar {
+  height: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #E2E8F0;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #CBD5E1;
+}
+
+/* Soft shadow for report cards */
+.shadow-soft {
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Report header glow effect */
+.header-glow {
+  position: absolute;
+  top: -96px;
+  right: -96px;
+  width: 384px;
+  height: 384px;
+  background: rgba(91, 91, 213, 0.2);
+  border-radius: 9999px;
+  filter: blur(120px);
+}
+
+/* Card hover lift effect */
+.card-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -8px rgba(0, 0, 0, 0.1);
+}

@@ -8,13 +8,6 @@ interface ExecutiveSummaryProps {
   hasFullAccess?: boolean;
 }
 
-function getScoreLabel(score: number): string {
-  if (score >= 80) return 'Excellent';
-  if (score >= 60) return 'Good';
-  if (score >= 40) return 'Needs Improvement';
-  return 'Critical';
-}
-
 export default function ExecutiveSummary({ report, hasFullAccess = false }: ExecutiveSummaryProps) {
   // Show all 10 sections for all users (blur locked ones for free users)
   const allSections = [
@@ -48,97 +41,72 @@ export default function ExecutiveSummary({ report, hasFullAccess = false }: Exec
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-xl border border-gray-200 p-6"
+      className="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-soft"
     >
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-gray-900 rounded-lg flex items-center justify-center">
-          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="flex items-center gap-3 mb-6 md:mb-8">
+        <div className="w-10 h-10 bg-[#E9E9FB] rounded-xl flex items-center justify-center text-[#5B5BD5]">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
         </div>
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900">Executive Summary</h2>
-          <p className="text-sm text-gray-500">Key findings at a glance</p>
-        </div>
+        <h2 className="text-lg md:text-xl font-[family-name:var(--font-space-grotesk)] font-bold text-slate-900">Executive Summary</h2>
       </div>
 
       {/* Overall Assessment */}
-      <div className="bg-gray-50 rounded-lg p-5 mb-6 border border-gray-100">
-        <div className="flex items-center gap-4">
-          <div className={`w-14 h-14 rounded-full flex items-center justify-center text-white font-bold text-lg ${
-            overallScore >= 70 ? 'bg-gray-900' : overallScore >= 50 ? 'bg-gray-600' : 'bg-gray-400'
-          }`}>
-            {overallScore}
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900">
-              Overall: {getScoreLabel(overallScore)}
-            </h3>
-            <p className="text-gray-600 text-sm mt-1">
-              {overallScore >= 70
-                ? 'Your website has a solid marketing foundation with room for targeted improvements.'
-                : overallScore >= 50
-                ? 'Your website has potential but needs work in several key areas to maximize conversions.'
-                : 'Your website needs significant improvements to effectively convert visitors into customers.'}
-            </p>
-          </div>
-        </div>
-      </div>
+      <p className="text-slate-600 leading-relaxed text-base md:text-lg mb-6 md:mb-8">
+        {overallScore >= 70
+          ? 'Your website demonstrates strong marketing fundamentals with several standout sections. Focus on the priority improvements below to maximize your conversion potential.'
+          : overallScore >= 50
+          ? 'Your website shows solid potential but needs targeted improvements in key areas. The analysis reveals specific opportunities to enhance your marketing effectiveness.'
+          : 'Your website requires significant optimization to effectively convert visitors. The areas below need immediate attention to improve your marketing performance.'}
+      </p>
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
         {/* Strengths */}
-        <div>
-          <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-            <svg className="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+        <div className="p-6 md:p-8 bg-green-50/50 border border-green-100 rounded-2xl">
+          <div className="flex items-center gap-2 mb-4 md:mb-6 text-green-800">
+            <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
             </svg>
-            Top Strengths
-          </h4>
+            <h4 className="font-bold text-sm md:text-base uppercase tracking-wide">Top Strengths</h4>
+          </div>
           {topStrengths.length > 0 ? (
-            <div className="space-y-2">
+            <ul className="space-y-3 md:space-y-4">
               {topStrengths.map((section) => (
-                <div
-                  key={section.name}
-                  className="bg-gray-50 rounded-lg p-3 border border-gray-100"
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-medium text-gray-800 text-sm">{section.name}</span>
-                    <span className="text-gray-900 font-semibold text-sm">{section.score}/100</span>
-                  </div>
-                  <p className="text-xs text-gray-600 line-clamp-2">{section.summary}</p>
-                </div>
+                <li key={section.name} className="text-sm font-medium text-green-900 flex items-start gap-3">
+                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-green-500 shrink-0" />
+                  <span>
+                    <strong>{section.name}</strong> ({section.score}/100) — {section.summary?.split('.')[0]}.
+                  </span>
+                </li>
               ))}
-            </div>
+            </ul>
           ) : (
-            <p className="text-gray-500 text-sm">No areas scoring above 70 yet.</p>
+            <p className="text-green-700 text-sm">No areas scoring above 70 yet. Keep optimizing!</p>
           )}
         </div>
 
         {/* Weaknesses */}
-        <div>
-          <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-            <svg className="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+        <div className="p-6 md:p-8 bg-red-50/80 border border-red-100 rounded-2xl">
+          <div className="flex items-center gap-2 mb-4 md:mb-6 text-red-900">
+            <svg className="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
             </svg>
-            Priority Improvements
-          </h4>
+            <h4 className="font-bold text-sm md:text-base uppercase tracking-wide">Priority Improvements</h4>
+          </div>
           {topWeaknesses.length > 0 ? (
-            <div className="space-y-2">
+            <ul className="space-y-3 md:space-y-4">
               {topWeaknesses.map((section) => (
-                <div
-                  key={section.name}
-                  className="bg-gray-50 rounded-lg p-3 border border-gray-100"
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-medium text-gray-800 text-sm">{section.name}</span>
-                    <span className="text-gray-900 font-semibold text-sm">{section.score}/100</span>
-                  </div>
-                  <p className="text-xs text-gray-600 line-clamp-2">{section.summary}</p>
-                </div>
+                <li key={section.name} className="text-sm font-medium text-red-900 flex items-start gap-3">
+                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
+                  <span>
+                    <strong>{section.name}</strong> ({section.score}/100) — {section.summary?.split('.')[0]}.
+                  </span>
+                </li>
               ))}
-            </div>
+            </ul>
           ) : (
-            <p className="text-gray-500 text-sm">No critical areas needing immediate attention.</p>
+            <p className="text-red-700 text-sm">No critical areas needing immediate attention.</p>
           )}
         </div>
       </div>
