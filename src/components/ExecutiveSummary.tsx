@@ -41,199 +41,213 @@ export default function ExecutiveSummary({ report, hasFullAccess = false }: Exec
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-soft"
+      className="bg-white rounded-2xl shadow-[0_20px_40px_rgba(44,47,49,0.06)] overflow-hidden"
     >
-      <div className="flex items-center gap-3 mb-6 md:mb-8">
-        <div className="w-10 h-10 bg-[#E9E9FB] rounded-xl flex items-center justify-center text-[#5B5BD5]">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-        </div>
-        <h2 className="text-lg md:text-xl font-[family-name:var(--font-space-grotesk)] font-bold text-slate-900">Executive Summary</h2>
-      </div>
-
-      {/* Overall Assessment */}
-      <p className="text-slate-600 leading-relaxed text-base md:text-lg mb-6 md:mb-8">
-        {overallScore >= 70
-          ? 'Your website demonstrates strong marketing fundamentals with several standout sections. Focus on the priority improvements below to maximize your conversion potential.'
-          : overallScore >= 50
-          ? 'Your website shows solid potential but needs targeted improvements in key areas. The analysis reveals specific opportunities to enhance your marketing effectiveness.'
-          : 'Your website requires significant optimization to effectively convert visitors. The areas below need immediate attention to improve your marketing performance.'}
-      </p>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-        {/* Strengths */}
-        <div className="p-6 md:p-8 bg-green-50/50 border border-green-100 rounded-2xl">
-          <div className="flex items-center gap-2 mb-4 md:mb-6 text-green-800">
-            <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-            </svg>
-            <h4 className="font-bold text-sm md:text-base uppercase tracking-wide">Top Strengths</h4>
-          </div>
-          {topStrengths.length > 0 ? (
-            <ul className="space-y-3 md:space-y-4">
-              {topStrengths.map((section) => (
-                <li key={section.name} className="text-sm font-medium text-green-900 flex items-start gap-3">
-                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-green-500 shrink-0" />
-                  <span>
-                    <strong>{section.name}</strong> ({section.score}/100) — {section.summary?.split('.')[0]}.
-                  </span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-green-700 text-sm">No areas scoring above 70 yet. Keep optimizing!</p>
-          )}
-        </div>
-
-        {/* Weaknesses */}
-        <div className="p-6 md:p-8 bg-red-50/80 border border-red-100 rounded-2xl">
-          <div className="flex items-center gap-2 mb-4 md:mb-6 text-red-900">
-            <svg className="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-            </svg>
-            <h4 className="font-bold text-sm md:text-base uppercase tracking-wide">Priority Improvements</h4>
-          </div>
-          {topWeaknesses.length > 0 ? (
-            <ul className="space-y-3 md:space-y-4">
-              {topWeaknesses.map((section) => (
-                <li key={section.name} className="text-sm font-medium text-red-900 flex items-start gap-3">
-                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
-                  <span>
-                    <strong>{section.name}</strong> ({section.score}/100) — {section.summary?.split('.')[0]}.
-                  </span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-red-700 text-sm">No critical areas needing immediate attention.</p>
-          )}
+      <div className="p-8 border-b border-[#abadaf]/15">
+        <div className="flex items-center gap-3">
+          <span className="material-symbols-outlined text-[#5B5BD5]">
+            description
+          </span>
+          <h2 className="text-2xl font-headline font-bold text-[#2c2f31]">Executive Summary</h2>
         </div>
       </div>
 
-      {/* Technical Quick Checks */}
-      <div className="mt-6 pt-6 border-t border-gray-100">
-        <h4 className="text-sm font-medium text-gray-700 mb-4 flex items-center gap-2">
-          <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          Technical Quick Checks
-        </h4>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-          {/* Schema Markup */}
-          <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-            <div className="flex items-center gap-2 mb-1">
-              {report.scrapedData?.technicalData?.hasStructuredData ? (
-                <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-              ) : (
-                <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-              )}
-              <span className="text-xs font-medium text-gray-700">Schema Markup</span>
+      <div className="p-8">
+
+        {/* Overall Assessment */}
+        <div className="bg-[#eef1f3]/30 rounded-xl p-6 mb-8">
+          <p className="text-[#595c5e] leading-relaxed font-body">
+            {overallScore >= 70
+              ? 'Your website demonstrates strong marketing fundamentals with several standout sections. Focus on the priority improvements below to maximize your conversion potential.'
+              : overallScore >= 50
+              ? 'Your website shows solid potential but needs targeted improvements in key areas. The analysis reveals specific opportunities to enhance your marketing effectiveness.'
+              : 'Your website requires significant optimization to effectively convert visitors. The areas below need immediate attention to improve your marketing performance.'}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          {/* Strengths */}
+          <div className="p-6 bg-[#6bff8f]/10 border border-[#005f28]/10 rounded-xl">
+            <div className="flex items-center gap-2 mb-4">
+              <svg className="w-5 h-5 text-[#005f28]" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              <h4 className="font-headline font-bold text-sm uppercase tracking-wider text-[#005f28]">Top Strengths</h4>
             </div>
-            <p className="text-[10px] text-gray-500">JSON-LD structured data</p>
+            {topStrengths.length > 0 ? (
+              <ul className="space-y-3">
+                {topStrengths.map((section) => (
+                  <li key={section.name} className="text-sm font-body text-[#2c2f31] flex items-start gap-3">
+                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#005f28] shrink-0" />
+                    <span>
+                      <strong className="font-headline font-semibold">{section.name}</strong> ({section.score}/100) — {section.summary?.split('.')[0]}.
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-[#005f28] text-sm font-body">No areas scoring above 70 yet. Keep optimizing!</p>
+            )}
           </div>
 
-          {/* SSL/HTTPS */}
-          <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-            <div className="flex items-center gap-2 mb-1">
-              {report.scrapedData?.technicalData?.hasSSL ? (
-                <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-              ) : (
-                <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-              )}
-              <span className="text-xs font-medium text-gray-700">SSL/HTTPS</span>
+          {/* Weaknesses */}
+          <div className="p-6 bg-[#f74b6d]/10 border border-[#510017]/10 rounded-xl">
+            <div className="flex items-center gap-2 mb-4">
+              <svg className="w-5 h-5 text-[#510017]" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              <h4 className="font-headline font-bold text-sm uppercase tracking-wider text-[#510017]">Priority Improvements</h4>
             </div>
-            <p className="text-[10px] text-gray-500">Secure connection</p>
-          </div>
-
-          {/* Mobile Friendly */}
-          <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-            <div className="flex items-center gap-2 mb-1">
-              {report.scrapedData?.technicalData?.hasViewportMeta ? (
-                <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-              ) : (
-                <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-              )}
-              <span className="text-xs font-medium text-gray-700">Mobile Ready</span>
-            </div>
-            <p className="text-[10px] text-gray-500">Viewport meta tag</p>
-          </div>
-
-          {/* Meta Description */}
-          <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-            <div className="flex items-center gap-2 mb-1">
-              {report.scrapedData?.metaDescription && report.scrapedData.metaDescription.length > 50 ? (
-                <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-              ) : (
-                <svg className="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-              )}
-              <span className="text-xs font-medium text-gray-700">Meta Description</span>
-            </div>
-            <p className="text-[10px] text-gray-500">SEO description</p>
+            {topWeaknesses.length > 0 ? (
+              <ul className="space-y-3">
+                {topWeaknesses.map((section) => (
+                  <li key={section.name} className="text-sm font-body text-[#2c2f31] flex items-start gap-3">
+                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#510017] shrink-0" />
+                    <span>
+                      <strong className="font-headline font-semibold">{section.name}</strong> ({section.score}/100) — {section.summary?.split('.')[0]}.
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-[#510017] text-sm font-body">No critical areas needing immediate attention.</p>
+            )}
           </div>
         </div>
-      </div>
 
-      {/* Section Summaries */}
-      <div className="mt-6 pt-6 border-t border-gray-100">
-        <h4 className="text-sm font-medium text-gray-700 mb-4">
-          Section Summaries
-        </h4>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {sections.map((section) => {
-            const isLocked = !section.free && !hasFullAccess;
-            return (
-              <div
-                key={section.name}
-                className={`bg-gray-50 rounded-lg p-3 border border-gray-100 relative ${
-                  isLocked ? 'overflow-hidden' : ''
-                }`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-medium text-gray-800 text-sm flex items-center gap-1">
-                    {section.name}
-                    {isLocked && (
-                      <svg className="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                      </svg>
-                    )}
+        {/* Technical Quick Checks */}
+        <div className="mb-8">
+          <h3 className="font-headline font-bold text-[#2c2f31] text-xl mb-4">Technical Quick Checks</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* Schema Markup */}
+            <div className="bg-[#eef1f3]/20 border border-[#abadaf]/10 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-1">
+                {report.scrapedData?.technicalData?.hasStructuredData ? (
+                  <span className="w-4 h-4 rounded-full bg-green-100 flex items-center justify-center">
+                    <svg className="w-2.5 h-2.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
                   </span>
-                  <span className={`text-sm font-semibold text-gray-900 ${isLocked ? 'blur-sm' : ''}`}>
-                    {section.score}
+                ) : (
+                  <span className="w-4 h-4 rounded-full bg-red-100 flex items-center justify-center">
+                    <svg className="w-2.5 h-2.5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
                   </span>
-                </div>
-                <p className={`text-xs text-gray-600 line-clamp-2 ${isLocked ? 'blur-sm select-none' : ''}`}>
-                  {section.summary || 'Analysis pending...'}
-                </p>
-                {isLocked && (
-                  <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] flex items-center justify-center">
-                    <div className="text-center">
-                      <svg className="w-4 h-4 text-gray-400 mx-auto mb-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                      </svg>
-                      <span className="text-[10px] text-gray-500 font-medium">Upgrade</span>
-                    </div>
-                  </div>
                 )}
+                <span className="text-xs font-headline font-semibold text-[#2c2f31]">Schema Markup</span>
               </div>
-            );
-          })}
+              <p className="text-[10px] text-[#595c5e] font-body">JSON-LD structured data</p>
+            </div>
+
+            {/* SSL/HTTPS */}
+            <div className="bg-[#eef1f3]/20 border border-[#abadaf]/10 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-1">
+                {report.scrapedData?.technicalData?.hasSSL ? (
+                  <span className="w-4 h-4 rounded-full bg-green-100 flex items-center justify-center">
+                    <svg className="w-2.5 h-2.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </span>
+                ) : (
+                  <span className="w-4 h-4 rounded-full bg-red-100 flex items-center justify-center">
+                    <svg className="w-2.5 h-2.5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </span>
+                )}
+                <span className="text-xs font-headline font-semibold text-[#2c2f31]">SSL/HTTPS</span>
+              </div>
+              <p className="text-[10px] text-[#595c5e] font-body">Secure connection</p>
+            </div>
+
+            {/* Mobile Friendly */}
+            <div className="bg-[#eef1f3]/20 border border-[#abadaf]/10 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-1">
+                {report.scrapedData?.technicalData?.hasViewportMeta ? (
+                  <span className="w-4 h-4 rounded-full bg-green-100 flex items-center justify-center">
+                    <svg className="w-2.5 h-2.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </span>
+                ) : (
+                  <span className="w-4 h-4 rounded-full bg-red-100 flex items-center justify-center">
+                    <svg className="w-2.5 h-2.5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </span>
+                )}
+                <span className="text-xs font-headline font-semibold text-[#2c2f31]">Mobile Ready</span>
+              </div>
+              <p className="text-[10px] text-[#595c5e] font-body">Viewport meta tag</p>
+            </div>
+
+            {/* Meta Description */}
+            <div className="bg-[#eef1f3]/20 border border-[#abadaf]/10 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-1">
+                {report.scrapedData?.metaDescription && report.scrapedData.metaDescription.length > 50 ? (
+                  <span className="w-4 h-4 rounded-full bg-green-100 flex items-center justify-center">
+                    <svg className="w-2.5 h-2.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </span>
+                ) : (
+                  <span className="w-4 h-4 rounded-full bg-amber-100 flex items-center justify-center">
+                    <svg className="w-2.5 h-2.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01" />
+                    </svg>
+                  </span>
+                )}
+                <span className="text-xs font-headline font-semibold text-[#2c2f31]">Meta Description</span>
+              </div>
+              <p className="text-[10px] text-[#595c5e] font-body">SEO description</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Section Summaries */}
+        <div>
+          <h3 className="font-headline font-bold text-[#2c2f31] text-xl mb-4">Section Summaries</h3>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {sections.map((section) => {
+              const isLocked = !section.free && !hasFullAccess;
+              return (
+                <div
+                  key={section.name}
+                  className={`bg-[#eef1f3]/20 border border-[#abadaf]/10 rounded-xl p-4 relative ${
+                    isLocked ? 'overflow-hidden' : ''
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-headline font-semibold text-[#2c2f31] text-sm flex items-center gap-1">
+                      {section.name}
+                      {isLocked && (
+                        <svg className="w-3 h-3 text-[#595c5e]" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                        </svg>
+                      )}
+                    </span>
+                    <span className={`text-sm font-headline font-bold text-[#2c2f31] ${isLocked ? 'blur-sm' : ''}`}>
+                      {section.score}
+                    </span>
+                  </div>
+                  <p className={`text-xs text-[#595c5e] font-body line-clamp-2 ${isLocked ? 'blur-sm select-none' : ''}`}>
+                    {section.summary || 'Analysis pending...'}
+                  </p>
+                  {isLocked && (
+                    <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] flex items-center justify-center">
+                      <div className="text-center">
+                        <svg className="w-4 h-4 text-[#595c5e] mx-auto mb-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                        </svg>
+                        <span className="text-[10px] text-[#595c5e] font-label font-medium">Upgrade</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </motion.div>

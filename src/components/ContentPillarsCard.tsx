@@ -3,7 +3,6 @@
 import { motion } from 'framer-motion';
 import type { ContentStrategy } from '@/types/report';
 import IssuesAndQuickWins from './IssuesAndQuickWins';
-import { getScoreColorClass } from '@/lib/utils';
 
 interface ContentPillarsCardProps {
   content: ContentStrategy;
@@ -29,6 +28,12 @@ function toDisplayString(value: unknown): string {
   return String(value);
 }
 
+function getScoreBadgeColor(score: number) {
+  if (score >= 75) return { bg: 'bg-[#6bff8f]', text: 'text-[#005f28]', label: 'Excellent' };
+  if (score >= 50) return { bg: 'bg-[#fed01b]', text: 'text-[#594700]', label: 'Average' };
+  return { bg: 'bg-[#f74b6d]', text: 'text-[#510017]', label: 'Needs Work' };
+}
+
 export default function ContentPillarsCard({ content }: ContentPillarsCardProps) {
   const analysis = content.detailedAnalysis || {};
   const pillars = Array.isArray(analysis.contentPillars) ? analysis.contentPillars : [];
@@ -38,58 +43,62 @@ export default function ContentPillarsCard({ content }: ContentPillarsCardProps)
   const cadence = analysis.publishingCadence || '';
   const platforms = analysis.platformGuidance || {};
 
+  const badgeColor = getScoreBadgeColor(content.score);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-xl border border-gray-200 overflow-hidden"
+      className="bg-white rounded-2xl shadow-[0_20px_40px_rgba(44,47,49,0.06)] overflow-hidden"
     >
       {/* Header */}
-      <div className="bg-gray-900 p-6 text-white">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-              </svg>
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold">Content Strategy</h2>
-              <p className="text-gray-400 text-sm">Your content pillars & roadmap</p>
-            </div>
-          </div>
+      <div className="p-8 flex justify-between items-start border-b border-[#abadaf]/15">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-headline font-bold text-[#2c2f31] tracking-tight">Content Strategy Analysis</h1>
+          <p className="text-[#595c5e] font-body text-lg">Pillars & Roadmap</p>
+        </div>
+        <div className="flex items-center gap-6">
           <div className="text-right">
-            <div className={`text-2xl font-bold ${getScoreColorClass(content.score)}`}>{content.score}</div>
-            <div className="text-gray-400 text-sm">/100</div>
+            <div className={`inline-flex items-center px-3 py-1 ${badgeColor.bg} ${badgeColor.text} rounded-full text-xs font-label font-bold uppercase tracking-wider mb-2`}>
+              {badgeColor.label}
+            </div>
+            <div className="flex items-baseline gap-1">
+              <span className="text-5xl font-headline font-bold text-[#2c2f31]">{content.score}</span>
+              <span className="text-xl text-[#595c5e] font-light">/100</span>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="p-6">
+      <div className="p-8">
         {/* Summary */}
-        <div className="bg-gray-50 rounded-lg p-4 mb-6 border border-gray-100">
-          <p className="text-gray-700 text-sm">{content.summary}</p>
-        </div>
+        {content.summary && (
+          <div className="bg-[#eef1f3]/30 rounded-xl p-6 mb-8">
+            <p className="text-[#595c5e] leading-relaxed font-body">{content.summary}</p>
+          </div>
+        )}
 
         {/* Content Pillars */}
         {pillars.length > 0 && (
-          <div className="mb-6">
-            <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-              Content Pillars
-            </h4>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="mb-8 space-y-6">
+            <h3 className="font-headline font-bold text-[#2c2f31] text-xl">Content Pillars</h3>
+            <div className="grid md:grid-cols-2 gap-6">
               {pillars.map((pillar, i) => (
                 <div
                   key={i}
-                  className="bg-gray-900 rounded-lg p-4 text-white"
+                  className={`p-6 rounded-xl border space-y-3 ${
+                    i === 0
+                      ? 'bg-[#f8f9ff] border-[#5B5BD5]/10'
+                      : 'bg-[#eef1f3]/20 border-[#abadaf]/10'
+                  }`}
                 >
-                  <div className="flex items-start gap-3">
-                    <span className="text-gray-500 font-semibold text-sm">{String(i + 1).padStart(2, '0')}</span>
-                    <p className="text-sm">{toDisplayString(pillar)}</p>
+                  <div className={`flex items-center gap-2 ${i === 0 ? 'text-[#5B5BD5]' : 'text-[#2c2f31]'}`}>
+                    <span className="material-symbols-outlined">description</span>
+                    <h4 className="font-headline font-bold uppercase text-xs tracking-widest">
+                      Pillar {i + 1}
+                    </h4>
                   </div>
+                  <p className="text-sm text-[#595c5e] leading-relaxed">{toDisplayString(pillar)}</p>
                 </div>
               ))}
             </div>
@@ -98,45 +107,18 @@ export default function ContentPillarsCard({ content }: ContentPillarsCardProps)
 
         {/* Topic Clusters */}
         {topics.length > 0 && (
-          <div className="mb-6 pt-6 border-t border-gray-100">
-            <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-              </svg>
-              Topic Clusters
-            </h4>
-            <div className="flex flex-wrap gap-2">
+          <div className="mb-8 space-y-6">
+            <h3 className="font-headline font-bold text-[#2c2f31] text-xl">Topic Clusters</h3>
+            <div className="space-y-3">
               {topics.map((topic, i) => (
-                <span
-                  key={i}
-                  className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-md text-sm border border-gray-200"
-                >
-                  {toDisplayString(topic)}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Format Recommendations */}
-        {formats.length > 0 && (
-          <div className="mb-6 pt-6 border-t border-gray-100">
-            <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              Recommended Formats
-            </h4>
-            <div className="space-y-2">
-              {formats.map((format, i) => (
                 <div
                   key={i}
-                  className="flex items-start gap-3 bg-gray-50 rounded-lg p-3 border border-gray-100"
+                  className="flex items-start gap-4 p-4 bg-[#eef1f3]/20 rounded-xl border border-[#abadaf]/10"
                 >
-                  <span className="flex-shrink-0 w-6 h-6 bg-gray-200 text-gray-600 rounded flex items-center justify-center text-xs font-medium">
+                  <span className="flex-shrink-0 w-7 h-7 bg-[#4b4bc5]/10 text-[#4b4bc5] rounded-lg flex items-center justify-center text-sm font-headline font-bold">
                     {i + 1}
                   </span>
-                  <p className="text-sm text-gray-700">{toDisplayString(format)}</p>
+                  <p className="text-sm text-[#2c2f31] leading-relaxed">{toDisplayString(topic)}</p>
                 </div>
               ))}
             </div>
@@ -145,23 +127,36 @@ export default function ContentPillarsCard({ content }: ContentPillarsCardProps)
 
         {/* Differentiation Angles */}
         {angles.length > 0 && (
-          <div className="mb-6 pt-6 border-t border-gray-100">
-            <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              Differentiation Angles
-            </h4>
-            <div className="space-y-2">
+          <div className="mb-8 space-y-6">
+            <h3 className="font-headline font-bold text-[#2c2f31] text-xl">Differentiation Angles</h3>
+            <div className="grid md:grid-cols-2 gap-4">
               {angles.map((angle, i) => (
                 <div
                   key={i}
-                  className="flex items-start gap-3 bg-gray-50 rounded-lg p-3 border border-gray-100"
+                  className="flex items-start gap-4 p-4 bg-[#eef1f3]/20 rounded-xl border border-[#abadaf]/10"
                 >
-                  <svg className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                  </svg>
-                  <p className="text-sm text-gray-700">{toDisplayString(angle)}</p>
+                  <span className="material-symbols-outlined text-[#595c5e] mt-0.5">trending_flat</span>
+                  <p className="text-sm font-medium text-[#2c2f31]">{toDisplayString(angle)}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Format Recommendations */}
+        {formats.length > 0 && (
+          <div className="mb-8 space-y-6">
+            <h3 className="font-headline font-bold text-[#2c2f31] text-xl">Recommended Formats</h3>
+            <div className="space-y-3">
+              {formats.map((format, i) => (
+                <div
+                  key={i}
+                  className="flex items-start gap-4 p-4 bg-[#eef1f3]/20 rounded-xl border border-[#abadaf]/10"
+                >
+                  <span className="flex-shrink-0 w-7 h-7 bg-[#4b4bc5]/10 text-[#4b4bc5] rounded-lg flex items-center justify-center text-sm font-headline font-bold">
+                    {i + 1}
+                  </span>
+                  <p className="text-sm text-[#2c2f31] leading-relaxed">{toDisplayString(format)}</p>
                 </div>
               ))}
             </div>
@@ -169,37 +164,37 @@ export default function ContentPillarsCard({ content }: ContentPillarsCardProps)
         )}
 
         {/* Publishing Cadence & Platform Guidance */}
-        <div className="grid md:grid-cols-2 gap-4 pt-6 border-t border-gray-100">
-          {cadence && (
-            <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-              <h5 className="font-medium text-gray-800 text-sm mb-2 flex items-center gap-2">
-                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                Publishing Cadence
-              </h5>
-              <p className="text-sm text-gray-600">{cadence}</p>
-            </div>
-          )}
+        {(cadence || Object.keys(platforms).length > 0) && (
+          <div className="mb-8">
+            <div className="grid md:grid-cols-2 gap-6">
+              {cadence && (
+                <div className="bg-[#eef1f3]/20 rounded-xl p-6 border border-[#abadaf]/10">
+                  <h5 className="font-headline font-bold text-[#2c2f31] text-sm mb-3 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[#595c5e]">event</span>
+                    Publishing Cadence
+                  </h5>
+                  <p className="text-sm text-[#595c5e] leading-relaxed">{cadence}</p>
+                </div>
+              )}
 
-          {Object.keys(platforms).length > 0 && (
-            <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-              <h5 className="font-medium text-gray-800 text-sm mb-2 flex items-center gap-2">
-                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                </svg>
-                Platform Focus
-              </h5>
-              <div className="space-y-1">
-                {Object.entries(platforms).map(([key, value]) => (
-                  <p key={key} className="text-sm text-gray-600">
-                    <span className="font-medium capitalize">{key}:</span> {String(value)}
-                  </p>
-                ))}
-              </div>
+              {Object.keys(platforms).length > 0 && (
+                <div className="bg-[#eef1f3]/20 rounded-xl p-6 border border-[#abadaf]/10">
+                  <h5 className="font-headline font-bold text-[#2c2f31] text-sm mb-3 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[#595c5e]">public</span>
+                    Platform Focus
+                  </h5>
+                  <div className="space-y-2">
+                    {Object.entries(platforms).map(([key, value]) => (
+                      <p key={key} className="text-sm text-[#595c5e]">
+                        <span className="font-semibold capitalize">{key}:</span> {String(value)}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Key Issues & Quick Wins */}
         <IssuesAndQuickWins
