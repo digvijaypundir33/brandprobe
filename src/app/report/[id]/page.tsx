@@ -10,7 +10,6 @@ import ScanningAnimation from '@/components/ScanningAnimation';
 import QuickWinsSection from '@/components/QuickWinsSection';
 import IssuesList from '@/components/IssuesList';
 import ExecutiveSummary from '@/components/ExecutiveSummary';
-import WebsiteInfoCard from '@/components/WebsiteInfoCard';
 import MessagingAnalysisCard from '@/components/MessagingAnalysisCard';
 import SeoAnalysisCard from '@/components/SeoAnalysisCard';
 import ContentPillarsCard from '@/components/ContentPillarsCard';
@@ -613,11 +612,6 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
                   <ScoreBarChart scores={scores} sectionScoreChanges={report.sectionScoreChanges} hasFullAccess={hasFullAccess} />
                 </div>
               </div>
-
-              {/* Website Info */}
-              {report.scrapedData && (
-                <WebsiteInfoCard data={report.scrapedData} />
-              )}
 
               {/* Issues List */}
               <IssuesList report={report} hasFullAccess={hasFullAccess} />

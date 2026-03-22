@@ -9,6 +9,8 @@ interface ExecutiveSummaryProps {
 }
 
 export default function ExecutiveSummary({ report, hasFullAccess = false }: ExecutiveSummaryProps) {
+  const scrapedData = report.scrapedData;
+
   // Show all 10 sections for all users (blur locked ones for free users)
   const allSections = [
     { name: 'Messaging', score: report.messagingScore || 0, summary: report.messagingAnalysis?.summary, free: true },
@@ -64,6 +66,111 @@ export default function ExecutiveSummary({ report, hasFullAccess = false }: Exec
               : 'Your website requires significant optimization to effectively convert visitors. The areas below need immediate attention to improve your marketing performance.'}
           </p>
         </div>
+
+        {/* Website Overview Section */}
+        {scrapedData && (
+          <div className="mb-8">
+            <h3 className="font-headline font-bold text-[#2c2f31] text-xl mb-4">Website Overview</h3>
+
+            {/* Title and Meta Description */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="bg-[#eef1f3]/30 border border-[#abadaf]/10 rounded-xl p-4">
+                <label className="text-xs font-headline font-semibold text-[#595c5e] uppercase tracking-wide">Page Title</label>
+                <p className="text-[#2c2f31] font-body font-medium mt-1 text-sm">{scrapedData.title || 'No title found'}</p>
+              </div>
+              <div className="bg-[#eef1f3]/30 border border-[#abadaf]/10 rounded-xl p-4">
+                <label className="text-xs font-headline font-semibold text-[#595c5e] uppercase tracking-wide">Meta Description</label>
+                <p className="text-[#595c5e] font-body text-sm mt-1 line-clamp-2">{scrapedData.metaDescription || 'No meta description found'}</p>
+              </div>
+            </div>
+
+            {/* H1 Headlines */}
+            {scrapedData.h1 && scrapedData.h1.length > 0 && (
+              <div className="bg-[#eef1f3]/30 border border-[#abadaf]/10 rounded-xl p-4 mb-4">
+                <label className="text-xs font-headline font-semibold text-[#595c5e] uppercase tracking-wide flex items-center gap-2">
+                  <span className="w-5 h-5 bg-[#5B5BD5]/10 rounded flex items-center justify-center text-xs font-bold text-[#5B5BD5]">H1</span>
+                  Primary Headlines
+                </label>
+                <ul className="mt-2 space-y-1">
+                  {scrapedData.h1.slice(0, 3).map((h, i) => (
+                    <li key={i} className="text-[#2c2f31] text-sm font-body flex items-start gap-2">
+                      <span className="text-[#abadaf] mt-1">•</span>
+                      {h}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+              <div className="bg-[#eef1f3]/30 border border-[#abadaf]/10 rounded-xl p-4 text-center">
+                <p className="text-2xl font-headline font-bold text-[#2c2f31]">{scrapedData.ctas?.length || 0}</p>
+                <p className="text-xs text-[#595c5e] font-label font-medium">CTAs Found</p>
+              </div>
+              <div className="bg-[#eef1f3]/30 border border-[#abadaf]/10 rounded-xl p-4 text-center">
+                <p className="text-2xl font-headline font-bold text-[#2c2f31]">{scrapedData.testimonials?.length || 0}</p>
+                <p className="text-xs text-[#595c5e] font-label font-medium">Testimonials</p>
+              </div>
+              <div className="bg-[#eef1f3]/30 border border-[#abadaf]/10 rounded-xl p-4 text-center">
+                <p className="text-2xl font-headline font-bold text-[#2c2f31]">{scrapedData.trustSignals?.length || 0}</p>
+                <p className="text-xs text-[#595c5e] font-label font-medium">Trust Signals</p>
+              </div>
+              <div className="bg-[#eef1f3]/30 border border-[#abadaf]/10 rounded-xl p-4 text-center">
+                <p className="text-2xl font-headline font-bold text-[#2c2f31]">{scrapedData.subPages?.length || 0}</p>
+                <p className="text-xs text-[#595c5e] font-label font-medium">Pages Scanned</p>
+              </div>
+            </div>
+
+            {/* CTAs Found */}
+            {scrapedData.ctas && scrapedData.ctas.length > 0 && (
+              <div className="mb-4">
+                <label className="text-xs font-headline font-semibold text-[#595c5e] uppercase tracking-wide mb-2 block">
+                  Calls-to-Action Found
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {scrapedData.ctas.slice(0, 6).map((cta, i) => (
+                    <span
+                      key={i}
+                      className="px-3 py-1.5 bg-[#5B5BD5]/10 text-[#5B5BD5] rounded-lg text-sm font-label font-medium border border-[#5B5BD5]/20"
+                    >
+                      {cta}
+                    </span>
+                  ))}
+                  {scrapedData.ctas.length > 6 && (
+                    <span className="px-3 py-1.5 bg-[#eef1f3]/50 text-[#595c5e] rounded-lg text-sm font-label border border-[#abadaf]/10">
+                      +{scrapedData.ctas.length - 6} more
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Navigation Links */}
+            {scrapedData.navLinks && scrapedData.navLinks.length > 0 && (
+              <div>
+                <label className="text-xs font-headline font-semibold text-[#595c5e] uppercase tracking-wide mb-2 block">
+                  Navigation Structure
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {scrapedData.navLinks.slice(0, 8).map((link, i) => (
+                    <span
+                      key={i}
+                      className="px-3 py-1.5 bg-[#eef1f3]/50 text-[#595c5e] rounded-lg text-sm font-label border border-[#abadaf]/10"
+                    >
+                      {link}
+                    </span>
+                  ))}
+                  {scrapedData.navLinks.length > 8 && (
+                    <span className="px-3 py-1.5 bg-[#eef1f3]/30 text-[#abadaf] rounded-lg text-sm font-label border border-[#abadaf]/10">
+                      +{scrapedData.navLinks.length - 8} more
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           {/* Strengths */}

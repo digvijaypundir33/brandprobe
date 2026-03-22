@@ -8,7 +8,6 @@ import ScoreBarChart from '@/components/ScoreBarChart';
 import QuickWinsSection from '@/components/QuickWinsSection';
 import IssuesList from '@/components/IssuesList';
 import ExecutiveSummary from '@/components/ExecutiveSummary';
-import WebsiteInfoCard from '@/components/WebsiteInfoCard';
 import MessagingAnalysisCard from '@/components/MessagingAnalysisCard';
 import SeoAnalysisCard from '@/components/SeoAnalysisCard';
 import ContentPillarsCard from '@/components/ContentPillarsCard';
@@ -1077,11 +1076,6 @@ export default function SampleReportPage() {
                   <ScoreBarChart scores={scores} sectionScoreChanges={sampleReport.sectionScoreChanges} hasFullAccess={true} />
                 </div>
               </div>
-
-              {/* Website Info */}
-              {sampleReport.scrapedData && (
-                <WebsiteInfoCard data={sampleReport.scrapedData} />
-              )}
 
               {/* Issues List */}
               <IssuesList report={sampleReport} hasFullAccess={true} />
