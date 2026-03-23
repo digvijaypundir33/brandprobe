@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { getOrCreateUser, updateUserLastLogin } from '@/lib/supabase';
+import { createSession } from '@/lib/auth';
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
@@ -93,23 +94,21 @@ export async function GET(request: NextRequest) {
     // Update last login
     await updateUserLastLogin(user.id);
 
-    // Create session cookie
+    // Create JWT session token using the proper auth system
+    const sessionToken = await createSession(
+      user.id,
+      user.email,
+      user.subscription_status || 'free'
+    );
+
+    // Set the session cookie
     const cookieStore = await cookies();
 
-    // Store user session (simple approach - you might want JWT or more secure session)
-    const sessionData = {
-      userId: user.id,
-      email: user.email,
-      name: googleUser.name,
-      picture: googleUser.picture,
-      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
-    };
-
-    cookieStore.set('session', JSON.stringify(sessionData), {
+    cookieStore.set('brandprobe-auth', sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60, // 7 days
+      maxAge: 30 * 24 * 60 * 60, // 30 days
       path: '/',
     });
 
