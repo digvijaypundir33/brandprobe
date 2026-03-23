@@ -9,9 +9,12 @@ interface DashboardPageProps {
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   // Check authentication
+  console.log('[Dashboard] Checking session...');
   const session = await getSession();
+  console.log('[Dashboard] Session result:', session ? `User: ${session.email}` : 'No session');
 
   if (!session) {
+    console.log('[Dashboard] No session, redirecting to /');
     redirect('/');
   }
 
