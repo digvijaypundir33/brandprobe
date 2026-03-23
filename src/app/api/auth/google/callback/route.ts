@@ -27,29 +27,10 @@ interface GoogleUserInfo {
 }
 
 export async function GET(request: NextRequest) {
-  console.log('[Google OAuth Callback] Started');
-  console.log('[Google OAuth Callback] URL:', request.url);
-
   const searchParams = request.nextUrl.searchParams;
   const code = searchParams.get('code');
   const error = searchParams.get('error');
   const stateParam = searchParams.get('state');
-
-  console.log('[Google OAuth Callback] State param raw:', stateParam);
-  console.log('[Google OAuth Callback] State param type:', typeof stateParam);
-  console.log('[Google OAuth Callback] Has code:', !!code);
-  console.log('[Google OAuth Callback] Error:', error);
-
-  // Try to parse state immediately to debug
-  if (stateParam) {
-    try {
-      const debugState = JSON.parse(stateParam);
-      console.log('[Google OAuth Callback] DEBUG - Parsed state:', debugState);
-      console.log('[Google OAuth Callback] DEBUG - redirect value:', debugState.redirect);
-    } catch (e) {
-      console.log('[Google OAuth Callback] DEBUG - Failed to parse state:', e);
-    }
-  }
 
   // Handle OAuth errors
   if (error) {
@@ -90,7 +71,6 @@ export async function GET(request: NextRequest) {
     }
 
     const tokens: GoogleTokenResponse = await tokenResponse.json();
-    console.log('[Google OAuth Callback] Token exchange successful');
 
     // Get user info from Google
     const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
@@ -105,34 +85,26 @@ export async function GET(request: NextRequest) {
     }
 
     const googleUser: GoogleUserInfo = await userInfoResponse.json();
-    console.log('[Google OAuth Callback] Got user info, email:', googleUser.email);
 
     if (!googleUser.email) {
-      console.error('[Google OAuth Callback] No email in user info');
       return NextResponse.redirect(new URL('/signup?error=no_email', request.url));
     }
 
     // Get or create user in our database
-    console.log('[Google OAuth Callback] Getting or creating user...');
     const user = await getOrCreateUser(googleUser.email);
-    console.log('[Google OAuth Callback] User ID:', user.id, 'Subscription:', user.subscriptionStatus);
 
     // Update last login
     await updateUserLastLogin(user.id);
 
     // Create JWT session token using the proper auth system
-    console.log('[Google OAuth Callback] Creating session token...');
     const sessionToken = await createSession(
       user.id,
       user.email,
       user.subscriptionStatus || 'free'
     );
-    console.log('[Google OAuth Callback] Session token created, length:', sessionToken.length);
 
     // Set the session cookie using the same method as magic link auth
-    console.log('[Google OAuth Callback] Setting session cookie...');
     await setSessionCookie(sessionToken);
-    console.log('[Google OAuth Callback] Session cookie set');
 
     // Also set a client-readable cookie for the email (for the google-success page to use)
     const cookieStore = await cookies();
@@ -143,7 +115,6 @@ export async function GET(request: NextRequest) {
       maxAge: 7 * 24 * 60 * 60,
       path: '/',
     });
-    console.log('[Google OAuth Callback] user_email cookie set');
 
     // Check for redirect destination in OAuth state parameter
     let redirectTo: string | null = null;
@@ -152,22 +123,18 @@ export async function GET(request: NextRequest) {
       try {
         const state = JSON.parse(stateParam);
         redirectTo = state.redirect;
-        console.log('[Google OAuth Callback] Parsed state, redirectTo:', redirectTo);
-      } catch (parseError) {
-        console.error('[Google OAuth Callback] Failed to parse state:', parseError);
+      } catch {
+        // Invalid state parameter, ignore
       }
     }
 
     if (redirectTo === 'dashboard') {
-      console.log('[Google OAuth Callback] Redirecting to dashboard');
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
 
-    console.log('[Google OAuth Callback] Redirecting to google-success page');
     // Redirect to the Google auth success page which will handle the pending URL
     return NextResponse.redirect(new URL('/auth/google-success', request.url));
-  } catch (err) {
-    console.error('[Google OAuth Callback] Error:', err);
+  } catch {
     return NextResponse.redirect(new URL('/signup?error=callback_error', request.url));
   }
 }

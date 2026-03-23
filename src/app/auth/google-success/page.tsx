@@ -1,27 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 
 export default function GoogleSuccessPage() {
-  const router = useRouter();
   const [status, setStatus] = useState<'loading' | 'scanning' | 'error'>('loading');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const handleGoogleSuccess = async () => {
-      console.log('[Google Success] Starting...');
-      console.log('[Google Success] All cookies:', document.cookie);
-
       // Get the pending URL from sessionStorage
       const pendingUrl = sessionStorage.getItem('pendingAuditUrl');
-      console.log('[Google Success] Pending URL:', pendingUrl);
 
       if (!pendingUrl) {
         // No pending URL - redirect to dashboard
-        // Use window.location for full page reload to ensure cookies are sent
-        console.log('[Google Success] No pending URL, redirecting to dashboard...');
         window.location.href = '/dashboard';
         return;
       }
@@ -32,10 +24,7 @@ export default function GoogleSuccessPage() {
         .find(row => row.startsWith('user_email='))
         ?.split('=')[1];
 
-      console.log('[Google Success] Email from cookie:', email);
-
       if (!email) {
-        console.error('[Google Success] No email cookie found');
         setError('Session expired. Please try again.');
         setStatus('error');
         return;
@@ -45,7 +34,6 @@ export default function GoogleSuccessPage() {
       sessionStorage.removeItem('pendingAuditUrl');
 
       setStatus('scanning');
-      console.log('[Google Success] Starting scan...');
 
       try {
         // Start the scan
@@ -56,11 +44,9 @@ export default function GoogleSuccessPage() {
         });
 
         const data = await response.json();
-        console.log('[Google Success] Scan response:', data);
 
         if (!response.ok) {
           if (data.requiresUpgrade && data.upgradeOptions) {
-            console.log('[Google Success] Requires upgrade, redirecting to pricing');
             window.location.href = '/#pricing';
             return;
           }
@@ -68,23 +54,20 @@ export default function GoogleSuccessPage() {
         }
 
         if (data.cached && data.existingReport) {
-          console.log('[Google Success] Cached report, redirecting to:', data.existingReport.id);
           window.location.href = `/report/${data.existingReport.id}`;
           return;
         }
 
         // Redirect to report page
-        console.log('[Google Success] New report, redirecting to:', data.reportId);
         window.location.href = `/report/${data.reportId}`;
       } catch (err) {
-        console.error('[Google Success] Error:', err);
         setError(err instanceof Error ? err.message : 'Something went wrong');
         setStatus('error');
       }
     };
 
     handleGoogleSuccess();
-  }, [router]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
@@ -135,7 +118,7 @@ export default function GoogleSuccessPage() {
                   <h1 className="text-2xl font-bold text-gray-900 mb-2">Something went wrong</h1>
                   <p className="text-gray-600 mb-6">{error}</p>
                   <button
-                    onClick={() => router.push('/')}
+                    onClick={() => window.location.href = '/'}
                     className="px-6 py-3 bg-[#5B5BD5] text-white rounded-xl font-semibold hover:bg-[#4a4ac4] transition-colors"
                   >
                     Go to Home
