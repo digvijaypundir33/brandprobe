@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { getOrCreateUser, updateUserLastLogin } from '@/lib/supabase';
-import { createSession } from '@/lib/auth';
+import { createSession, setSessionCookie } from '@/lib/auth';
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
@@ -115,7 +115,7 @@ export async function GET(request: NextRequest) {
     // Get or create user in our database
     console.log('[Google OAuth Callback] Getting or creating user...');
     const user = await getOrCreateUser(googleUser.email);
-    console.log('[Google OAuth Callback] User ID:', user.id, 'Subscription:', user.subscription_status);
+    console.log('[Google OAuth Callback] User ID:', user.id, 'Subscription:', user.subscriptionStatus);
 
     // Update last login
     await updateUserLastLogin(user.id);
@@ -125,39 +125,17 @@ export async function GET(request: NextRequest) {
     const sessionToken = await createSession(
       user.id,
       user.email,
-      user.subscription_status || 'free'
+      user.subscriptionStatus || 'free'
     );
     console.log('[Google OAuth Callback] Session token created, length:', sessionToken.length);
 
-    // Set the session cookie
+    // Set the session cookie using the same method as magic link auth
+    console.log('[Google OAuth Callback] Setting session cookie...');
+    await setSessionCookie(sessionToken);
+    console.log('[Google OAuth Callback] Session cookie set');
+
+    // Also set a client-readable cookie for the email (for the google-success page to use)
     const cookieStore = await cookies();
-    console.log('[Google OAuth Callback] Setting cookies...');
-
-    // Cookie options for production
-    const cookieOptions: {
-      httpOnly: boolean;
-      secure: boolean;
-      sameSite: 'lax' | 'strict' | 'none';
-      maxAge: number;
-      path: string;
-      domain?: string;
-    } = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 30 * 24 * 60 * 60, // 30 days
-      path: '/',
-    };
-
-    // Set domain for production to ensure cookie works across subdomains
-    if (process.env.NODE_ENV === 'production' && process.env.COOKIE_DOMAIN) {
-      cookieOptions.domain = process.env.COOKIE_DOMAIN;
-    }
-
-    cookieStore.set('brandprobe-auth', sessionToken, cookieOptions);
-    console.log('[Google OAuth Callback] brandprobe-auth cookie set');
-
-    // Also set a client-readable cookie for the email (for the signup page to use)
     cookieStore.set('user_email', googleUser.email, {
       httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
