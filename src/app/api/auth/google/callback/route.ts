@@ -35,9 +35,21 @@ export async function GET(request: NextRequest) {
   const error = searchParams.get('error');
   const stateParam = searchParams.get('state');
 
-  console.log('[Google OAuth Callback] State param:', stateParam);
+  console.log('[Google OAuth Callback] State param raw:', stateParam);
+  console.log('[Google OAuth Callback] State param type:', typeof stateParam);
   console.log('[Google OAuth Callback] Has code:', !!code);
   console.log('[Google OAuth Callback] Error:', error);
+
+  // Try to parse state immediately to debug
+  if (stateParam) {
+    try {
+      const debugState = JSON.parse(stateParam);
+      console.log('[Google OAuth Callback] DEBUG - Parsed state:', debugState);
+      console.log('[Google OAuth Callback] DEBUG - redirect value:', debugState.redirect);
+    } catch (e) {
+      console.log('[Google OAuth Callback] DEBUG - Failed to parse state:', e);
+    }
+  }
 
   // Handle OAuth errors
   if (error) {

@@ -43,17 +43,21 @@ export async function createSession(
  */
 export async function verifySession(token: string): Promise<SessionData | null> {
   try {
+    console.log('[Auth] verifySession - Verifying token...');
     const verified = await jwtVerify(token, JWT_SECRET);
     const payload = verified.payload as unknown as SessionData;
+    console.log('[Auth] verifySession - Payload email:', payload.email);
 
     // Check if token is expired
     if (payload.expiresAt < Date.now()) {
+      console.log('[Auth] verifySession - Token expired');
       return null;
     }
 
+    console.log('[Auth] verifySession - Token valid');
     return payload;
   } catch (error) {
-    console.error('Session verification failed:', error);
+    console.error('[Auth] verifySession - Verification failed:', error);
     return null;
   }
 }
@@ -65,11 +69,18 @@ export async function getSession(): Promise<SessionData | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
 
+  console.log('[Auth] getSession - Cookie name:', COOKIE_NAME);
+  console.log('[Auth] getSession - Token exists:', !!token);
+  console.log('[Auth] getSession - Token length:', token?.length || 0);
+
   if (!token) {
+    console.log('[Auth] getSession - No token found');
     return null;
   }
 
-  return verifySession(token);
+  const session = await verifySession(token);
+  console.log('[Auth] getSession - Session verified:', !!session);
+  return session;
 }
 
 /**
