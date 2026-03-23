@@ -104,13 +104,28 @@ export async function GET(request: NextRequest) {
     // Set the session cookie
     const cookieStore = await cookies();
 
-    cookieStore.set('brandprobe-auth', sessionToken, {
+    // Cookie options for production
+    const cookieOptions: {
+      httpOnly: boolean;
+      secure: boolean;
+      sameSite: 'lax' | 'strict' | 'none';
+      maxAge: number;
+      path: string;
+      domain?: string;
+    } = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 30 * 24 * 60 * 60, // 30 days
       path: '/',
-    });
+    };
+
+    // Set domain for production to ensure cookie works across subdomains
+    if (process.env.NODE_ENV === 'production' && process.env.COOKIE_DOMAIN) {
+      cookieOptions.domain = process.env.COOKIE_DOMAIN;
+    }
+
+    cookieStore.set('brandprobe-auth', sessionToken, cookieOptions);
 
     // Also set a client-readable cookie for the email (for the signup page to use)
     cookieStore.set('user_email', googleUser.email, {
