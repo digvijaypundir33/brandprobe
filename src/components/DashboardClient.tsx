@@ -27,9 +27,10 @@ interface DashboardClientProps {
   user: User;
   reports: Report[];
   session: SessionData;
+  pendingAnalyzeUrl?: string;
 }
 
-export default function DashboardClient({ user, reports, session }: DashboardClientProps) {
+export default function DashboardClient({ user, reports, session, pendingAnalyzeUrl }: DashboardClientProps) {
   const router = useRouter();
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [menuPosition, setMenuPosition] = useState<{ top: number; right: number } | null>(null);
@@ -50,6 +51,9 @@ export default function DashboardClient({ user, reports, session }: DashboardCli
   const [urlToRescan, setUrlToRescan] = useState<string>('');
   const [showErrorAlert, setShowErrorAlert] = useState(false);
   const [errorAlertMessage, setErrorAlertMessage] = useState('');
+  const [showAnalyzeConfirmModal, setShowAnalyzeConfirmModal] = useState(!!pendingAnalyzeUrl);
+  const [pendingUrl, setPendingUrl] = useState(pendingAnalyzeUrl || '');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const handleCreateReport = async (e: React.FormEvent, forceRescan = false) => {
     e.preventDefault();
@@ -305,6 +309,62 @@ export default function DashboardClient({ user, reports, session }: DashboardCli
   const cancelRescan = () => {
     setShowRescanWarning(false);
     setUrlToRescan('');
+  };
+
+  // Handle pending analyze URL from landing page
+  const handleConfirmAnalyze = async () => {
+    if (!pendingUrl) return;
+
+    setIsAnalyzing(true);
+
+    try {
+      const response = await fetch('/api/scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: pendingUrl,
+          email: session.email,
+          skipVerification: true,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (data.requiresUpgrade && data.upgradeOptions) {
+          setShowAnalyzeConfirmModal(false);
+          setUpgradeOptions(data.upgradeOptions);
+          setShowUpgradeModal(true);
+          setIsAnalyzing(false);
+          return;
+        }
+        throw new Error(data.message || data.error || 'Failed to start scan');
+      }
+
+      if (data.cached && data.existingReport) {
+        setShowAnalyzeConfirmModal(false);
+        setExistingReport(data.existingReport);
+        setCanRescan(data.canRescan);
+        setNewReportUrl(pendingUrl);
+        setShowRescanModal(true);
+        setIsAnalyzing(false);
+        return;
+      }
+
+      router.push(`/report/${data.reportId}`);
+    } catch (err) {
+      setShowAnalyzeConfirmModal(false);
+      setErrorAlertMessage(err instanceof Error ? err.message : 'Something went wrong');
+      setShowErrorAlert(true);
+      setIsAnalyzing(false);
+    }
+  };
+
+  const handleCancelAnalyze = () => {
+    setShowAnalyzeConfirmModal(false);
+    setPendingUrl('');
+    // Remove the query param from URL
+    router.replace('/dashboard');
   };
 
   const handleDownloadPDF = (reportId: string) => {
@@ -1212,6 +1272,63 @@ export default function DashboardClient({ user, reports, session }: DashboardCli
           message={errorAlertMessage}
           variant="error"
         />
+
+        {/* Analyze Confirmation Modal */}
+        {showAnalyzeConfirmModal && pendingUrl && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white rounded-2xl p-8 max-w-md w-full"
+            >
+              <div className="text-center mb-6">
+                <div className="mx-auto w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mb-4">
+                  <svg className="w-8 h-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold mb-2 text-gray-900">Analyze Website?</h3>
+                <p className="text-gray-600 mb-4">
+                  You&apos;re about to analyze:
+                </p>
+                <div className="bg-gray-100 rounded-lg px-4 py-3 mb-4">
+                  <p className="text-sm font-medium text-gray-900 break-all">{pendingUrl}</p>
+                </div>
+                <p className="text-sm text-gray-500">
+                  This will use 1 of your {reportsLimit} reports this month.
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={handleCancelAnalyze}
+                  disabled={isAnalyzing}
+                  className="flex-1 py-3 px-4 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmAnalyze}
+                  disabled={isAnalyzing}
+                  className="flex-1 py-3 px-4 text-white rounded-xl font-medium transition-colors disabled:opacity-50"
+                  style={{ backgroundColor: 'var(--brand-primary)' }}
+                >
+                  {isAnalyzing ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Analyzing...
+                    </span>
+                  ) : (
+                    'Start Analysis'
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
       </main>
     </div>
   );
