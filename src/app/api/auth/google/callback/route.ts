@@ -121,6 +121,24 @@ export async function GET(request: NextRequest) {
       path: '/',
     });
 
+    // Check for redirect destination in OAuth state parameter
+    const stateParam = searchParams.get('state');
+    let redirectTo: string | null = null;
+
+    if (stateParam) {
+      try {
+        const state = JSON.parse(stateParam);
+        redirectTo = state.redirect;
+      } catch {
+        // Invalid state, ignore
+      }
+    }
+
+    if (redirectTo === 'dashboard') {
+      // Direct redirect to dashboard (from access-reports page)
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
+
     // Redirect to the Google auth success page which will handle the pending URL
     return NextResponse.redirect(new URL('/auth/google-success', request.url));
   } catch (err) {

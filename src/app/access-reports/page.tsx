@@ -18,7 +18,8 @@ export default function AccessReportsPage() {
   const handleGoogleSignIn = () => {
     // Store a flag to indicate this is an access-reports flow (no pending URL)
     sessionStorage.removeItem('pendingAuditUrl');
-    window.location.href = '/api/auth/google';
+    // Redirect to dashboard after Google sign-in
+    window.location.href = '/api/auth/google?redirect=dashboard';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
