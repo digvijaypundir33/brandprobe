@@ -11,12 +11,18 @@ export default function GoogleSuccessPage() {
 
   useEffect(() => {
     const handleGoogleSuccess = async () => {
+      console.log('[Google Success] Starting...');
+      console.log('[Google Success] All cookies:', document.cookie);
+
       // Get the pending URL from sessionStorage
       const pendingUrl = sessionStorage.getItem('pendingAuditUrl');
+      console.log('[Google Success] Pending URL:', pendingUrl);
 
       if (!pendingUrl) {
-        // No pending URL - redirect to dashboard or home
-        router.push('/dashboard');
+        // No pending URL - redirect to dashboard
+        // Use window.location for full page reload to ensure cookies are sent
+        console.log('[Google Success] No pending URL, redirecting to dashboard...');
+        window.location.href = '/dashboard';
         return;
       }
 
@@ -26,7 +32,10 @@ export default function GoogleSuccessPage() {
         .find(row => row.startsWith('user_email='))
         ?.split('=')[1];
 
+      console.log('[Google Success] Email from cookie:', email);
+
       if (!email) {
+        console.error('[Google Success] No email cookie found');
         setError('Session expired. Please try again.');
         setStatus('error');
         return;
@@ -36,6 +45,7 @@ export default function GoogleSuccessPage() {
       sessionStorage.removeItem('pendingAuditUrl');
 
       setStatus('scanning');
+      console.log('[Google Success] Starting scan...');
 
       try {
         // Start the scan
@@ -46,23 +56,28 @@ export default function GoogleSuccessPage() {
         });
 
         const data = await response.json();
+        console.log('[Google Success] Scan response:', data);
 
         if (!response.ok) {
           if (data.requiresUpgrade && data.upgradeOptions) {
-            router.push('/#pricing');
+            console.log('[Google Success] Requires upgrade, redirecting to pricing');
+            window.location.href = '/#pricing';
             return;
           }
           throw new Error(data.message || data.error || 'Failed to start scan');
         }
 
         if (data.cached && data.existingReport) {
-          router.push(`/report/${data.existingReport.id}`);
+          console.log('[Google Success] Cached report, redirecting to:', data.existingReport.id);
+          window.location.href = `/report/${data.existingReport.id}`;
           return;
         }
 
         // Redirect to report page
-        router.push(`/report/${data.reportId}`);
+        console.log('[Google Success] New report, redirecting to:', data.reportId);
+        window.location.href = `/report/${data.reportId}`;
       } catch (err) {
+        console.error('[Google Success] Error:', err);
         setError(err instanceof Error ? err.message : 'Something went wrong');
         setStatus('error');
       }
