@@ -47,7 +47,7 @@ export default function GoogleSuccessPage() {
 
         if (!response.ok) {
           if (data.requiresUpgrade && data.upgradeOptions) {
-            window.location.href = '/#pricing';
+            window.location.href = '/pricing';
             return;
           }
           throw new Error(data.message || data.error || 'Failed to start scan');

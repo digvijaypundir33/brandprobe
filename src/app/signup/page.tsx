@@ -55,7 +55,7 @@ function SignupContent() {
       if (!response.ok) {
         if (data.requiresUpgrade && data.upgradeOptions) {
           // Redirect to pricing with upgrade info
-          router.push('/#pricing');
+          router.push('/pricing');
           return;
         }
         throw new Error(data.message || data.error || 'Failed to start scan');

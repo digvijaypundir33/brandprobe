@@ -1,5 +1,20 @@
+import { Metadata } from 'next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+
+export const metadata: Metadata = {
+  title: 'FAQ - Frequently Asked Questions | BrandProbe',
+  description: 'Find answers to common questions about BrandProbe website analysis tool. Learn about pricing, features, reports, the startup showcase, and how to get actionable marketing insights.',
+  openGraph: {
+    title: 'FAQ - Frequently Asked Questions | BrandProbe',
+    description: 'Find answers to common questions about BrandProbe website analysis tool, pricing, features, and the startup showcase.',
+    type: 'website',
+    url: 'https://brandprobe.io/faq',
+  },
+  alternates: {
+    canonical: '/faq',
+  },
+};
 
 export default function FAQPage() {
   return (

@@ -303,7 +303,7 @@ export default function DashboardClient({ user, reports, session, pendingAnalyze
   const confirmRescan = () => {
     setShowRescanWarning(false);
     // Redirect to pricing page for upgrade
-    window.location.href = '/#pricing';
+    window.location.href = '/pricing?returnTo=/dashboard';
   };
 
   const cancelRescan = () => {
@@ -1181,7 +1181,7 @@ export default function DashboardClient({ user, reports, session, pendingAnalyze
                       <span className="text-gray-600 ml-2">one-time</span>
                     </div>
                     <Link
-                      href="/#pricing"
+                      href="/pricing?returnTo=/dashboard"
                       className="block w-full py-3 px-4 bg-gray-900 text-white text-center rounded-lg font-medium hover:bg-gray-800 transition-colors"
                       onClick={() => setShowUpgradeModal(false)}
                     >
@@ -1205,7 +1205,7 @@ export default function DashboardClient({ user, reports, session, pendingAnalyze
                     <span className="text-gray-600 ml-2">/month</span>
                   </div>
                   <Link
-                    href="/#pricing"
+                    href="/pricing?returnTo=/dashboard"
                     className="block w-full py-3 px-4 text-white text-center rounded-lg font-medium transition-colors"
                     style={{ backgroundColor: 'var(--brand-primary)' }}
                     onClick={() => setShowUpgradeModal(false)}

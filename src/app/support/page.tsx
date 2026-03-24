@@ -1,6 +1,21 @@
+import { Metadata } from 'next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
+
+export const metadata: Metadata = {
+  title: 'Support - Help Center | BrandProbe',
+  description: 'Get help with BrandProbe website analysis tool. Find answers to FAQs about reports, payments, subscriptions, and technical issues. Contact our support team.',
+  openGraph: {
+    title: 'Support - Help Center | BrandProbe',
+    description: 'Get help with BrandProbe. FAQs about reports, payments, and technical support.',
+    type: 'website',
+    url: 'https://brandprobe.io/support',
+  },
+  alternates: {
+    canonical: '/support',
+  },
+};
 
 export default function SupportPage() {
   return (
