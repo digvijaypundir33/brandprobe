@@ -48,12 +48,11 @@ export default function Home() {
           {/* Left: Content */}
           <div className="lg:col-span-6">
             <h1 className="font-bold text-3xl md:text-4xl lg:text-5xl leading-[1.1] text-gray-900 mb-6">
-              Get real feedback on your{' '}
-              <span className="text-[#5B5BD5]">startup website</span> in 60 seconds
+              Traffic but no customers?{' '}
+              <span className="text-[#5B5BD5]">Something&apos;s broken.</span>
             </h1>
             <p className="text-gray-600 text-base md:text-lg mb-8 max-w-2xl leading-relaxed">
-              Paste your URL. Get brutally honest insights on messaging, SEO, AI search visibility,
-              and what&apos;s killing your growth. No fluff, just actionable fixes.
+              Find out what — messaging, SEO, conversions, AI visibility. Complete audit in 60 seconds.
             </p>
 
             {/* URL Input */}

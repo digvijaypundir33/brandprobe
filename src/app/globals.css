@@ -499,3 +499,19 @@ body {
   transform: translateY(-4px);
   box-shadow: 0 20px 40px -8px rgba(0, 0, 0, 0.1);
 }
+
+/* ================================
+   Label Text Visibility Fix
+   ================================ */
+
+/* Ensure small uppercase labels have sufficient contrast */
+/* This targets trust bar labels and similar small text elements */
+span[class*="text-xs"][class*="font-bold"][class*="uppercase"] {
+  color: #1f2937 !important; /* gray-800 - high contrast for visibility on all browsers */
+}
+
+/* General fix for any small uppercase tracking text */
+.text-xs.uppercase.tracking-wider,
+.text-xs.font-bold.uppercase {
+  color: #374151 !important; /* gray-700 */
+}
