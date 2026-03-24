@@ -5,7 +5,6 @@ import URLInput from '@/components/URLInput';
 import AnalyzedWebsitesCarousel from '@/components/AnalyzedWebsitesCarousel';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import HeroIntelligenceDeck from '@/components/HeroIntelligenceDeck';
 import HowItWorksEditorial from '@/components/HowItWorksEditorial';
 import IntelligenceDeck from '@/components/IntelligenceDeck';
 import InsideAuditSection from '@/components/InsideAuditSection';
@@ -97,9 +96,20 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Right: Animated Hero Deck */}
-          <div className="lg:col-span-6 hidden lg:block">
-            <HeroIntelligenceDeck />
+          {/* Right: Demo Video */}
+          <div className="lg:col-span-6">
+            <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50">
+              <iframe
+                src="https://player.cloudinary.com/embed/?cloud_name=dqk3vdvee&public_id=BrandProbe__Find_What_s_Killing_Your_Growth_SaaS_Demo_pd5clj&autoplay=false"
+                width="640"
+                height="360"
+                style={{ height: 'auto', width: '100%', aspectRatio: '640 / 360' }}
+                allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+                allowFullScreen
+                frameBorder="0"
+                title="BrandProbe Demo Video"
+              />
+            </div>
           </div>
         </section>
 
