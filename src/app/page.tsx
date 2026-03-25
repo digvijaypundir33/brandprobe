@@ -24,8 +24,8 @@ const rotatingTexts = [
   "Something's broken.",
   "Let's find out why.",
   "We'll fix that.",
+  "Get instant clarity.",
   "Time to dig deeper.",
-  "Know exactly why.",
 ];
 
 export default function Home() {
