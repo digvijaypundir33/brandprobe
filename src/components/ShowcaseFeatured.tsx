@@ -72,26 +72,26 @@ export default function ShowcaseFeatured() {
   };
 
   return (
-    <section className="py-16 px-4">
+    <section className="py-10 md:py-16 px-4">
       <div className="max-w-6xl mx-auto w-full overflow-hidden">
         {/* Header */}
-        <div className="text-center mb-10">
-          <h2 className="text-3xl font-bold text-gray-900 mb-3">
+        <div className="text-center mb-6 md:mb-10">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2 md:mb-3">
             Startup Showcase
           </h2>
-          <p className="text-gray-600 max-w-xl mx-auto mb-3">
+          <p className="text-gray-600 text-sm md:text-base max-w-xl mx-auto mb-3">
             Founders showcasing their startups with BrandProbe analysis. See how top sites score, share your work, and learn from other builders.
           </p>
           <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-full">
             <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
             </svg>
-            <span className="text-sm font-medium text-green-700">Free for all users during launch</span>
+            <span className="text-xs md:text-sm font-medium text-green-700">Free for all users during launch</span>
           </div>
         </div>
 
         {/* Cards Grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8 w-full">
           {entries.map((entry) => (
             <div key={entry.reportId} className="relative pt-3 min-w-0">
               <Link

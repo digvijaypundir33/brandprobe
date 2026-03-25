@@ -96,44 +96,44 @@ export default function InsideAuditSection() {
   const currentDot = Math.floor(currentIndex / 2);
 
   return (
-    <section className="pt-4 pb-16">
-      <div className="max-w-7xl mx-auto px-8">
-        <div className="mb-12">
-          <h2 className="text-2xl md:text-3xl font-bold mb-3 text-gray-900">
+    <section className="pt-4 pb-10 md:pb-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-8">
+        <div className="mb-6 md:mb-12">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 md:mb-3 text-gray-900">
             Inside a BrandProbe Audit
           </h2>
-          <p className="text-gray-500 text-base">
+          <p className="text-gray-500 text-sm md:text-base">
             Real insights from real analyses. No fluff.
           </p>
         </div>
 
         <div
-          className={`grid grid-cols-1 lg:grid-cols-2 gap-6 transition-all duration-400 ${
+          className={`grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 transition-all duration-400 ${
             isVisible ? 'opacity-100' : 'opacity-0'
           }`}
         >
           {currentInsights.map((insight) => (
             <article
               key={insight.id}
-              className="group relative bg-white rounded-2xl p-8 border border-gray-100 hover:border-gray-200 transition-colors min-h-[280px] flex flex-col"
+              className="group relative bg-white rounded-xl md:rounded-2xl p-5 md:p-8 border border-gray-100 hover:border-gray-200 transition-colors min-h-[220px] md:min-h-[280px] flex flex-col"
             >
               {/* Large faded number */}
-              <span className="absolute top-6 right-8 text-7xl font-bold text-gray-100 select-none font-[family-name:var(--font-space-grotesk)]">
+              <span className="absolute top-4 md:top-6 right-4 md:right-8 text-5xl md:text-7xl font-bold text-gray-100 select-none font-[family-name:var(--font-space-grotesk)]">
                 {insight.number}
               </span>
 
               <div className="relative z-10 flex-1 flex flex-col">
-                <h3 className="text-xl font-semibold text-gray-900 mb-4 leading-snug pr-16">
+                <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-3 md:mb-4 leading-snug pr-12 md:pr-16">
                   {insight.title}
                 </h3>
 
-                <p className="text-gray-600 text-[15px] leading-relaxed mb-6 flex-1">
+                <p className="text-gray-600 text-sm md:text-[15px] leading-relaxed mb-4 md:mb-6 flex-1">
                   {insight.description}
                 </p>
 
-                <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
+                <div className="flex items-center gap-2 md:gap-3 pt-3 md:pt-4 border-t border-gray-100">
                   <div className="w-2 h-2 rounded-full bg-[#5B5BD5]" />
-                  <span className="text-sm text-gray-900 font-medium">
+                  <span className="text-xs md:text-sm text-gray-900 font-medium">
                     {insight.action}
                   </span>
                 </div>
@@ -143,7 +143,7 @@ export default function InsideAuditSection() {
         </div>
 
         {/* Minimal dots */}
-        <div className="flex justify-center gap-1.5 mt-10">
+        <div className="flex justify-center gap-1.5 mt-6 md:mt-10">
           {Array.from({ length: totalDots }).map((_, index) => (
             <button
               key={index}

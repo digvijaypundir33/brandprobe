@@ -108,9 +108,9 @@ export default function AnalyzedWebsitesCarousel() {
           }
         }
       `}</style>
-      <section className="py-16 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-8">
-          <h3 className="font-[family-name:var(--font-space-grotesk)] text-[10px] font-bold uppercase tracking-[0.25em] text-[var(--on-surface-variant)] opacity-60 mb-10">
+      <section className="py-8 md:py-16 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8">
+          <h3 className="font-[family-name:var(--font-space-grotesk)] text-[10px] font-bold uppercase tracking-[0.25em] text-gray-700 mb-6 md:mb-10">
             Recently Probed
           </h3>
 

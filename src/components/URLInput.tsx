@@ -7,11 +7,20 @@ export default function URLInput() {
   const router = useRouter();
   const [url, setUrl] = useState('');
   const [checking, setChecking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [shake, setShake] = useState(false);
 
-  // Validate and normalize URL
-  const normalizeUrl = (input: string): string | null => {
+  // Validate and normalize URL - returns { url, error } object
+  const validateUrl = (input: string): { url: string | null; error: string | null } => {
     const trimmed = input.trim();
-    if (!trimmed) return null;
+    if (!trimmed) {
+      return { url: null, error: 'Please enter a website URL' };
+    }
+
+    // Check if it looks like a domain (contains at least one dot)
+    if (!trimmed.includes('.')) {
+      return { url: null, error: 'Enter a valid domain (e.g., example.com)' };
+    }
 
     try {
       let testUrl = trimmed;
@@ -22,24 +31,37 @@ export default function URLInput() {
 
       // Must be a public website with a valid domain
       if (!parsed.hostname || parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') {
-        return null;
+        return { url: null, error: 'Please enter a public website URL' };
       }
 
-      if (!parsed.hostname.includes('.')) {
-        return null;
+      // Check for valid TLD (at least 2 characters after the last dot)
+      const parts = parsed.hostname.split('.');
+      const tld = parts[parts.length - 1];
+      if (tld.length < 2 || /^\d+$/.test(tld)) {
+        return { url: null, error: 'Enter a valid domain (e.g., example.com)' };
       }
 
-      return testUrl;
+      return { url: testUrl, error: null };
     } catch {
-      return null;
+      return { url: null, error: 'Please enter a valid website URL' };
     }
+  };
+
+  const triggerError = (message: string) => {
+    setError(message);
+    setShake(true);
+    setTimeout(() => setShake(false), 500);
+    setTimeout(() => setError(null), 3000);
   };
 
   const handleUrlSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const validUrl = normalizeUrl(url);
-    if (!validUrl) return;
+    const { url: validUrl, error: validationError } = validateUrl(url);
+    if (validationError || !validUrl) {
+      triggerError(validationError || 'Please enter a valid website URL');
+      return;
+    }
 
     setChecking(true);
 
@@ -68,27 +90,40 @@ export default function URLInput() {
 
   return (
     <form onSubmit={handleUrlSubmit} className="w-full max-w-2xl mx-auto">
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="flex-grow relative">
+      <div className={`flex flex-col sm:flex-row sm:items-start gap-3 ${shake ? 'animate-shake' : ''}`}>
+        <div className="flex-grow">
           <label htmlFor="url" className="sr-only">Website URL</label>
           <input
             id="url"
             type="text"
             value={url}
-            onChange={(e) => setUrl(e.target.value)}
+            onChange={(e) => {
+              setUrl(e.target.value);
+              if (error) setError(null);
+            }}
             placeholder="yourstartup.com"
-            className="w-full bg-[var(--surface-container-lowest)] ghost-border rounded-xl px-6 py-4 text-[var(--on-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)] transition-all"
+            className={`w-full bg-[var(--surface-container-lowest)] rounded-xl px-6 py-4 text-[var(--on-surface)] focus:outline-none focus:ring-2 transition-all ${
+              error
+                ? 'border-2 border-rose-300 focus:ring-rose-100 focus:border-rose-300'
+                : 'ghost-border focus:ring-[var(--primary)]/20 focus:border-[var(--primary)]'
+            }`}
             autoComplete="off"
             autoCorrect="off"
             autoCapitalize="off"
             spellCheck="false"
             disabled={checking}
           />
+          {/* Error message - inline below input */}
+          {error && (
+            <p className="mt-2 text-rose-600 text-sm font-medium animate-fadeIn">
+              {error}
+            </p>
+          )}
         </div>
         <button
           type="submit"
           disabled={checking}
-          className="primary-gradient text-[var(--on-primary)] px-8 py-4 rounded-xl font-[family-name:var(--font-space-grotesk)] font-bold text-lg hover:scale-[0.98] transition-transform whitespace-nowrap disabled:opacity-70 disabled:cursor-not-allowed"
+          className="bg-[#5B5BD5] hover:bg-[#4a4ac4] text-white px-8 py-4 rounded-xl font-[family-name:var(--font-space-grotesk)] font-bold text-lg hover:scale-[0.98] transition-all whitespace-nowrap disabled:opacity-70 disabled:cursor-not-allowed"
         >
           {checking ? (
             <span className="flex items-center justify-center gap-2">

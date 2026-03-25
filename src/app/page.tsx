@@ -65,17 +65,25 @@ export default function Home() {
       <MorphingBackground />
       <Header />
 
-      <main className="pt-24 relative z-10">
+      <main className="pt-16 md:pt-24 relative z-10">
         {/* Hero Section */}
-        <section className="max-w-7xl mx-auto px-8 py-12 md:py-16 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        <section className="max-w-7xl mx-auto px-4 sm:px-8 py-6 md:py-16 grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 items-center">
           {/* Left: Content */}
           <div className="lg:col-span-6">
-            <h1 className="font-bold text-3xl md:text-4xl lg:text-5xl leading-[1.1] text-gray-900 mb-6">
+            <h1 className="font-bold text-2xl sm:text-3xl md:text-4xl lg:text-5xl leading-[1.15] text-gray-900 mb-6">
               <span className="whitespace-nowrap">Traffic but no customers?</span>{' '}
-              <span
-                className={`text-[#5B5BD5] transition-opacity duration-500 ${isFading ? 'opacity-0' : 'opacity-100'}`}
-              >
-                {rotatingTexts[textIndex]}
+              <span className="relative inline-block align-baseline">
+                <span
+                  className="absolute left-0 top-0 text-[#5B5BD5] whitespace-nowrap transition-all duration-500"
+                  style={{
+                    opacity: isFading ? 0 : 1,
+                    filter: isFading ? 'blur(8px)' : 'blur(0px)',
+                    transform: isFading ? 'translateY(4px)' : 'translateY(0px)',
+                  }}
+                >
+                  {rotatingTexts[textIndex]}
+                </span>
+                <span className="invisible whitespace-nowrap">{rotatingTexts[textIndex]}</span>
               </span>
             </h1>
             <p className="text-gray-600 text-base md:text-lg mb-8 max-w-2xl leading-relaxed">
@@ -103,14 +111,6 @@ export default function Home() {
                 </svg>
                 <span className="font-[family-name:var(--font-space-grotesk)] text-xs font-bold uppercase tracking-wider">
                   60-second analysis
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <svg className="w-5 h-5 text-[#5B5BD5]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                <span className="font-[family-name:var(--font-space-grotesk)] text-xs font-bold uppercase tracking-wider">
-                  No signup required
                 </span>
               </div>
               <div className="flex items-center gap-2">
@@ -159,28 +159,28 @@ export default function Home() {
 
           {/* Testimonials */}
           {testimonials.length > 0 && (
-            <section className="pt-4 pb-16">
-              <div className="max-w-7xl mx-auto px-8">
-                <div className="mb-10">
-                  <h2 className="text-2xl md:text-3xl font-bold mb-4 text-gray-900">
+            <section className="pt-4 pb-10 md:pb-16">
+              <div className="max-w-7xl mx-auto px-4 sm:px-8">
+                <div className="mb-6 md:mb-10">
+                  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-3 md:mb-4 text-gray-900">
                     Real Founders Using BrandProbe
                   </h2>
-                  <p className="text-gray-600 text-base">
+                  <p className="text-gray-600 text-sm md:text-base">
                     Join 100+ websites analyzed and improved with BrandProbe
                   </p>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
                   {testimonials.slice(0, 3).map((testimonial) => (
                     <div
                       key={testimonial.id}
-                      className="bg-white p-10 rounded-xl border border-gray-100 shadow-sm relative"
+                      className="bg-white p-6 md:p-10 rounded-xl border border-gray-100 shadow-sm relative"
                     >
                       {/* Stars */}
-                      <div className="flex text-amber-500 mb-6">
+                      <div className="flex text-amber-500 mb-4 md:mb-6">
                         {[...Array(testimonial.rating)].map((_, j) => (
                           <svg
                             key={j}
-                            className="w-5 h-5 fill-current"
+                            className="w-4 h-4 md:w-5 md:h-5 fill-current"
                             viewBox="0 0 20 20"
                           >
                             <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
@@ -189,16 +189,16 @@ export default function Home() {
                       </div>
 
                       {/* Quote */}
-                      <p className="text-gray-900 font-medium italic mb-10 leading-relaxed text-lg">
+                      <p className="text-gray-900 font-medium italic mb-6 md:mb-10 leading-relaxed text-base md:text-lg">
                         &ldquo;{testimonial.testimonial_text}&rdquo;
                       </p>
 
                       {/* Author */}
                       <div className="mt-auto">
-                        <p className="font-[family-name:var(--font-space-grotesk)] font-bold">
+                        <p className="font-[family-name:var(--font-space-grotesk)] font-bold text-sm md:text-base">
                           {testimonial.author_name}
                         </p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-xs md:text-sm text-gray-600">
                           {testimonial.author_role}
                         </p>
                         {testimonial.website_url && (

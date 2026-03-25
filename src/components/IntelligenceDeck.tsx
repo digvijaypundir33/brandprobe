@@ -115,29 +115,29 @@ const modules = [
 
 export default function IntelligenceDeck() {
   return (
-    <section className="py-16">
-      <div className="max-w-7xl mx-auto px-8">
-        <div className="mb-10">
-          <h2 className="text-2xl md:text-3xl font-bold mb-4 text-gray-900">
+    <section className="py-10 md:py-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-8">
+        <div className="mb-6 md:mb-10">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-3 md:mb-4 text-gray-900">
             The Intelligence Deck
           </h2>
-          <p className="text-gray-600 text-base">
+          <p className="text-gray-600 text-sm md:text-base">
             Every scan includes 10 deep-dive analysis modules.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           {modules.map((module, index) => (
             <div
               key={index}
               className={`${
                 module.size === 'large' ? 'lg:col-span-2' : ''
-              } bg-white p-8 rounded-xl ${
+              } bg-white p-5 md:p-8 rounded-xl ${
                 module.isFree ? 'ambient-shadow' : 'ghost-border'
               }`}
             >
-              <div className="flex justify-between items-start mb-6">
-                <span className="text-gray-400 text-3xl">
+              <div className="flex justify-between items-start mb-4 md:mb-6">
+                <span className="text-gray-400 text-2xl md:text-3xl">
                   {module.icon}
                 </span>
                 <span
@@ -150,10 +150,10 @@ export default function IntelligenceDeck() {
                   {module.isFree ? 'FREE' : 'PRO'}
                 </span>
               </div>
-              <h5 className="text-xl font-bold mb-2 text-gray-900">
+              <h5 className="text-lg md:text-xl font-bold mb-2 text-gray-900">
                 {module.title}
               </h5>
-              <p className="text-gray-600 text-sm">
+              <p className="text-gray-600 text-xs md:text-sm">
                 {module.description}
               </p>
             </div>
