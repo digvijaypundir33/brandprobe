@@ -9,6 +9,7 @@ import HowItWorksEditorial from '@/components/HowItWorksEditorial';
 import IntelligenceDeck from '@/components/IntelligenceDeck';
 import InsideAuditSection from '@/components/InsideAuditSection';
 import ShowcaseFeatured from '@/components/ShowcaseFeatured';
+import MorphingBackground from '@/components/MorphingBackground';
 
 interface Testimonial {
   id: string;
@@ -19,8 +20,30 @@ interface Testimonial {
   rating: number;
 }
 
+const rotatingTexts = [
+  "Something's broken.",
+  "Let's find out why.",
+  "We'll fix that.",
+  "Time to dig deeper.",
+  "Know exactly why.",
+];
+
 export default function Home() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [textIndex, setTextIndex] = useState(0);
+  const [isFading, setIsFading] = useState(false);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsFading(true);
+      setTimeout(() => {
+        setTextIndex((prev) => (prev + 1) % rotatingTexts.length);
+        setIsFading(false);
+      }, 500);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const fetchTestimonials = async () => {
@@ -38,17 +61,22 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <div className="min-h-screen bg-white relative overflow-x-hidden">
+      <MorphingBackground />
       <Header />
 
-      <main className="pt-24">
+      <main className="pt-24 relative z-10">
         {/* Hero Section */}
         <section className="max-w-7xl mx-auto px-8 py-12 md:py-16 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           {/* Left: Content */}
           <div className="lg:col-span-6">
             <h1 className="font-bold text-3xl md:text-4xl lg:text-5xl leading-[1.1] text-gray-900 mb-6">
-              Traffic but no customers?{' '}
-              <span className="text-[#5B5BD5]">Something&apos;s broken.</span>
+              <span className="whitespace-nowrap">Traffic but no customers?</span>{' '}
+              <span
+                className={`text-[#5B5BD5] transition-opacity duration-500 ${isFading ? 'opacity-0' : 'opacity-100'}`}
+              >
+                {rotatingTexts[textIndex]}
+              </span>
             </h1>
             <p className="text-gray-600 text-base md:text-lg mb-8 max-w-2xl leading-relaxed">
               Find out what — messaging, SEO, conversions, AI visibility. Complete audit in 60 seconds.
@@ -114,7 +142,7 @@ export default function Home() {
         </section>
 
         {/* Recently Probed + How It Works - Combined Section */}
-        <div className="bg-blue-50/50">
+        <div>
           <AnalyzedWebsitesCarousel />
           <div id="how-it-works">
             <HowItWorksEditorial />
@@ -122,7 +150,7 @@ export default function Home() {
         </div>
 
         {/* Intelligence Deck + Inside Audit + Testimonials - Combined Section */}
-        <div className="bg-gradient-to-b from-blue-50/80 to-white">
+        <div>
           <IntelligenceDeck />
           <InsideAuditSection />
 

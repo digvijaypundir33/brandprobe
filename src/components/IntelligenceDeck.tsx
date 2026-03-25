@@ -150,7 +150,7 @@ export default function IntelligenceDeck() {
                   {module.isFree ? 'FREE' : 'PRO'}
                 </span>
               </div>
-              <h5 className="text-xl font-bold mb-2">
+              <h5 className="text-xl font-bold mb-2 text-gray-900">
                 {module.title}
               </h5>
               <p className="text-gray-600 text-sm">
