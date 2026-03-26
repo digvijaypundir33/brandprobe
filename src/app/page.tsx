@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Script from 'next/script';
 import URLInput from '@/components/URLInput';
 import AnalyzedWebsitesCarousel from '@/components/AnalyzedWebsitesCarousel';
 import Header from '@/components/Header';
@@ -64,6 +65,17 @@ export default function Home() {
     <div className="min-h-screen bg-white relative overflow-x-hidden">
       <MorphingBackground />
       <Header />
+
+      {/* ChatCrafter Widget */}
+      <Script
+        id="chatcrafter-widget"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: `
+(function(){if(!window.ChatCrafterWidget||window.ChatCrafterWidget("getState")!=="initialized"){window.ChatCrafterWidget=(...args)=>{if(!window.ChatCrafterWidget.q){window.ChatCrafterWidget.q=[]}window.ChatCrafterWidget.q.push(args)};window.ChatCrafterWidget=new Proxy(window.ChatCrafterWidget,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://chatcrafterai.com/widget-embed.min.js";script.id="0ff3687f-8880-4f43-a07b-6cf630ca6208";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
+          `,
+        }}
+      />
 
       <main className="pt-16 md:pt-24 relative z-10">
         {/* Hero Section */}
