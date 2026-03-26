@@ -79,12 +79,12 @@ export default function URLInput() {
         // User not logged in - redirect to signup
         router.push(`/signup?url=${encodedUrl}`);
       }
+      // Don't reset checking state - keep loading until page navigates away
     } catch {
       // On error, default to signup flow
       const encodedUrl = encodeURIComponent(validUrl);
       router.push(`/signup?url=${encodedUrl}`);
-    } finally {
-      setChecking(false);
+      // Don't reset checking state - keep loading until page navigates away
     }
   };
 

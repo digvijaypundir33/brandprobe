@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth';
-import { getReportsByUserId, getUserByEmail } from '@/lib/supabase';
+import { getReportsByUserIdLite, getUserByEmail } from '@/lib/supabase';
 import DashboardClient from '@/components/DashboardClient';
 
 interface DashboardPageProps {
@@ -8,6 +8,9 @@ interface DashboardPageProps {
 }
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+  // Start fetching searchParams early (non-blocking)
+  const paramsPromise = searchParams;
+
   // Check authentication
   const session = await getSession();
 
@@ -22,11 +25,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     redirect('/');
   }
 
-  // Get all reports for this user
-  const reports = await getReportsByUserId(user.id);
+  // Fetch reports and params in parallel
+  const [reports, params] = await Promise.all([
+    getReportsByUserIdLite(user.id),
+    paramsPromise,
+  ]);
 
-  // Get the analyze URL from query params
-  const params = await searchParams;
   const analyzeUrl = params.analyze ? decodeURIComponent(params.analyze) : undefined;
 
   return (

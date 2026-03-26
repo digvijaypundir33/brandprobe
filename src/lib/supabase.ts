@@ -242,6 +242,104 @@ export async function getReportsByUserId(userId: string): Promise<Report[]> {
   return data.map(transformReport);
 }
 
+// Lightweight version for dashboard list - only fetches essential columns
+export async function getReportsByUserIdLite(userId: string): Promise<Report[]> {
+  const { data, error } = await supabaseAdmin
+    .from('reports')
+    .select(`
+      id,
+      user_id,
+      site_id,
+      url,
+      status,
+      overall_score,
+      messaging_score,
+      seo_score,
+      content_score,
+      ads_score,
+      conversion_score,
+      distribution_score,
+      ai_search_score,
+      technical_score,
+      brand_health_score,
+      design_authenticity_score,
+      previous_overall_score,
+      score_change,
+      scan_number,
+      scan_time_ms,
+      is_auto_rescan,
+      is_public,
+      created_at,
+      showcase_enabled,
+      showcase_rank,
+      showcase_views,
+      showcase_clicks,
+      showcase_upvotes,
+      is_priority
+    `)
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Failed to get reports by user ID (lite):', error);
+    return [];
+  }
+  return data.map(transformReportLite);
+}
+
+// Transform for lite reports (without heavy JSON fields)
+function transformReportLite(row: Record<string, unknown>): Report {
+  return {
+    id: row.id as string,
+    userId: row.user_id as string,
+    siteId: row.site_id as string,
+    url: row.url as string,
+    status: row.status as Report['status'],
+    // Heavy fields set to null/undefined
+    scrapedData: null,
+    messagingAnalysis: null,
+    seoOpportunities: null,
+    contentStrategy: null,
+    adAngles: null,
+    conversionOptimization: null,
+    distributionStrategy: null,
+    aiSearchVisibility: null,
+    technicalPerformance: null,
+    brandHealth: null,
+    designAuthenticity: null,
+    // Scores
+    overallScore: row.overall_score as number | null,
+    messagingScore: row.messaging_score as number | null,
+    seoScore: row.seo_score as number | null,
+    contentScore: row.content_score as number | null,
+    adsScore: row.ads_score as number | null,
+    conversionScore: row.conversion_score as number | null,
+    distributionScore: row.distribution_score as number | null,
+    aiSearchScore: row.ai_search_score as number | null,
+    technicalScore: row.technical_score as number | null,
+    brandHealthScore: row.brand_health_score as number | null,
+    designAuthenticityScore: row.design_authenticity_score as number | null,
+    previousOverallScore: row.previous_overall_score as number | null,
+    scoreChange: row.score_change as number | null,
+    // Improvement tracking (not needed for list)
+    previousSectionScores: null,
+    sectionScoreChanges: null,
+    issueComparison: null,
+    scanNumber: (row.scan_number as number) || 1,
+    scanTimeMs: row.scan_time_ms as number | null,
+    isAutoRescan: row.is_auto_rescan as boolean,
+    isPublic: row.is_public !== false,
+    createdAt: row.created_at as string,
+    // Showcase fields
+    showcaseEnabled: row.showcase_enabled as boolean || false,
+    showcaseRank: row.showcase_rank as number || 0,
+    showcaseViews: row.showcase_views as number || 0,
+    showcaseClicks: row.showcase_clicks as number || 0,
+    showcaseUpvotes: row.showcase_upvotes as number || 0,
+    isPriority: row.is_priority as boolean || false,
+  };
+}
+
 // Count completed reports (status = 'ready') for a user this month
 export async function getCompletedReportsCountThisMonth(userId: string): Promise<number> {
   // Get the start of the current month

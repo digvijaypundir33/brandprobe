@@ -62,7 +62,7 @@ export default function ReportHeader({
             </span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-[family-name:var(--font-space-grotesk)] font-bold mb-6 md:mb-8 tracking-tight break-all">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-[family-name:var(--font-space-grotesk)] font-bold mb-6 md:mb-8 tracking-tight break-all text-white">
             {domain}
           </h1>
 
