@@ -54,6 +54,21 @@ export default function DashboardClient({ user, reports, session, pendingAnalyze
   const [showAnalyzeConfirmModal, setShowAnalyzeConfirmModal] = useState(!!pendingAnalyzeUrl);
   const [pendingUrl, setPendingUrl] = useState(pendingAnalyzeUrl || '');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Check if user is admin
+  useEffect(() => {
+    const checkAdmin = async () => {
+      try {
+        const response = await fetch('/api/admin/users');
+        // If we get 200, user is admin. If 403, user is not admin.
+        setIsAdmin(response.ok);
+      } catch {
+        setIsAdmin(false);
+      }
+    };
+    checkAdmin();
+  }, []);
 
   const handleCreateReport = async (e: React.FormEvent, forceRescan = false) => {
     e.preventDefault();
@@ -542,6 +557,49 @@ export default function DashboardClient({ user, reports, session, pendingAnalyze
             </div>
           </motion.div>
         </div>
+
+        {/* Admin Banner */}
+        {isAdmin && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.32 }}
+            className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-200 p-4 sm:p-6 mb-6"
+          >
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+              <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
+                    Admin Panel
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-600">
+                    Manage users, testimonials, and platform settings
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full md:w-auto">
+                <Link
+                  href="/dashboard/users"
+                  className="px-4 py-2 bg-white text-purple-600 rounded-lg font-medium hover:bg-purple-50 transition-colors border border-purple-200 text-sm sm:text-base text-center"
+                >
+                  Manage Users
+                </Link>
+                <Link
+                  href="/dashboard/testimonials"
+                  className="px-4 py-2 bg-white text-purple-600 rounded-lg font-medium hover:bg-purple-50 transition-colors border border-purple-200 text-sm sm:text-base text-center"
+                >
+                  Manage Testimonials
+                </Link>
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         {/* Showcase Banner */}
         {reports.some(r => r.showcaseEnabled) && (

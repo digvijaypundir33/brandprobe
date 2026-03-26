@@ -5,10 +5,14 @@ import { getUserByEmail } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
-// Admin email(s) - you can add multiple admins here
-const ADMIN_EMAILS = [
-  process.env.ADMIN_EMAIL || 'digvijay.pundir0@gmail.com',
-];
+// Get admin emails from environment variable (comma-separated)
+const getAdminEmails = (): string[] => {
+  const adminEmailsEnv = process.env.ADMIN_EMAILS || '';
+  return adminEmailsEnv
+    .split(',')
+    .map((email) => email.trim().toLowerCase())
+    .filter((email) => email.length > 0);
+};
 
 // POST - Approve testimonial (admin only)
 export async function POST(
@@ -27,7 +31,8 @@ export async function POST(
 
     // Check if user is admin
     const user = await getUserByEmail(session.email);
-    if (!user || !ADMIN_EMAILS.includes(user.email)) {
+    const adminEmails = getAdminEmails();
+    if (!user || !adminEmails.includes(user.email.toLowerCase())) {
       return NextResponse.json(
         { success: false, error: 'Admin access required' },
         { status: 403 }
@@ -91,7 +96,8 @@ export async function DELETE(
 
     // Check if user is admin
     const user = await getUserByEmail(session.email);
-    if (!user || !ADMIN_EMAILS.includes(user.email)) {
+    const adminEmails = getAdminEmails();
+    if (!user || !adminEmails.includes(user.email.toLowerCase())) {
       return NextResponse.json(
         { success: false, error: 'Admin access required' },
         { status: 403 }
