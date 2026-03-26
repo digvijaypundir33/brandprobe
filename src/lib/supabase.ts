@@ -243,6 +243,7 @@ export async function getReportsByUserId(userId: string): Promise<Report[]> {
 }
 
 // Lightweight version for dashboard list - only fetches essential columns
+// Note: Only includes columns that exist in the reports table (not showcase_profiles)
 export async function getReportsByUserIdLite(userId: string): Promise<Report[]> {
   const { data, error } = await supabaseAdmin
     .from('reports')
@@ -274,8 +275,7 @@ export async function getReportsByUserIdLite(userId: string): Promise<Report[]> 
       showcase_rank,
       showcase_views,
       showcase_clicks,
-      showcase_upvotes,
-      is_priority
+      showcase_upvotes
     `)
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
@@ -330,13 +330,13 @@ function transformReportLite(row: Record<string, unknown>): Report {
     isAutoRescan: row.is_auto_rescan as boolean,
     isPublic: row.is_public !== false,
     createdAt: row.created_at as string,
-    // Showcase fields
+    // Showcase fields (is_priority is on showcase_profiles, not reports)
     showcaseEnabled: row.showcase_enabled as boolean || false,
     showcaseRank: row.showcase_rank as number || 0,
     showcaseViews: row.showcase_views as number || 0,
     showcaseClicks: row.showcase_clicks as number || 0,
     showcaseUpvotes: row.showcase_upvotes as number || 0,
-    isPriority: row.is_priority as boolean || false,
+    isPriority: false, // Not available in lite query - only on showcase_profiles table
   };
 }
 
