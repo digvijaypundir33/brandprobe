@@ -467,13 +467,19 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
       )
     : undefined;
 
-  // Print handler
-  const handlePrint = () => {
-    window.open(`/report/${id}/print`, '_blank');
-  };
-
   return (
-    <div className="min-h-screen bg-[#F5F7F9]">
+    <div
+      className="min-h-screen bg-[#F5F7F9]"
+      style={{
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+        MozUserSelect: 'none',
+        msUserSelect: 'none',
+      }}
+      onCopy={(e) => e.preventDefault()}
+      onCut={(e) => e.preventDefault()}
+      onContextMenu={(e) => e.preventDefault()}
+    >
       {/* Header */}
       {isAuthenticated ? (
         <AuthenticatedHeader
@@ -543,7 +549,6 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
             createdAt={report.createdAt}
             reportId={id}
             isPublic={report.isPublic}
-            onPrint={handlePrint}
           />
         </motion.div>
 
